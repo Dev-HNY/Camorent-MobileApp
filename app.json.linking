@@ -1,0 +1,93 @@
+{
+  "expo": {
+    "scheme": "camorent",
+    "web": {
+      "bundler": "metro"
+    },
+    "linking": {
+      "prefixes": [
+        "camorent://",
+        "https://camorent.com",
+        "https://*.camorent.com"
+      ],
+      "config": {
+        "screens": {
+          "(onboarding)": {
+            "screens": {
+              "index": "onboarding",
+              "welcome": "welcome"
+            }
+          },
+          "(auth)": {
+            "screens": {
+              "login": "login",
+              "signup": "signup",
+              "verify-otp": "verify-otp",
+              "forgot-password": "forgot-password"
+            }
+          },
+          "(tabs)": {
+            "screens": {
+              "(home)": {
+                "screens": {
+                  "index": "",
+                  "categories": {
+                    "screens": {
+                      "index": "categories/:category?"
+                    }
+                  },
+                  "search": "search",
+                  "offers": {
+                    "screens": {
+                      "index": "offers"
+                    }
+                  }
+                }
+              },
+              "(shoots)": {
+                "screens": {
+                  "index": "shoots",
+                  "order-details": "shoots/:orderId"
+                }
+              },
+              "(profile)": {
+                "screens": {
+                  "index": "profile",
+                  "wishlist": "wishlist",
+                  "addresses": "addresses",
+                  "settings": "settings"
+                }
+              }
+            }
+          },
+          "product": {
+            "screens": {
+              "[id]": "product/:id"
+            }
+          },
+          "cart": {
+            "screens": {
+              "index": "cart",
+              "choose-address": "cart/choose-address",
+              "address-details": "cart/address-details"
+            }
+          },
+          "checkout": {
+            "screens": {
+              "crew": {
+                "screens": {
+                  "index": "checkout/crew"
+                }
+              },
+              "payment": {
+                "screens": {
+                  "index": "checkout/payment"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

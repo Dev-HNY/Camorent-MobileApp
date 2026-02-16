@@ -1,0 +1,86 @@
+name: Build Android AAB
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Android AAB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.18.1'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npx tsc --noEmit --skipLibCheck
+
+      - name: Decode keystore from secrets
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/camorent-upload-key.keystore
+          echo "✅ Keystore decoded from secrets"
+
+      - name: Run prebuild
+        run: npx expo prebuild --platform android --clean
+
+      - name: Copy keystore into android/app
+        run: |
+          cp /tmp/camorent-upload-key.keystore android/app/camorent-upload-key.keystore
+          echo "✅ Keystore copied to android/app/"
+          ls -lh android/app/camorent-upload-key.keystore
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Configure Gradle for CI and signing
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
+          echo "org.gradle.daemon=false" >> android/gradle.properties
+          echo "org.gradle.configureondemand=true" >> android/gradle.properties
+          echo "kotlin.incremental=false" >> android/gradle.properties
+          echo "CAMORENT_UPLOAD_STORE_FILE=camorent-upload-key.keystore" >> android/gradle.properties
+          echo "CAMORENT_UPLOAD_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/gradle.properties
+          echo "CAMORENT_UPLOAD_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> android/gradle.properties
+          echo "CAMORENT_UPLOAD_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/gradle.properties
+          echo "✅ Gradle CI configuration and signing credentials added"
+
+      - name: Build AAB (Android App Bundle)
+        run: |
+          cd android
+          ./gradlew clean bundleRelease --stacktrace --no-daemon --max-workers=2
+        env:
+          NODE_ENV: 'production'
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"'
+
+      - name: Verify signing
+        run: |
+          echo "--- Checking AAB signing ---"
+          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab || true
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30

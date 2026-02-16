@@ -1,0 +1,98 @@
+import { BackButton } from "@/components/ui/BackButton";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { YStack, XStack, ScrollView, Spinner } from "tamagui";
+import { Dimensions, Animated } from "react-native";
+import { Heading2 } from "@/components/ui/Typography";
+import { ProductCard } from "@/components/ui/ProductCard";
+import { router } from "expo-router";
+import { useCartStore } from "@/store/cart/cart";
+import { UseGetAllProducts } from "@/hooks/product/useGetAllProducts";
+import { hp, wp, fp } from "@/utils/responsive";
+import { useEffect, useRef } from "react";
+
+export default function NewArrivals() {
+  const { data: productsResponse, isLoading } = UseGetAllProducts({
+    selection: "dop",
+    is_active: true,
+  });
+
+  const products = productsResponse?.data || [];
+  const { width: screenWidth } = Dimensions.get("window");
+  const cardWidth = (screenWidth - wp(32) - wp(12)) / 2;
+
+  // Header animation
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(-20)).current;
+
+  useEffect(() => {
+    // Smooth header entrance
+    Animated.parallel([
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#FAFAFA" }}>
+      <YStack flex={1} paddingHorizontal={wp(16)} backgroundColor="#FAFAFA">
+        {/* Animated Header */}
+        <Animated.View
+          style={{
+            opacity: headerOpacity,
+            transform: [{ translateY: headerTranslateY }],
+          }}
+        >
+          <XStack alignItems="center" marginBottom={hp(20)} marginTop={hp(12)}>
+            <BackButton />
+            <YStack marginLeft={wp(12)}>
+              <Heading2 color="#1C1C1E" fontSize={fp(24)} letterSpacing={-0.5}>
+                New Arrivals
+              </Heading2>
+              <Heading2
+                color="#6B7280"
+                fontSize={fp(14)}
+                fontWeight="400"
+                marginTop={hp(2)}
+              >
+                {products.length} products available
+              </Heading2>
+            </YStack>
+          </XStack>
+        </Animated.View>
+
+        {isLoading ? (
+          <YStack flex={1} justifyContent="center" alignItems="center">
+            <Spinner size="large" color="#8E0FFF" />
+          </YStack>
+        ) : (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: hp(40),
+            }}
+          >
+            {/* Product Grid with staggered animation built into ProductCard */}
+            <XStack flexWrap="wrap" gap={wp(12)} justifyContent="space-between">
+              {products?.map((product) => (
+                <ProductCard
+                  key={product.sku_id}
+                  product={product}
+                  maxWidth={cardWidth}
+                  onProductPress={() => router.push(`/product/${product.sku_id}`)}
+                />
+              ))}
+            </XStack>
+          </ScrollView>
+        )}
+      </YStack>
+    </SafeAreaView>
+  );
+}
