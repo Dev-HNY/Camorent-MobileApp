@@ -280,7 +280,9 @@ export default function OTPVerification() {
                         justifyContent="center"
                       >
                         <TextInput
-                          ref={(ref) => (inputRefs.current[index] = ref)}
+                          ref={(ref) => {
+                            inputRefs.current[index] = ref;
+                          }}
                           style={{
                             fontSize: fp(24),
                             fontWeight: "600",

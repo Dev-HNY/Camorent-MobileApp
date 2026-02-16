@@ -134,7 +134,7 @@ export default function WishlistPage() {
                   .damping(18)
                   .stiffness(250)}
               >
-                <WishlistItem item={item} />
+                <WishlistItem item={item} index={index} />
               </Animated.View>
             )}
             showsVerticalScrollIndicator={false}
@@ -143,9 +143,6 @@ export default function WishlistPage() {
               paddingBottom: insets.bottom + 100,
               paddingTop: hp(16),
             }}
-            renderItem={({ item, index }) => (
-              <WishlistItem key={item.wishlist_id} item={item} index={index} />
-            )}
             ItemSeparatorComponent={() => <YStack height={hp(12)} />}
           />
         )}
