@@ -105,6 +105,7 @@ module.exports = {
           launchMode: "most-recent",
         },
       ],
+      "expo-system-ui",
       "expo-build-properties",
     ],
     experiments: {
