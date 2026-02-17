@@ -74,6 +74,9 @@ module.exports = {
           ios: {
             deploymentTarget: "15.1",
           },
+          android: {
+            enableProguardInReleaseBuilds: false,
+          },
         },
       ],
       [
