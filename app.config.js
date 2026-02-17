@@ -38,7 +38,7 @@ module.exports = {
       // config: {
       //   googleMaps: { apiKey: process.env.GOOGLE_MAPS_API_KEY },
       // },
-      edgeToEdgeEnabled: true,
+      edgeToEdgeEnabled: false,
       package: "com.camorent.customermobileapp",
       allowBackup: false,
       intentFilters: [
@@ -105,7 +105,6 @@ module.exports = {
           launchMode: "most-recent",
         },
       ],
-      "expo-system-ui",
       "expo-build-properties",
     ],
     experiments: {
