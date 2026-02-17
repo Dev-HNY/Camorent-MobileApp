@@ -49,6 +49,12 @@ jobs:
           echo "✅ Keystore copied to android/app/"
           ls -lh android/app/camorent-upload-key.keystore
 
+      - name: Patch build.gradle for release signing
+        run: |
+          python3 scripts/patch-signing.py
+          echo "--- Verifying patch ---"
+          grep "signingConfig " android/app/build.gradle
+
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
