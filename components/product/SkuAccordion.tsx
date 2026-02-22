@@ -3,10 +3,10 @@ import {
   SpecificationList,
   BulletList,
 } from "@/components/ui/AccordionSection";
-import { SKU } from "@/types/products/product";
+import { SKUDetail } from "@/types/products/product";
 
 interface SkuAccordionProps {
-  product: SKU;
+  product: SKUDetail;
 }
 
 export function SkuAccordion({ product }: SkuAccordionProps) {

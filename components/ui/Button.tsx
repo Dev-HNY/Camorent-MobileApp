@@ -37,12 +37,12 @@ const getButtonStyles = (variant: Variant, size: Size, disabled: boolean) => {
     sm: {
       paddingHorizontal: wp(12),
       paddingVertical: hp(6),
-      borderRadius: wp(8),
+      borderRadius: wp(20),
     },
     md: {
       paddingHorizontal: wp(12),
       paddingVertical: hp(6),
-      borderRadius: wp(8),
+      borderRadius: wp(20),
     },
     lg: {
       paddingHorizontal: wp(16),
@@ -185,7 +185,7 @@ export function Button({
       >
         {leftIcon && <YStack alignSelf="center">{leftIcon}</YStack>}
         {leftIcon && isStringChildren && <YStack width={6} />}
-        {isStringChildren ? <Text {...textStyles}>{children}</Text> : children}
+        {isStringChildren ? <Text {...textStyles as any}>{children}</Text> : children}
         {rightIcon && isStringChildren && <YStack width={6} />}
         {rightIcon && <YStack alignSelf="center">{rightIcon}</YStack>}
       </LinearGradient>
@@ -200,7 +200,7 @@ export function Button({
     >
       {leftIcon && <YStack alignSelf="center">{leftIcon}</YStack>}
       {leftIcon && isStringChildren && <YStack width={6} />}
-      {isStringChildren ? <Text {...textStyles}>{children}</Text> : children}
+      {isStringChildren ? <Text {...textStyles as any}>{children}</Text> : children}
       {rightIcon && isStringChildren && <YStack width={6} />}
       {rightIcon && <YStack alignSelf="center">{rightIcon}</YStack>}
     </YStack>

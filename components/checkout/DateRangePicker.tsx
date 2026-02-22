@@ -271,23 +271,25 @@ export function DateRangePicker({
               padding={wp(8)}
             >
               <DateTimePicker
-                mode="range"
-                startDate={tempStart}
-                endDate={tempEnd}
-                minDate={dayjs()}
-                maxDate={dayjs().add(90, "day")}
-                onChange={(params: any) => {
-                  Haptics.selectionAsync();
-                  if (params.startDate) {
-                    setTempStart(dayjs(params.startDate));
-                  }
-                  if (params.endDate) {
-                    setTempEnd(dayjs(params.endDate));
-                  }
-                }}
-                headerButtonSize={20}
-                headerTextContainerStyle={{ flexDirection: "column", alignItems: "center" }}
-                styles={calendarStyles}
+                {...{
+                  mode: "range",
+                  startDate: tempStart,
+                  endDate: tempEnd,
+                  minDate: dayjs(),
+                  maxDate: dayjs().add(90, "day"),
+                  onChange: (params: any) => {
+                    Haptics.selectionAsync();
+                    if (params.startDate) {
+                      setTempStart(dayjs(params.startDate));
+                    }
+                    if (params.endDate) {
+                      setTempEnd(dayjs(params.endDate));
+                    }
+                  },
+                  headerButtonSize: 20,
+                  headerTextContainerStyle: { flexDirection: "column", alignItems: "center" },
+                  styles: calendarStyles,
+                } as any}
               />
             </YStack>
           </YStack>

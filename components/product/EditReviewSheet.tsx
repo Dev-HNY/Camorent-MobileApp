@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { StarIcon } from "@/components/ui/StarIcon";
 import { useEffect } from "react";
 import { fp, hp, wp } from "@/utils/responsive";
-import { UpdateReviewRequest } from "@/types/review/review";
-import { Review } from "@/types/products/product";
+import { UpdateReviewRequest, Review } from "@/types/review/review";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -52,7 +51,7 @@ export function EditReviewSheet({
     if (review) {
       reset({
         rating: review.rating,
-        comment: review.review_text || "",
+        comment: review.comment || "",
         phone_num: review.phone_num || "",
         email: review.email || "",
       });

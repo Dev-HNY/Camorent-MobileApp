@@ -258,7 +258,7 @@ export default function ProductDetails() {
           entering={FadeInDown.delay(DURATION.stagger).springify().damping(18).stiffness(250)}
           layout={Layout.springify()}
         >
-          <SkuAccordion product={product} />
+          {product && <SkuAccordion product={product} />}
         </Animated.View>
 
         {/* Add-Ons */}

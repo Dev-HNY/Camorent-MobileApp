@@ -74,7 +74,7 @@ apiClient.interceptors.response.use(
 
         // console.log(" Refresh successful, updating tokens");
         useAuthStore.getState().setAuth({
-          user,
+          user: user!,
           id_token: data.id_token,
           refresh_token,
         });

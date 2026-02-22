@@ -63,7 +63,7 @@ export function Skeleton({
     <Animated.View
       style={[
         {
-          width: typeof width === 'number' ? wp(width) : width,
+          width: (typeof width === 'number' ? wp(width) : width) as any,
           height,
           borderRadius,
           backgroundColor: '#EBEBEF',

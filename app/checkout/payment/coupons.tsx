@@ -50,7 +50,7 @@ export default function CouponsPage() {
       setDialogContent({
         type: "success",
         code: code,
-        savings: appliedCoupon?.discount || 0,
+        savings: appliedCoupon?.discountAmount || 0,
       });
       setDialogOpen(true);
     } else {

@@ -15,6 +15,7 @@ import { AnimatedInput } from "@/components/ui/AnimatedInput";
 import { AnimatedDropdown } from "@/components/ui/AnimatedDropdown";
 import * as Haptics from "expo-haptics";
 import { KeyboardAwareScrollView } from "@/components/ui/KeyboardAwareScrollView";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 const editProfileSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -34,6 +35,7 @@ const roleOptions = [
 ];
 
 export default function EditProfileScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { data: currentUser, isLoading: isLoadingUser } = useGetCurrentUser();
   const updateProfile = useUpdateUserProfile();
 
@@ -146,7 +148,7 @@ export default function EditProfileScreen() {
       </XStack>
 
       <KeyboardAwareScrollView
-        contentContainerStyle={{ paddingBottom: hp(40) }}
+        contentContainerStyle={{ paddingBottom: tabBarHeight + hp(40) }}
         extraScrollHeight={80}
         enableResetScrollToCoords={false}
       >

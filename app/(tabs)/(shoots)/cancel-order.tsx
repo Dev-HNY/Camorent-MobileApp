@@ -5,6 +5,8 @@ import { Pressable, TextInput, KeyboardAvoidingView, Platform } from "react-nati
 import { ArrowLeft, AlertCircle } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { router } from "expo-router";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { hp } from "@/utils/responsive";
 
 const CANCELLATION_REASONS = [
   "Changed my mind",
@@ -17,6 +19,7 @@ const CANCELLATION_REASONS = [
 ];
 
 export default function CancelOrderScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   const [selectedReason, setSelectedReason] = useState("");
   const [additionalDetails, setAdditionalDetails] = useState("");
   const [refundMethod, setRefundMethod] = useState("original");
@@ -56,7 +59,7 @@ export default function CancelOrderScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-        <ScrollView flex={1} paddingHorizontal="$4" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+        <ScrollView flex={1} paddingHorizontal="$4" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: tabBarHeight + hp(24) }}>
           <YStack gap="$4" paddingBottom="$6" paddingTop="$4">
             <XStack
               backgroundColor="#fef3c7"

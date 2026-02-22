@@ -1,19 +1,18 @@
 import React, { useMemo, useRef, useEffect, useCallback } from "react";
 import { Card, Text, XStack, YStack } from "tamagui";
-import { LinearGradient } from "expo-linear-gradient";
 import { Button } from "./Button";
 import { Counter } from "./Counter";
 import { Image } from "expo-image";
 import { SKU } from "@/types/products/product";
 import { fp, hp, wp } from "@/utils/responsive";
-import { HeartIcon } from "./HeartIcon";
 import { useWishlistStatus } from "@/hooks/wishlist";
 import { useGetCart } from "@/hooks/cart/useGetCart";
 import { useAddToCart } from "@/hooks/cart/useAddToCart";
 import { useModifyQuantity, Operation } from "@/hooks/cart/useModifyQuantity";
 import { useGetCurrentUser } from "@/hooks/auth";
 import { formatPrice } from "@/utils/format";
-import { Animated, Pressable } from "react-native";
+import { Animated, Pressable, View } from "react-native";
+import { Heart } from "lucide-react-native";
 
 interface ProductCardProps {
   product: SKU;
@@ -133,137 +132,182 @@ function ProductCardComponent({
           width="100%"
           borderRadius={wp(12)}
           backgroundColor="white"
-          overflow="visible"
+          overflow="hidden"
           borderWidth={1}
-          borderColor="#FAFAFA"
-          shadowColor="#000"
-          shadowOffset={{ width: 0, height: 2 }}
-          shadowOpacity={0.06}
-          shadowRadius={12}
-          elevation={4}
+          borderColor="#EBEBEF"
         >
           <YStack flex={1}>
-            {/* Image Section with Glassy Purple Gradient */}
-            <YStack position="relative" overflow="hidden" borderTopLeftRadius={wp(12)} borderTopRightRadius={wp(12)}>
-              <LinearGradient
-                colors={[
-                  "rgba(142, 15, 255, 0.08)",
-                  "rgba(197, 164, 255, 0.12)",
-                  "rgba(255, 255, 255, 0.95)",
-                  "rgba(142, 15, 255, 0.10)",
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+            {/* Image Section — plain gray background */}
+            <View
+              style={{
+                backgroundColor: "#F8F9FA",
+                height: hp(128),
+                borderBottomLeftRadius:wp(0),
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+              }}
+            >
+              {/* Exclusive tag — top left */}
+              <View
                 style={{
-                  paddingHorizontal: wp(12),
-                  paddingTop: hp(12),
-                  paddingBottom: hp(14),
+                  position: "absolute",
+                  top: hp(-1),
+                  left: wp(-2),
+                  backgroundColor: "#FFCC00",
+                  borderBottomRightRadius: wp(5),
+                  // borderBottomLeftRadius:0,
+                  // borderTopRightRadius:5,
+                  paddingVertical: hp(3),
+                  paddingHorizontal: wp(8),
+                  zIndex: 10,
                 }}
               >
-                {/* Heart Icon - Top Right */}
-                <XStack position="absolute" top={hp(8)} right={wp(8)} zIndex={10}>
-                  <Pressable onPress={handleFavoritePress}>
-                    <HeartIcon filled={isFavorite} />
-                  </Pressable>
-                </XStack>
+                <Text fontSize={fp(9)} fontWeight="700" color="#121217">
+                  Exclusive
+                </Text>
+              </View>
 
-                {/* Product Image */}
-                <XStack justifyContent="center" alignItems="center" height={hp(95)}>
-                  <Image
-                    source={{ uri: product?.primary_image_url }}
-                    alt={`${product.brand}`}
-                    contentFit="contain"
-                    transition={200}
-                    cachePolicy="memory-disk"
-                    priority="normal"
-                    style={{
-                      width: wp(75),
-                      height: hp(75),
-                    }}
+              {/* Heart icon — top right, circle bg */}
+              <Pressable
+                onPress={handleFavoritePress}
+                style={{
+                  position: "absolute",
+                  top: hp(8),
+                  right: wp(8),
+                  width: wp(28),
+                  height: wp(28),
+                  borderRadius: wp(14),
+                  backgroundColor: "#F3F0F0",
+                  borderWidth: 1,
+                  borderColor: "#EEEEEE",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 10,
+                }}
+              >
+                <Heart
+                  size={14}
+                  color={isFavorite ? "#D50B3E" : "#7E7E7E"}
+                  fill={isFavorite ? "#D50B3E" : "none"}
+                  strokeWidth={1.8}
+                />
+              </Pressable>
+
+              {/* Product Image */}
+              <Image
+                source={{ uri: product?.primary_image_url }}
+                alt={`${product.brand}`}
+                contentFit="contain"
+                transition={200}
+                cachePolicy="memory-disk"
+                priority="normal"
+                style={{
+                  width: wp(100),
+                  height: hp(100),
+                }}
+              />
+
+              {/* Shadow ellipse under product
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: hp(6),
+                  left: "50%",
+                  marginLeft: -wp(22),
+                  width: wp(44),
+                  height: hp(6),
+                  borderRadius: wp(22),
+                  backgroundColor: "rgba(0,0,0,0.12)",
+                }}
+              /> */}
+            </View>
+
+            {/* Content Section */}
+            <YStack
+              padding={wp(10)}
+              paddingTop={hp(5)}
+              gap={hp(5)}
+              backgroundColor="white"
+            >
+              {/* Product Name */}
+              <View style={{ height: hp(34) }}>
+                <Text
+                  fontSize={fp(10)}
+                  fontWeight="700"
+                  lineHeight={hp(14)}
+                  color="#121217"
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {product.name}
+                </Text>
+              </View>
+
+              {/* Price Section */}
+              <YStack gap={hp(2)}>
+                <XStack gap={wp(4)} alignItems="baseline" flexWrap="wrap">
+                  <Text fontSize={fp(14)} fontWeight="700" color="#1447BC">
+                    {formatPrice(Number(product.price_per_day))}
+                  </Text>
+                  <Text fontSize={fp(10)} color="#6C6C89" fontWeight="500">
+                    per day
+                  </Text>
+                </XStack>
+                <XStack alignItems="center" gap={wp(6)}>
+                  <Text
+                    fontSize={fp(10)}
+                    color="#6C6C89"
+                    fontWeight="400"
+                    textDecorationLine="line-through"
+                  >
+                    {formatPrice(originalPrice)} per day
+                  </Text>
+                  <XStack
+                    paddingHorizontal={wp(6)}
+                    paddingVertical={hp(2)}
+                    backgroundColor="#D50B3E"
+                    borderRadius={wp(10)}
+                  >
+                    <Text fontSize={fp(9)} fontWeight="600" color="#FFF">
+                      15% Off
+                    </Text>
+                  </XStack>
+                </XStack>
+              </YStack>
+
+              {/* Add to Cart Button */}
+              {isInCart ? (
+                <XStack
+                  width="100%"
+                  alignItems="center"
+                  justifyContent="flex-end"
+                  marginTop={hp(4)}
+                >
+                  <Counter
+                    value={cartItem.quantity}
+                    onIncrement={handleCounterIncrement}
+                    onDecrement={handleCounterDecrement}
+                    size="sm"
+                    variant="primary"
                   />
                 </XStack>
-              </LinearGradient>
-            </YStack>
-
-            {/* Exclusive Badge - Straddling the border */}
-            <XStack
-              position="absolute"
-              top={hp(110)}
-              left={wp(10)}
-              paddingVertical={hp(3)}
-              paddingHorizontal={wp(8)}
-              backgroundColor="#FFF9EB"
-              borderRadius={wp(4)}
-              borderColor="#FFE4A0"
-              borderWidth={1}
-              zIndex={10}
-            >
-              <Text fontSize={fp(9)} fontWeight="600" color="#8B6914">
-                Exclusive
-              </Text>
-            </XStack>
-
-            {/* Content Section - White Background */}
-            <YStack>
-              <YStack padding={wp(10)} paddingTop={hp(12)} gap={hp(5)} backgroundColor="white" borderBottomLeftRadius={wp(12)} borderBottomRightRadius={wp(12)} borderTopRightRadius={wp(20)}>
-                {/* Product Name */}
-                <YStack height={hp(34)}>
-                  <Text fontSize={fp(12)} fontWeight="700" lineHeight={hp(16)} color="#121217" numberOfLines={2} ellipsizeMode="tail">
-                    {product.name}
-                  </Text>
-                </YStack>
-
-                {/* Price Section */}
-                <YStack gap={hp(3)}>
-                  <XStack gap={wp(4)} alignItems="baseline" flexWrap="wrap">
-                    <Text fontSize={fp(14)} fontWeight="700" color="#1447BC">
-                      {formatPrice(Number(product.price_per_day))}
-                    </Text>
-                    <Text fontSize={fp(10)} color="#6C6C89" fontWeight="500">
-                      per day
-                    </Text>
-                  </XStack>
-                  <XStack alignItems="center" gap={wp(6)}>
-                    <Text
-                      fontSize={fp(10)}
-                      color="#6C6C89"
-                      fontWeight="400"
-                      textDecorationLine="line-through"
-                    >
-                      {formatPrice(originalPrice)} per day
-                    </Text>
-                    <XStack
-                      paddingHorizontal={wp(6)}
-                      paddingVertical={hp(2)}
-                      backgroundColor="#D50B3E"
-                      borderRadius={wp(10)}
-                    >
-                      <Text fontSize={fp(9)} fontWeight="600" color="#FFF">
-                        15% Off
-                      </Text>
-                    </XStack>
-                  </XStack>
-                </YStack>
-
-                {/* Add to Cart Button */}
-                {isInCart ? (
-                  <XStack width="100%" alignItems="center" justifyContent="flex-end" marginTop={hp(4)}>
-                    <Counter
-                      value={cartItem.quantity}
-                      onIncrement={handleCounterIncrement}
-                      onDecrement={handleCounterDecrement}
-                      size="sm"
-                      variant="primary"
-                    />
-                  </XStack>
-                ) : (
-                  <XStack onPress={(e) => e.stopPropagation()} width="100%" marginTop={hp(4)}>
-                    <Button width="100%" size="md" onPress={handleAddToCart} variant="primary">
-                      Add to cart
-                    </Button>
-                  </XStack>
-                )}
-              </YStack>
+              ) : (
+                <XStack
+                  onPress={(e) => e.stopPropagation()}
+                  width="100%"
+                  marginTop={hp(4)}
+                >
+                  <Button
+                    width="100%"
+                    size="md"
+                    onPress={handleAddToCart}
+                    variant="primary"
+                  >
+                    Add to cart
+                  </Button>
+                </XStack>
+              )}
             </YStack>
           </YStack>
         </Card>

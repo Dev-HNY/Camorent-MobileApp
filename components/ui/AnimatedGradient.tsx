@@ -82,7 +82,7 @@ export function AnimatedGradient({
     }
   }, [animationType, duration]);
 
-  const animatedProps = useAnimatedProps(() => {
+  const animatedProps = useAnimatedProps((): any => {
     if (animationType === 'rotate') {
       // For rotate, we'll animate start and end points
       return {
@@ -110,7 +110,7 @@ export function AnimatedGradient({
     <AnimatedLinearGradient
       // @ts-ignore - animatedProps typing issue
       animatedProps={animatedProps}
-      colors={colors}
+      colors={colors as any}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[StyleSheet.absoluteFill, style]}

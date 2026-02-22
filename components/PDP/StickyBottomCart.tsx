@@ -37,6 +37,7 @@ interface StickyBottomCartProps {
   amount?: string;
   isLoading?: boolean;
   embedded?: boolean;
+  isOrganization?: boolean;
 }
 
 export function StickyBottomCart({
@@ -52,6 +53,7 @@ export function StickyBottomCart({
   amount,
   isLoading = false,
   embedded = false,
+  isOrganization = false,
 }: StickyBottomCartProps) {
   const { summary } = useCartStore();
   const { user } = useAuthStore();
@@ -228,7 +230,16 @@ export function StickyBottomCart({
             </Text>
           </YStack>
         ) : (
-          <YStack flex={1.2}>
+          <YStack flex={1.2} gap={hp(8)}>
+            {isPaymentScreen && isOrganization && (
+              <Button
+                onPress={() => router.replace("/(tabs)/(shoots)")}
+                size="lg"
+                variant="outline"
+              >
+                My Shoots
+              </Button>
+            )}
             <Button
               onPress={handleAddToCart}
               size="lg"

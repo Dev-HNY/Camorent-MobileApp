@@ -236,7 +236,7 @@ export const formValidators = {
  * Secure data before sending to API
  */
 export const securePayload = <T extends Record<string, any>>(payload: T): T => {
-  const secured = { ...payload };
+  const secured: Record<string, any> = { ...payload };
 
   Object.keys(secured).forEach(key => {
     const value = secured[key];
@@ -248,7 +248,7 @@ export const securePayload = <T extends Record<string, any>>(payload: T): T => {
     }
   });
 
-  return secured;
+  return secured as T;
 };
 
 /**
@@ -258,7 +258,7 @@ export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: ReturnType<typeof setTimeout> | null = null;
 
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {

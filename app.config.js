@@ -40,6 +40,7 @@ module.exports = {
       // },
       edgeToEdgeEnabled: false,
       package: "com.camorent.customermobileapp",
+      versionCode: 2,
       allowBackup: false,
       intentFilters: [
         {
@@ -68,6 +69,7 @@ module.exports = {
     },
     plugins: [
       "expo-router",
+      "./plugins/withAndroidReleaseKeystore",
       [
         "expo-build-properties",
         {
@@ -108,7 +110,6 @@ module.exports = {
           launchMode: "most-recent",
         },
       ],
-      "expo-build-properties",
     ],
     experiments: {
       typedRoutes: true,

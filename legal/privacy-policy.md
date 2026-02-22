@@ -134,7 +134,7 @@ Under applicable Indian law (IT Act 2000 and DPDP Act 2023), you have the right 
 - **Withdrawal of consent** — Withdraw consent for data processing (this may affect your ability to use the App)
 - **Grievance** — Lodge a complaint with our Grievance Officer
 
-To exercise your rights, contact us at **privacy@camorent.com** or through the Help Centre in the App.
+To exercise your rights, contact us at **support@camorent.co.in** or through the Help Centre in the App.
 
 ---
 

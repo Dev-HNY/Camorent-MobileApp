@@ -14,8 +14,10 @@ import { WishlistItem } from "@/components/ui/WishlistItem";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { DURATION } from "@/components/animations/constants";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 export default function WishlistPage() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { data: wishlistItems, isLoading } = useGetWishlist();
   const insets = useSafeAreaInsets();
 
@@ -140,7 +142,7 @@ export default function WishlistPage() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
               paddingHorizontal: wp(16),
-              paddingBottom: insets.bottom + 100,
+              paddingBottom: tabBarHeight + hp(24),
               paddingTop: hp(16),
             }}
             ItemSeparatorComponent={() => <YStack height={hp(12)} />}

@@ -83,8 +83,17 @@ const CAROUSEL_IMAGES = [
   require("@/assets/new/icons/hero-2.png"),
   require("@/assets/new/icons/hero-3.png"),
   require("@/assets/new/icons/hero-4.png"),
-  require("@/assets/new/icons/hero-5.png")
 ];
+
+// Per-slide gradient: header fades transparent→solid (covers only the header/search row)
+const SLIDE_GRADIENTS: [string, string][] = [
+  ["rgba(71,13,126,0)", "#470D7E"],
+  ["rgba(114,94,227,0)", "#725EE3"],
+  ["rgba(224,217,255,0)", "#E0D9FF"],
+  ["rgba(48,121,192,0)", "#3079C0"],
+];
+// Solid colors for the carousel background block (same hues, no gradient)
+const SLIDE_SOLID_COLORS = ["#470D7E", "#725EE3", "#E0D9FF", "#3079C0"];
 
 export default function Home() {
   const { user, isVerified, isCitySelected } = useAuthStore();
@@ -171,11 +180,10 @@ export default function Home() {
     };
   }, [activeKeywordIndex, isSearchFocused]);
 
-  // Scroll tracking
-  const scrollY = useRef(new Animated.Value(0)).current;
-
   // Premium Carousel state with swipeable ScrollView
   const [activeSlide, setActiveSlide] = useState(0);
+  // Animated slide index for smooth gradient transitions (JS-side, reliable on Hermes)
+  const animatedSlideIndex = useRef(new Animated.Value(0)).current;
   const carouselRef = useRef<RNScrollView>(null);
   const autoScrollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
@@ -187,9 +195,8 @@ export default function Home() {
       autoScrollTimer.current = setInterval(() => {
         setActiveSlide((prev) => {
           const nextSlide = (prev + 1) % CAROUSEL_IMAGES.length;
-          const slideWidth = SCREEN_WIDTH - 32 + 16; // Card width + gap
           carouselRef.current?.scrollTo({
-            x: nextSlide * slideWidth,
+            x: nextSlide * SCREEN_WIDTH,
             animated: true,
           });
           return nextSlide;
@@ -204,16 +211,23 @@ export default function Home() {
     };
   }, [isUserInteracting, SCREEN_WIDTH]);
 
-  // Handle scroll events to update active indicator
-  const handleCarouselScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const scrollPosition = event.nativeEvent.contentOffset.x;
-    const slideWidth = SCREEN_WIDTH - 32 + 16; // Card width + gap
-    const slideIndex = Math.round(scrollPosition / slideWidth);
+  // Animate gradient smoothly whenever active slide changes
+  useEffect(() => {
+    Animated.timing(animatedSlideIndex, {
+      toValue: activeSlide,
+      duration: 350,
+      useNativeDriver: false,
+    }).start();
+  }, [activeSlide]);
 
-    if (slideIndex !== activeSlide && slideIndex >= 0 && slideIndex < CAROUSEL_IMAGES.length) {
+  // Update activeSlide (for dots + gradient) on every scroll event
+  const handleCarouselScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = event.nativeEvent.contentOffset.x;
+    const slideIndex = Math.round(x / SCREEN_WIDTH);
+    if (slideIndex >= 0 && slideIndex < CAROUSEL_IMAGES.length) {
       setActiveSlide(slideIndex);
     }
-  }, [SCREEN_WIDTH, activeSlide]);
+  }, [SCREEN_WIDTH]);
 
   // Pause auto-scroll when user swipes
   const handleScrollBeginDrag = useCallback(() => {
@@ -305,8 +319,7 @@ export default function Home() {
   const handleDotPress = useCallback((index: number) => {
     setActiveSlide(index);
     setIsUserInteracting(true);
-    const slideWidth = SCREEN_WIDTH - 32 + 16;
-    carouselRef.current?.scrollTo({ x: index * slideWidth, animated: true });
+    carouselRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
     setTimeout(() => setIsUserInteracting(false), 3000);
   }, [SCREEN_WIDTH]);
 
@@ -324,163 +337,208 @@ export default function Home() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
-      <Animated.ScrollView
+      <RNScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
           paddingBottom: tabHeight + insets.bottom + hp(40),
         }}
         showsVerticalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
-        )}
-        scrollEventThrottle={16}
       >
-        {/* Full header: transparent-to-lavender gradient wrapping top bar + search + carousel */}
-        <LinearGradient
-          colors={["rgba(160,162,227,0)", "rgba(160,162,227,0.45)", "#A1A0E1"]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-        >
-        <YStack>
-          <YStack height={insets.top} />
-          <XStack
-            alignItems="center"
-            justifyContent="space-between"
-            paddingHorizontal={wp(16)}
-            paddingVertical={hp(10)}
-          >
-            {/* Left: Avatar + Home + City */}
-            <Pressable onPress={handleOpenCityModal}>
-              <XStack alignItems="center" gap={wp(10)}>
-                <YStack
-                  width={wp(34)}
-                  height={wp(34)}
-                  borderRadius={wp(17)}
-                  backgroundColor="rgba(209, 217, 230, 0.67)"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Text fontSize={fp(15)} fontWeight="700" color="#320163">
-                    {(user?.first_name?.[0] || user?.email?.[0] || "U").toUpperCase()}
-                  </Text>
-                </YStack>
-                <XStack alignItems="center" gap={wp(4)}>
-                  <Text fontSize={fp(13)} fontWeight="400" color="#6B7280">Home</Text>
-                  <Text fontSize={fp(14)} fontWeight="700" color="#1C1C1E">{city}</Text>
-                  <ChevronDown size={14} color="#6B7280" strokeWidth={2.5} />
+        {/* ── Header area: transparent→solid gradient (covers nav + search only) ── */}
+        <View style={{ position: "relative" }}>
+          {/* Base gradient layer: slide 0 */}
+          <LinearGradient
+            colors={SLIDE_GRADIENTS[0]}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+          />
+          {/* Remaining slides fade in as carousel scrolls */}
+          {SLIDE_GRADIENTS.slice(1).map((colors, idx) => {
+            const i = idx + 1;
+            return (
+              <Animated.View
+                key={i}
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  top: 0, left: 0, right: 0, bottom: 0,
+                  opacity: animatedSlideIndex.interpolate({
+                    inputRange: [i - 1, i, i + 1],
+                    outputRange: [0, 1, 0],
+                    extrapolate: "clamp",
+                  }),
+                }}
+              >
+                <LinearGradient
+                  colors={colors}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={{ flex: 1 }}
+                />
+              </Animated.View>
+            );
+          })}
+
+          {/* Nav + Search content */}
+          <YStack>
+            <YStack height={insets.top} />
+            <XStack
+              alignItems="center"
+              justifyContent="space-between"
+              paddingHorizontal={wp(16)}
+              paddingVertical={hp(10)}
+            >
+              {/* Left: Avatar + Home + City */}
+              <Pressable onPress={handleOpenCityModal}>
+                <XStack alignItems="center" gap={wp(10)}>
+                  <YStack
+                    width={wp(34)}
+                    height={wp(34)}
+                    borderRadius={wp(17)}
+                    backgroundColor="rgba(209, 217, 230, 0.67)"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Text fontSize={fp(15)} fontWeight="700" color="#320163">
+                      {(user?.first_name?.[0] || user?.email?.[0] || "U").toUpperCase()}
+                    </Text>
+                  </YStack>
+                  <XStack alignItems="center" gap={wp(4)}>
+                    <Text fontSize={fp(13)} fontWeight="400" color="#6B7280">Home</Text>
+                    <Text fontSize={fp(14)} fontWeight="700" color="#1C1C1E">{city}</Text>
+                    <ChevronDown size={14} color="#6B7280" strokeWidth={2.5} />
+                  </XStack>
                 </XStack>
+              </Pressable>
+
+              {/* Right: Wishlist + Cart */}
+              <XStack alignItems="center" gap={wp(18)}>
+                <Pressable onPress={handleWishlistPress}>
+                  <YStack position="relative">
+                    <Heart size={22} color="#1C1C1E" strokeWidth={1.8} />
+                    {wishlistCount > 0 && (
+                      <XStack
+                        position="absolute" top={-6} right={-6}
+                        backgroundColor="#FF3B30" borderRadius={8}
+                        minWidth={16} height={16}
+                        alignItems="center" justifyContent="center" paddingHorizontal={3}
+                      >
+                        <Text color="white" fontSize={10} fontWeight="600">
+                          {wishlistCount > 9 ? "9+" : wishlistCount}
+                        </Text>
+                      </XStack>
+                    )}
+                  </YStack>
+                </Pressable>
+                <Pressable onPress={handleCartPress}>
+                  <YStack position="relative">
+                    <ShoppingCart size={22} color="#1C1C1E" strokeWidth={1.8} />
+                    {cartItemCount > 0 && (
+                      <XStack
+                        position="absolute" top={-6} right={-6}
+                        backgroundColor="#FF3B30" borderRadius={8}
+                        minWidth={16} height={16}
+                        alignItems="center" justifyContent="center" paddingHorizontal={3}
+                      >
+                        <Text color="white" fontSize={10} fontWeight="600">
+                          {cartItemCount > 9 ? "9+" : cartItemCount}
+                        </Text>
+                      </XStack>
+                    )}
+                  </YStack>
+                </Pressable>
               </XStack>
-            </Pressable>
-
-            {/* Right: Wishlist + Cart */}
-            <XStack alignItems="center" gap={wp(18)}>
-              <Pressable onPress={handleWishlistPress}>
-                <YStack position="relative">
-                  <Heart size={22} color="#1C1C1E" strokeWidth={1.8} />
-                  {wishlistCount > 0 && (
-                    <XStack
-                      position="absolute" top={-6} right={-6}
-                      backgroundColor="#FF3B30" borderRadius={8}
-                      minWidth={16} height={16}
-                      alignItems="center" justifyContent="center" paddingHorizontal={3}
-                    >
-                      <Text color="white" fontSize={10} fontWeight="600">
-                        {wishlistCount > 9 ? "9+" : wishlistCount}
-                      </Text>
-                    </XStack>
-                  )}
-                </YStack>
-              </Pressable>
-              <Pressable onPress={handleCartPress}>
-                <YStack position="relative">
-                  <ShoppingCart size={22} color="#1C1C1E" strokeWidth={1.8} />
-                  {cartItemCount > 0 && (
-                    <XStack
-                      position="absolute" top={-6} right={-6}
-                      backgroundColor="#FF3B30" borderRadius={8}
-                      minWidth={16} height={16}
-                      alignItems="center" justifyContent="center" paddingHorizontal={3}
-                    >
-                      <Text color="white" fontSize={10} fontWeight="600">
-                        {cartItemCount > 9 ? "9+" : cartItemCount}
-                      </Text>
-                    </XStack>
-                  )}
-                </YStack>
-              </Pressable>
             </XStack>
-          </XStack>
 
-          {/* Search row: Search+Mic box + Promo badge */}
-          <XStack
-            alignItems="center"
-            gap={wp(8)}
-            paddingHorizontal={wp(16)}
-            paddingBottom={hp(14)}
-          >
-            {/* Search + Mic in one box with divider */}
-            <Pressable onPress={handleSearchPress} style={{ flex: 1 }}>
+            {/* Search row */}
+            <XStack
+              alignItems="center"
+              gap={wp(8)}
+              paddingHorizontal={wp(16)}
+              paddingBottom={hp(14)}
+            >
+              <Pressable onPress={handleSearchPress} style={{ flex: 1 }}>
+                <XStack
+                  flex={1}
+                  paddingLeft={wp(14)}
+                  paddingVertical={hp(11)}
+                  alignItems="center"
+                  backgroundColor="#FFFFFF"
+                  borderRadius={10}
+                  borderWidth={1}
+                  borderColor="#EBEBEF"
+                >
+                  <Search size={18} color="#8E0FFF" strokeWidth={2.2} />
+                  <XStack flex={1} alignItems="center" height={20} marginLeft={wp(10)}>
+                    <TextInput
+                      ref={searchInputRef}
+                      placeholder=""
+                      onFocus={handleSearchFocus}
+                      onBlur={handleSearchBlur}
+                      style={{ flex: 1, fontSize: 14, color: "#1C1C1E", padding: 0, margin: 0 }}
+                      placeholderTextColor="#9CA3AF"
+                      editable={false}
+                      pointerEvents="none"
+                    />
+                    <XStack position="absolute" left={0} alignItems="baseline" pointerEvents="none">
+                      <Text fontSize={14} fontWeight="400" color="#9CA3AF">Search "Camera Gear"....</Text>
+                    </XStack>
+                  </XStack>
+                  <YStack width={1} height={20} backgroundColor="#EBEBEF" marginHorizontal={wp(10)} />
+                  <YStack paddingRight={wp(12)}>
+                    <Mic size={18} color="#8E0FFF" strokeWidth={2} />
+                  </YStack>
+                </XStack>
+              </Pressable>
+
+              {/* Promo badge */}
               <XStack
-                flex={1}
-                paddingLeft={wp(14)}
-                paddingVertical={hp(11)}
-                alignItems="center"
                 backgroundColor="#FFFFFF"
                 borderRadius={10}
                 borderWidth={1}
                 borderColor="#EBEBEF"
+                paddingHorizontal={wp(10)}
+                height={wp(44)}
+                alignItems="center"
+                gap={wp(8)}
               >
-                <Search size={18} color="#8E0FFF" strokeWidth={2.2} />
-                <XStack flex={1} alignItems="center" height={20} marginLeft={wp(10)}>
-                  <TextInput
-                    ref={searchInputRef}
-                    placeholder=""
-                    onFocus={handleSearchFocus}
-                    onBlur={handleSearchBlur}
-                    style={{ flex: 1, fontSize: 14, color: "#1C1C1E", padding: 0, margin: 0 }}
-                    placeholderTextColor="#9CA3AF"
-                    editable={false}
-                    pointerEvents="none"
-                  />
-                  <XStack position="absolute" left={0} alignItems="baseline" pointerEvents="none">
-                    <Text fontSize={14} fontWeight="400" color="#9CA3AF">Search "Camera Gear"....</Text>
-                  </XStack>
-                </XStack>
-                {/* Divider + Mic */}
-                <YStack width={1} height={20} backgroundColor="#EBEBEF" marginHorizontal={wp(10)} />
-                <YStack paddingRight={wp(12)}>
-                  <Mic size={18} color="#8E0FFF" strokeWidth={2} />
-                </YStack>
-              </XStack>
-            </Pressable>
-
-            {/* Promo badge */}
-            <XStack
-              backgroundColor="#FFFFFF"
-              borderRadius={10}
-              borderWidth={1}
-              borderColor="#EBEBEF"
-              paddingHorizontal={wp(10)}
-              height={wp(44)}
-              alignItems="center"
-              gap={wp(8)}
-            >
-              <Image
-                source={require("@/assets/images/waller.svg")}
-                style={{ width: wp(26), height: wp(26) }}
-                contentFit="contain"
-              />
-              <YStack>
-                {/* <Text fontSize={fp(9)} fontWeight="500" color="#9CA3AF" letterSpacing={0.3}>
-                  SAVE UP TO
-                </Text> */}
+                <Image
+                  source={require("@/assets/images/waller.svg")}
+                  style={{ width: wp(26), height: wp(26) }}
+                  contentFit="contain"
+                />
                 <Text fontSize={fp(14)} fontWeight="800" color="#5F00BA">₹ 200</Text>
-              </YStack>
+              </XStack>
             </XStack>
-          </XStack>
+          </YStack>
+        </View>
 
-          {/* Hero Carousel - full width, edge to edge */}
+        {/* ── Carousel area: solid color background (same hue as gradient end) ── */}
+        <View style={{ position: "relative" }}>
+          {/* Base solid: slide 0 */}
+          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: SLIDE_SOLID_COLORS[0] }} />
+          {/* Remaining slides solid layers */}
+          {SLIDE_SOLID_COLORS.slice(1).map((color, idx) => {
+            const i = idx + 1;
+            return (
+              <Animated.View
+                key={i}
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  top: 0, left: 0, right: 0, bottom: 0,
+                  backgroundColor: color,
+                  opacity: animatedSlideIndex.interpolate({
+                    inputRange: [i - 1, i, i + 1],
+                    outputRange: [0, 1, 0],
+                    extrapolate: "clamp",
+                  }),
+                }}
+              />
+            );
+          })}
+          {/* Carousel */}
           <RNScrollView
             ref={carouselRef}
             horizontal
@@ -504,13 +562,13 @@ export default function Home() {
               />
             ))}
           </RNScrollView>
-        </YStack>
-        </LinearGradient>
+        </View>
 
         <YStack
           backgroundColor={"white"}
-          gap={hp(32)}
-          paddingVertical={hp(22)}
+          gap={hp(52)}
+          paddingTop={hp(20)}
+          paddingBottom={hp(22)}
         >
           {/* Carousel dots on white background */}
           <XStack justifyContent="center" alignItems="center" gap={6} marginTop={hp(-16)}>
@@ -530,16 +588,19 @@ export default function Home() {
               );
             })}
           </XStack>
+
+          {/* 1. Crafted for Creators — category grid */}
           <AnimatedSection delay={100}>
             <CategoriesSection onCategoryPress={handleCategories} />
           </AnimatedSection>
 
-          <AnimatedSection delay={300}>
+          {/* 2. Deals of the day */}
+          <AnimatedSection delay={200}>
             {isLoadingTopPicks ? (
               <Spinner color="#8E0FFF" />
             ) : (
               <ProductListSection
-                title="Top Picks For you"
+                title="Deals of the day"
                 products={topPicks?.data}
                 onViewAllPress={() => router.push("./selections")}
                 onProductPress={handleProductPress}
@@ -547,48 +608,31 @@ export default function Home() {
             )}
           </AnimatedSection>
 
-          <AnimatedSection delay={200}>
+          {/* 3. Discover */}
+          {/* <AnimatedSection delay={250}>
             <DiscoverSection onItemPress={handleDiscoverPress} />
+          </AnimatedSection> */}
+
+          {/* 4. Our clients + testimonials */}
+          <AnimatedSection delay={300}>
+            <ClientTestimonialsSection />
           </AnimatedSection>
 
-          <AnimatedSection delay={400}>
+          {/* 5. Search by Brands (3-col grid + projects delivered) */}
+          <AnimatedSection delay={350}>
             <BrandsSection
               onBrandPress={handleBrandPress}
               onViewAllPress={handleViewAllBrands}
             />
           </AnimatedSection>
 
-          <AnimatedSection delay={500}>
+          {/* 6. Offers — purple 25%-off banner + offer cards */}
+          <AnimatedSection delay={400}>
             <OffersSection onViewAllPress={() => router.push("./offers")} />
           </AnimatedSection>
-        </YStack>
-        <Image
-          source={require("@/assets/images/home/home-banner2.png")}
-          contentFit="cover"
-          style={{
-            height: 400,
-            width: "100%",
-          }}
-        />
 
-        <YStack
-          borderTopLeftRadius={wp(24)}
-          borderTopRightRadius={wp(24)}
-          backgroundColor={"white"}
-          marginTop={-20}
-          zIndex={1000}
-          gap={hp(32)}
-          paddingTop={hp(32)}
-        >
-          <AnimatedSection delay={100}>
-            <ClientTestimonialsSection />
-          </AnimatedSection>
-
-          {/* <AnimatedSection delay={200}>
-            <InfiniteCarouselSection />
-          </AnimatedSection> */}
-
-          <AnimatedSection delay={300}>
+          {/* 7. DOP's First Choice */}
+          <AnimatedSection delay={460}>
             {isLoadingDop ? (
               <Spinner color="#8E0FFF" />
             ) : (
@@ -601,19 +645,21 @@ export default function Home() {
             )}
           </AnimatedSection>
 
-          <AnimatedSection delay={400}>
+          {/* 9. Rent Now cards */}
+          <AnimatedSection delay={500}>
             <RentNowCards />
           </AnimatedSection>
 
-          <AnimatedSection delay={450}>
+          {/* 10. How Do I Roll */}
+          <AnimatedSection delay={530}>
             <HowDoIRollSection />
           </AnimatedSection>
 
-          <AnimatedSection delay={500}>
+          <AnimatedSection delay={560}>
             <Footer />
           </AnimatedSection>
         </YStack>
-      </Animated.ScrollView>
+      </RNScrollView>
       <StickyCartButton />
 
       {/* City Selection Modal */}

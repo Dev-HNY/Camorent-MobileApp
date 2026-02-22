@@ -51,19 +51,21 @@ export function AccordionSection({
           <Accordion.Item
             key={item.value}
             value={item.value}
-            backgroundColor="#FFFFFF"
-            borderRadius={wp(12)}
-            borderWidth={1}
-            borderColor="#E5E7EB"
-            overflow="visible"
-            gap={hp(0)}
-            shadowColor="#000"
-            shadowOffset={{ width: 0, height: 1 }}
-            shadowOpacity={0.04}
-            shadowRadius={4}
-            elevation={2}
-            paddingVertical={hp(16)}
-            paddingHorizontal={wp(16)}
+            {...{
+              backgroundColor: "#FFFFFF",
+              borderRadius: wp(12),
+              borderWidth: 1,
+              borderColor: "#E5E7EB",
+              overflow: "visible",
+              gap: hp(0),
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.04,
+              shadowRadius: 4,
+              elevation: 2,
+              paddingVertical: hp(16),
+              paddingHorizontal: wp(16),
+            } as any}
           >
             <Accordion.Header backgroundColor="transparent">
               <Accordion.Trigger

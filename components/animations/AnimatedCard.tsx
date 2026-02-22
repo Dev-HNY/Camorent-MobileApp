@@ -29,7 +29,7 @@ interface AnimatedCardProps {
   elevation?: number;
   borderRadius?: number;
   backgroundColor?: string;
-  gradientColors?: string[];
+  gradientColors?: readonly [string, string, ...string[]];
   shadowColor?: string;
 }
 
@@ -235,7 +235,7 @@ export function AnimatedActionCard({
     switch (variant) {
       case 'primary':
         return {
-          gradientColors: ['#8E0FFF', '#6D00DA'] as string[],
+          gradientColors: ['#8E0FFF', '#6D00DA'] as const,
           shadowColor: '#8E0FFF',
         };
       case 'secondary':

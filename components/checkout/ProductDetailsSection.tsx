@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { YStack, XStack, Stack, Separator, Text } from "tamagui";
 import { Image } from "expo-image";
 import { Plus } from "lucide-react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { View } from "react-native";
 import { wp, hp, fp } from "@/utils/responsive";
 import { BodyText, BodySmall, Heading2 } from "@/components/ui/Typography";
 import { formatPrice } from "@/utils/format";
@@ -63,19 +63,15 @@ export const ProductDetailsSection = ({
         <YStack gap={hp(14)}>
           {products.map((item, index) => (
             <XStack key={item.id} alignItems="center" gap={wp(12)}>
-              {/* Product image with gradient */}
-              <LinearGradient
-                colors={["#F5EDFF", "#FDFBFF", "#FFFFFF"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+              {/* Product image */}
+              <View
                 style={{
                   width: wp(64),
                   height: hp(64),
                   borderRadius: wp(10),
                   justifyContent: "center",
                   alignItems: "center",
-                  borderWidth: 1,
-                  borderColor: "#E5E7EB",
+                  backgroundColor: "#E8E8E8",
                 }}
               >
                 <Image
@@ -85,7 +81,7 @@ export const ProductDetailsSection = ({
                   cachePolicy="memory-disk"
                   style={{ width: wp(54), height: hp(54) }}
                 />
-              </LinearGradient>
+              </View>
 
               {/* Product info */}
               <YStack flex={1} gap={hp(4)}>

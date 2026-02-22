@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 
-export const useGetFaqs = (sku_id) => {
+export const useGetFaqs = (sku_id: string) => {
   return useQuery({
     queryKey: ["faqs", sku_id],
     queryFn: async () => {

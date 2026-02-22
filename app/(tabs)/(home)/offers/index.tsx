@@ -10,8 +10,10 @@ import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { DURATION } from "@/components/animations/constants";
 import { Pressable } from "react-native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 export default function Offers() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { data: offersData, isLoading: isLoadingOffers } = useGetAllOffers();
 
   return (
@@ -44,7 +46,7 @@ export default function Offers() {
             <Spinner size="large" color={"#8E0FFF"} />
           </YStack>
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: tabBarHeight + hp(24) }}>
             <YStack gap={hp(12)}>
               {offersData?.map((offer: Offer, index: number) => (
                 <Animated.View

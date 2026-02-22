@@ -128,7 +128,7 @@ export function Counter({
           //  height: config.height,
           paddingHorizontal: config.paddingHorizontal,
           paddingVertical: hp(6),
-          borderRadius: wp(8),
+          borderRadius: wp(20),
           backgroundColor: "#5F00BA",
           borderWidth: 1,
           borderColor: "#8E0FFF",
@@ -153,7 +153,7 @@ export function Counter({
       justifyContent="space-between"
       height={config.height}
       paddingHorizontal={config.paddingHorizontal}
-      borderRadius={12}
+      borderRadius={wp(20)}
       borderWidth={1}
       borderColor="#8E0FFF"
       backgroundColor="transparent"

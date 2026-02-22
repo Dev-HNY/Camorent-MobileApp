@@ -218,7 +218,7 @@ export function StaggerListItem({
 export function useStaggerAnimation(itemCount: number, staggerDelay: number = DURATION.stagger) {
   const animations = Array.from({ length: itemCount }, (_, index) => {
     const opacity = useSharedValue(0);
-    const translateY = useSharedValue(DISTANCE.large);
+    const translateY = useSharedValue<number>(DISTANCE.large);
 
     useEffect(() => {
       const timeout = setTimeout(() => {

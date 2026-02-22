@@ -1,178 +1,141 @@
 import React, { memo } from "react";
-import { XStack, YStack, Text, Card, Separator } from "tamagui";
-import { BodySmall, Heading2 } from "../ui/Typography";
+import { XStack, YStack, Text } from "tamagui";
 import { Image } from "expo-image";
-import { wp,fp } from "@/utils/responsive";
-import { BRANDS } from "@/constants/brands";
+import { wp, fp, hp } from "@/utils/responsive";
 import { useGetBrands } from "@/hooks/CDP/useGetBrands";
+import { Pressable, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface BrandsSectionProps {
   onBrandPress?: (brand: string) => void;
   onViewAllPress?: () => void;
 }
 
-export function BrandsSection({
-  onBrandPress,
-  onViewAllPress,
-}: BrandsSectionProps) {
-  // Display brands twice to show 6 items in a 3x2 grid
-  const { data: brandsdata, isLoading: isLoadingBrands } = useGetBrands();
-  const brands = brandsdata?.filter((brand) => brand.id !== "blackmagic");
+const BrandCell = memo(({ brand, onPress, borderRight, borderBottom }: {
+  brand: { id: string; name: string };
+  onPress: () => void;
+  borderRight?: boolean;
+  borderBottom?: boolean;
+}) => (
+  <Pressable
+    onPress={onPress}
+    style={{
+      flex: 1,
+      height: hp(76),
+      backgroundColor: "#FFFFFF",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: wp(16),
+      borderRightWidth: borderRight ? 1 : 0,
+      borderBottomWidth: borderBottom ? 1 : 0,
+      borderColor: "#EBEBEF",
+    }}
+  >
+    <Image
+      source={{ uri: `https://img.camorent.co.in/brands/images/${brand.id}/primary.webp` }}
+      contentFit="contain"
+      cachePolicy="memory-disk"
+      style={{ width: "100%", height: "100%", maxWidth: wp(80), maxHeight: hp(44) }}
+    />
+  </Pressable>
+));
+
+BrandCell.displayName = "BrandCell";
+
+export function BrandsSection({ onBrandPress, onViewAllPress }: BrandsSectionProps) {
+  const { data: brandsData } = useGetBrands();
+  const brands = (brandsData || [])
+    .filter((b: { id: string; name: string }) => b.id !== "blackmagic")
+    .slice(0, 6);
+
+  const row1 = brands.slice(0, 3);
+  const row2 = brands.slice(3, 6);
 
   return (
-    <YStack gap="$4" paddingHorizontal={wp(16)}>
+    <YStack gap={hp(20)} paddingHorizontal={wp(16)}>
+      {/* Header */}
       <XStack justifyContent="space-between" alignItems="center">
-        {/* <Heading2></Heading2> */}
-        <Text fontSize={fp(18)} fontWeight="800" color="#121217">Search by Brands</Text>
+        <Text fontSize={fp(16)} fontWeight="600" color="#121217">Search by Brands</Text>
         <Text
-          color="$purple9"
-          fontWeight="600"
-          fontSize="$3"
+          fontSize={fp(12)}
+          color="#3f3f50"
           onPress={onViewAllPress}
           pressStyle={{ opacity: 0.7 }}
-          cursor="pointer"
         >
           View All
         </Text>
       </XStack>
 
-      <YStack backgroundColor="#FFFFFF">
-        <XStack justifyContent="space-between">
-          {brands?.slice(0, 3).map((brand, index) => (
-            <React.Fragment key={`${brand.id}-${index}`}>
-              <Card
-                flex={1}
-                height={100}
-                backgroundColor="#FFFFFF"
-                pressStyle={{ opacity: 0.8, scale: 0.98 }}
+      {/* Grid with gradient fade on left/right edges (borders appear to dissolve) */}
+      <View style={{ position: "relative" }}>
+        <View style={{ borderWidth: 1, borderColor: "#EBEBEF", borderRadius: wp(12), overflow: "hidden" }}>
+          <XStack>
+            {row1.map((brand: { id: string; name: string }, i: number) => (
+              <BrandCell
+                key={brand.id}
+                brand={brand}
                 onPress={() => onBrandPress?.(brand.name)}
-                justifyContent="center"
-                alignItems="center"
-                padding={wp(10)}
-              >
-                <Image
-                  source={{
-                    uri: `https://img.camorent.co.in/brands/images/${brand.id}/primary.webp`,
-                  }}
-                  contentFit="contain"
-                  cachePolicy="memory-disk"
-                  priority="normal"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: 90,
-                    maxHeight: 50,
-                  }}
-                />
-              </Card>
-              {index < 2 && <Separator vertical />}
-            </React.Fragment>
-          ))}
-        </XStack>
-        <Separator />
-        <XStack justifyContent="space-between">
-          {brands?.slice(3, 6).map((brand, index) => (
-            <React.Fragment key={`${brand.id}-${index + 3}`}>
-              <Card
-                flex={1}
-                height={100}
-                backgroundColor="#FFFFFF"
-                pressStyle={{ opacity: 0.8, scale: 0.98 }}
+                borderRight={i < 2}
+                borderBottom
+              />
+            ))}
+          </XStack>
+          <XStack>
+            {row2.map((brand: { id: string; name: string }, i: number) => (
+              <BrandCell
+                key={brand.id}
+                brand={brand}
                 onPress={() => onBrandPress?.(brand.name)}
-                justifyContent="center"
-                alignItems="center"
-                padding={wp(10)}
-              >
-                <Image
-                  source={{
-                    uri: `https://img.camorent.co.in/brands/images/${brand.id}/primary.webp`,
-                  }}
-                  contentFit="contain"
-                  cachePolicy="memory-disk"
-                  priority="normal"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: 90,
-                    maxHeight: 50,
-                  }}
-                />
-              </Card>
-              {index < 2 && <Separator vertical />}
-            </React.Fragment>
-          ))}
-        </XStack>
-      </YStack>
+                borderRight={i < 2}
+              />
+            ))}
+          </XStack>
+        </View>
+        {/* Left */}
+        <LinearGradient
+          colors={["#ffffff", "rgba(255,255,255,0)"]}
+          start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+          style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: wp(32), pointerEvents: "none" }}
+        />
+        {/* Right */}
+        <LinearGradient
+          colors={["rgba(255,255,255,0)", "#ffffff"]}
+          start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+          style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: wp(32), pointerEvents: "none" }}
+        />
+        {/* Top */}
+        <LinearGradient
+          colors={["#ffffff", "rgba(255,255,255,0)"]}
+          start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+          style={{ position: "absolute", top: 0, left: 0, right: 0, height: hp(24), pointerEvents: "none" }}
+        />
+        {/* Bottom */}
+        <LinearGradient
+          colors={["rgba(255,255,255,0)", "#ffffff"]}
+          start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+          style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: hp(24), pointerEvents: "none" }}
+        />
+      </View>
 
-      {/* Success stats section */}
-      <YStack alignItems="center" paddingTop="$4">
-        <BodySmall fontWeight="600" textAlign="center" color={"#121217"}>
-          Over <Text color="#7C3AED">500</Text> projects delivered
-        </BodySmall>
-        <BodySmall fontWeight="600" textAlign="center" color={"#121217"}>
-          Successfully
-        </BodySmall>
-      </YStack>
-
-      {/* Project Images Gallery */}
-      <XStack gap="$2" paddingTop="$4" height={200}>
-        {/* First column */}
-
-        <YStack flex={1} gap="$2">
-          <Card
-            flex={1}
-            borderRadius="$3"
-            overflow="hidden"
-            backgroundColor="$purple10"
-            transform={[{ perspective: 100 }, { rotateY: "+5deg" }]}
-          >
-            <Image
-              source={require("@/assets/images/project-1.png")}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-              style={{ width: "100%", height: "100%" }}
-            />
-          </Card>
-        </YStack>
-
-        {/* Second column */}
-        <YStack flex={1} gap="$2">
-          <Card
-            flex={1}
-            borderRadius="$3"
-            overflow="hidden"
-            transform={[
-              { perspective: 100 },
-              { rotateY: "0deg" },
-              { scale: 0.95 },
-            ]}
-          >
-            <Image
-              source={require("@/assets/images/project-2.png")}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-              style={{ width: "100%", height: "100%" }}
-            />
-          </Card>
-        </YStack>
-
-        {/* Third column */}
-        <YStack flex={1} gap="$2">
-          <Card
-            flex={1}
-            borderRadius="$3"
-            overflow="hidden"
-            transform={[{ perspective: 100 }, { rotateY: "-5deg" }]}
-          >
-            <Image
-              source={require("@/assets/images/project-3.png")}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-              style={{ width: "100%", height: "100%" }}
-            />
-          </Card>
-        </YStack>
-      </XStack>
+      {/* Projects Delivered warm pill */}
+      <View
+        style={{
+          backgroundColor: "#FFF9EB",
+          borderRadius: wp(20),
+          paddingVertical: hp(12),
+          paddingHorizontal: wp(20),
+          alignItems: "center",
+        }}
+      >
+        <Text fontSize={fp(14)} fontWeight="600" color="#121217" textAlign="center">
+          Over{" "}
+          <Text fontSize={fp(16)} fontWeight="800" color="#121217">500</Text>
+          {" "}projects delivered{" "}
+          <Text fontSize={fp(14)} fontWeight="600" color="#8a6100">
+            Successfully
+          </Text>
+        </Text>
+      </View>
     </YStack>
   );
 }

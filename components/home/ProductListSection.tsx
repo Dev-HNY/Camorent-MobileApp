@@ -15,6 +15,7 @@ interface ProductListSectionProps {
 export function ProductListSection({
   title,
   products,
+  onViewAllPress,
   onProductPress,
 }: ProductListSectionProps) {
   if (!products || products.length === 0) {
@@ -22,17 +23,23 @@ export function ProductListSection({
   }
 
   return (
-    <YStack gap={wp(12)}>
+    <YStack gap={hp(16)}>
       <XStack
         paddingHorizontal={wp(16)}
         justifyContent="space-between"
         alignItems="center"
       >
-        {/* <Heading2></Heading2> */}
-        <Text fontSize={fp(18)} fontWeight="800" color="#121217">{title}</Text>
-        {/* <XStack onPress={onViewAllPress}>
-          <Text color="$purple9">View all </Text>
-        </XStack> */}
+        <Text fontSize={fp(16)} fontWeight="600" color="#121217">{title}</Text>
+        {onViewAllPress && (
+          <Text
+            fontSize={fp(12)}
+            color="#3f3f50"
+            onPress={onViewAllPress}
+            pressStyle={{ opacity: 0.7 }}
+          >
+            View all
+          </Text>
+        )}
       </XStack>
       <ScrollView
         horizontal

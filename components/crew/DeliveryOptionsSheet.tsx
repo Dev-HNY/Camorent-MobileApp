@@ -27,7 +27,7 @@ export function DeliveryOptionsSheet({
 
   const handleCamorentDelivery = () => {
     onClose();
-    router.push("/checkout/crew/camorent-delivery");
+    router.push("/checkout/crew/camorent-delivery" as any);
   };
 
   return (

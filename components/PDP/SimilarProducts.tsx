@@ -33,7 +33,7 @@ function SimilarProductsComponent({ products, onProductPress }: SimilarProductsP
   return (
     <YStack gap={hp(16)}>
       {/* Camo Care Component */}
-      <YStack paddingHorizontal={wp(16)}>
+      <YStack paddingHorizontal={wp(16)} paddingTop={wp(16)}>
         <Camocare handleCamocare={handleCamocarePress} />
       </YStack>
 

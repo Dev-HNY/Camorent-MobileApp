@@ -37,7 +37,7 @@ You may register using your mobile phone number. An OTP (One-Time Password) will
 You are responsible for:
 - Maintaining the confidentiality of your account credentials
 - All activities that occur under your account
-- Notifying us immediately of any unauthorised use at **support@camorent.com**
+- Notifying us immediately of any unauthorised use at **support@camorent.co.in**
 
 ### 3.3 KYC Verification
 We may require you to complete Know Your Customer (KYC) verification before placing orders. You agree to:
@@ -198,7 +198,7 @@ By submitting reviews, ratings, or other content, you:
 ## 13. Termination
 
 ### 13.1 By You
-You may close your account at any time by contacting us at **support@camorent.com**. Outstanding obligations (active rentals, unpaid dues) must be settled before account closure.
+You may close your account at any time by contacting us at **support@camorent.co.in**. Outstanding obligations (active rentals, unpaid dues) must be settled before account closure.
 
 ### 13.2 By Us
 We may suspend or terminate your account without notice if you:
@@ -212,7 +212,7 @@ We may suspend or terminate your account without notice if you:
 ## 14. Dispute Resolution
 
 ### 14.1 Informal Resolution
-If you have a dispute, please contact us first at **support@camorent.com**. We will attempt to resolve it within 30 days.
+If you have a dispute, please contact us first at **support@camorent.co.in**. We will attempt to resolve it within 30 days.
 
 ### 14.2 Arbitration
 If the dispute cannot be resolved informally, it shall be referred to arbitration under the **Arbitration and Conciliation Act, 1996** of India. The arbitration shall take place in India and be conducted in English.
@@ -230,10 +230,10 @@ We may update these Terms from time to time. We will notify you of material chan
 
 ## 16. Contact Us
 
-**Email:** support@camorent.com
-**Grievance Officer:** grievance@camorent.com
+**Email:** support@camorent.co.in
+**Grievance Officer:** hemant@camorent.co.in
 **Website:** www.camorent.com
-**Address:** India
+**Address:** New Delhi, India
 
 ---
 

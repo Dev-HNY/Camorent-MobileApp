@@ -161,7 +161,7 @@ export function CartProgressIndicator({
   const steps: {
     key: Step;
     label: string;
-    icon: (isActive: boolean) => JSX.Element;
+    icon: (isActive: boolean) => React.JSX.Element;
   }[] = [
     {
       key: "cart",

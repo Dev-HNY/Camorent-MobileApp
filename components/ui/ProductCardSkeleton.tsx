@@ -32,7 +32,7 @@ export function ProductCardSkeleton({ width }: ProductCardSkeletonProps = {}) {
   return (
     <YStack
       width={cardWidth}
-      borderRadius={wp(16)}
+      borderRadius={wp(12)}
       backgroundColor="white"
       overflow="hidden"
       shadowColor="#000"

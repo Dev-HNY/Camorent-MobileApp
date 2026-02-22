@@ -49,15 +49,6 @@ export function AuthSheet({ isOpen, onClose, onAuthSuccess }: AuthSheetProps) {
     onClose();
   };
 
-  const handleSignupSubmit = (data: {
-    email: string;
-    password: string;
-    phoneNumber: string;
-  }) => {
-    // TODO: Store email and password
-    sendOtp(data.phoneNumber);
-  };
-
   return (
     <BottomSheet isOpen={isOpen} onClose={handleClose} snapPoints={[50]}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -75,20 +66,12 @@ export function AuthSheet({ isOpen, onClose, onAuthSuccess }: AuthSheetProps) {
                 </YStack>
               </YStack>
 
-              <SignupForm
-                onSubmit={handleSignupSubmit}
-                isLoading={isSendingOtp}
-                error={
-                  hasSendOtpError
-                    ? sendOtpError?.message || "Failed to send OTP"
-                    : undefined
-                }
-              />
+              <SignupForm />
             </>
           ) : (
             <OTPInput
               onSubmit={verifyOtp}
-              onResend={resendOtp}
+              onResend={() => resendOtp("")}
               isLoading={isVerifying}
               isResending={isResending}
               error={

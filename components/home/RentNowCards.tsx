@@ -9,7 +9,7 @@ interface RentCard {
   subtitle: string;
   buttonText: string;
   icon: any;
-  gradientColors: string[];
+  gradientColors: readonly [string, string, ...string[]];
 }
 
 const RENT_CARDS: RentCard[] = [
@@ -18,14 +18,14 @@ const RENT_CARDS: RentCard[] = [
     subtitle: "Equipment, crew, and logistics.",
     buttonText: "Rent Now",
     icon: require("@/assets/new/icons/above-how-1.svg"),
-    gradientColors: ["#FFFFFF", "#EEFBF4"], // White to light green
+    gradientColors: ["#FFFFFF", "#EEFBF4"] as const, // White to light green
   },
   {
     title: "Turn Your Camera Into Cash",
     subtitle: "Earn money by renting out gear.",
     buttonText: "List Now",
     icon: require("@/assets/new/icons/above-how-2.svg"),
-    gradientColors: ["#B571FF", "#6D00DA"], // Purple gradient
+    gradientColors: ["#B571FF", "#6D00DA"] as const, // Purple gradient
   },
 ];
 

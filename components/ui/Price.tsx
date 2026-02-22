@@ -7,10 +7,10 @@ type Props = {
   locale?: string; // default 'en-IN'
   fractionDigits?: number | null; // null -> use Intl default
   fontSize?: number;
-  fontWeight?: string;
+  fontWeight?: any;
   color?: string;
   lineHeight?: number;
-  textDecorationLine?: string;
+  textDecorationLine?: any;
 };
 
 export default function Price({

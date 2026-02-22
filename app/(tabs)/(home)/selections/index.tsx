@@ -1,7 +1,7 @@
 import { BackButton } from "@/components/ui/BackButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { YStack, XStack, ScrollView, Spinner, Text } from "tamagui";
-import { Dimensions, Pressable, StyleSheet, FlatList } from "react-native";
+import { Dimensions, Pressable, StyleSheet, FlatList, View } from "react-native";
 import { Heading2 } from "@/components/ui/Typography";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { router } from "expo-router";
@@ -19,6 +19,7 @@ import { Grid3x3, Rows3 } from "lucide-react-native";
 import { Image } from "expo-image";
 import { SKU } from "@/types/products/product";
 import { formatPrice } from "@/utils/format";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 type ViewMode = "grid" | "list";
 
@@ -83,6 +84,7 @@ const FilterChip = ({ filter, isSelected, onPress }: { filter: string; isSelecte
 );
 
 export default function NewArrivals() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { data: productsResponse, isLoading } = UseGetAllProducts({
     is_active: true,
     limit: 100,
@@ -139,12 +141,14 @@ export default function NewArrivals() {
   const renderListItem = useCallback(({ item }: { item: SKU }) => (
     <Pressable onPress={() => handleProductPress(item.sku_id)} style={styles.listItem}>
       <XStack gap={wp(12)} alignItems="center">
-        <Image
-          source={{ uri: item.primary_image_url }}
-          contentFit="contain"
-          cachePolicy="memory-disk"
-          style={{ width: wp(80), height: hp(80), borderRadius: wp(10) }}
-        />
+        <View style={{ width: wp(80), height: hp(80), borderRadius: wp(10), backgroundColor: "#E8E8E8", justifyContent: "center", alignItems: "center" }}>
+          <Image
+            source={{ uri: item.primary_image_url }}
+            contentFit="contain"
+            cachePolicy="memory-disk"
+            style={{ width: wp(64), height: hp(64) }}
+          />
+        </View>
         <YStack flex={1} gap={hp(4)}>
           <Text fontSize={fp(14)} fontWeight="600" color="#121217" numberOfLines={2}>
             {item.name}
@@ -223,7 +227,7 @@ export default function NewArrivals() {
                 renderItem={renderGridItem}
                 ItemSeparatorComponent={gridSeparator}
                 columnWrapperStyle={{ gap: wp(8), paddingHorizontal: wp(20) }}
-                contentContainerStyle={{ paddingTop: hp(16), paddingBottom: hp(40) }}
+                contentContainerStyle={{ paddingTop: hp(16), paddingBottom: tabBarHeight + hp(24) }}
                 showsVerticalScrollIndicator={false}
                 removeClippedSubviews
                 initialNumToRender={6}
@@ -236,7 +240,7 @@ export default function NewArrivals() {
                 keyExtractor={keyExtractor}
                 renderItem={renderListItem}
                 ItemSeparatorComponent={listSeparator}
-                contentContainerStyle={styles.listContainer}
+                contentContainerStyle={[styles.listContainer, { paddingBottom: tabBarHeight + hp(24) }]}
                 showsVerticalScrollIndicator={false}
                 removeClippedSubviews
                 initialNumToRender={8}

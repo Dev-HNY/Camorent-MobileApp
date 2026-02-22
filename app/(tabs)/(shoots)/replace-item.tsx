@@ -4,37 +4,44 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Pressable, TextInput, KeyboardAvoidingView, Platform } from "react-native";
 import { ArrowLeft } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
-import { AlternativeGear } from "@/types/shoots/shoots";
 import { router } from "expo-router";
 import DropDownPicker from "react-native-dropdown-picker";
 import { fp, hp, wp } from "@/utils/responsive";
 import { BodySmall, Heading2 } from "@/components/ui/Typography";
 import { Image } from "expo-image";
 import { ProductCard } from "@/components/ui/ProductCard";
-import { Product } from "@/types/products/product";
+import { SKU } from "@/types/products/product";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 // Mock data - replace with actual data from API/params
-const MOCK_ALTERNATIVE_PRODUCTS: Product[] = [
+const MOCK_ALTERNATIVE_PRODUCTS: SKU[] = [
   {
+    sku_id: "sku-1",
     id: "1",
     name: "Canon EOS 5D Mark IV",
-    description: "Professional DSLR camera",
-    price: "₹5,000",
-    category: "camera",
-    images: [],
-    rating: 4.5,
-    reviews: 120,
+    brand: "Canon",
+    category_id: "camera",
+    subcategory_id: "",
+    price_per_day: "₹5,000",
+    primary_image_url: undefined,
+    tags: null,
+    is_active: true,
+    avg_rating: "4.5",
+    review_count: 120,
   },
   {
+    sku_id: "sku-2",
     id: "2",
     name: "Nikon D850",
-    description: "High-resolution DSLR",
-    price: "₹4,500",
-    category: "camera",
-    images: [],
-    rating: 4.5,
-    reviews: 98,
+    brand: "Nikon",
+    category_id: "camera",
+    subcategory_id: "",
+    price_per_day: "₹4,500",
+    primary_image_url: undefined,
+    tags: null,
+    is_active: true,
+    avg_rating: "4.5",
+    review_count: 98,
   },
 ];
 
@@ -51,6 +58,7 @@ export default function ReplaceItemScreen() {
   const [selectedReason, setSelectedReason] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [open, setOpen] = useState(false);
+  const tabBarHeight = useBottomTabBarHeight();
 
   const handleSubmit = () => {
     if (!selectedReason) return;
@@ -100,7 +108,7 @@ export default function ReplaceItemScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-        <ScrollView flex={1} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+        <ScrollView flex={1} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: tabBarHeight + hp(24) }}>
           <YStack
             gap={hp(24)}
             paddingTop={hp(24)}
@@ -225,7 +233,7 @@ export default function ReplaceItemScreen() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{
-                  paddingBottom: useBottomTabBarHeight(),
+                  paddingBottom: tabBarHeight,
                 }}
               >
                 <XStack gap={wp(12)}>

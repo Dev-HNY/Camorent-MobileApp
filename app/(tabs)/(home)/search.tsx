@@ -19,8 +19,10 @@ import Animated, { FadeInDown, FadeIn, FadeOut } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { DURATION } from "@/components/animations/constants";
 import { LinearGradient } from "expo-linear-gradient";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 export default function SearchModal() {
+  const tabBarHeight = useBottomTabBarHeight();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SKU[]>([]);
 
@@ -152,7 +154,7 @@ export default function SearchModal() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          contentContainerStyle={{ paddingBottom: 70 }}
+          contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
         >
           {/* Search Results */}
           {searchQuery.trim() && searchResults.length > 0 && (

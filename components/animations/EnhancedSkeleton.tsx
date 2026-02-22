@@ -53,11 +53,11 @@ export function Skeleton({
     <View
       style={[
         {
-          width,
-          height,
+          width: width as any,
+          height: height as any,
           borderRadius,
           backgroundColor: '#F3F4F6',
-          overflow: 'hidden',
+          overflow: 'hidden' as const,
         },
         style,
       ]}

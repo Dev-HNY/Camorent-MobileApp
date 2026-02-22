@@ -18,6 +18,7 @@ import { useGetCurrentUser } from "@/hooks/auth";
 import { LinearGradient } from "expo-linear-gradient";
 import { ChevronLeft, ChevronRight, LogOut, Edit2 } from "lucide-react-native";
 import { Image } from "expo-image";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 interface MenuItem {
   icon: any;
@@ -44,6 +45,7 @@ const capitalizeName = (name: string) => {
 };
 
 export default function Index() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { clearAuth } = useAuthStore();
   const { data: currentUser, isLoading: isLoadingUser } = useGetCurrentUser();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -156,7 +158,7 @@ export default function Index() {
         flex={1}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: hp(100),
+          paddingBottom: tabBarHeight + hp(24),
         }}
       >
         <YStack flex={1}>

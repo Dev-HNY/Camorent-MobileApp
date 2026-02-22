@@ -29,8 +29,10 @@ export const useAddToWishlist = () => {
 
       // Optimistically add the item (with minimal data)
       const optimisticItem: WishlistItem = {
+        id: `temp-${request.sku_id}-${Date.now()}`,
         wishlist_id: `temp-${request.sku_id}-${Date.now()}`,
         sku_name: request.sku_name,
+        sku_category: "",
         user_id: "",
         sku_id: request.sku_id,
         created_at: new Date().toISOString(),

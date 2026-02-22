@@ -100,13 +100,13 @@ export function GlassmorphicView({
     >
       <AnimatedBlurView
         style={[StyleSheet.absoluteFill, animatedStyle]}
-        blurType={config.blurType}
+        blurType={config.blurType as any}
         blurAmount={intensity}
-        reducedTransparencyFallbackColor="white"
+        {...{ reducedTransparencyFallbackColor: "white" } as any}
       />
 
       <LinearGradient
-        colors={config.overlayColors}
+        colors={config.overlayColors as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}

@@ -51,8 +51,8 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const width = Dimensions.get("window").width;
 
   const { isInWishlist, toggleWishlist } = useWishlistStatus(
-    product?.id,
-    product?.name
+    product?.id ?? "",
+    product?.name ?? ""
   );
 
   const insets = useSafeAreaInsets();
@@ -472,7 +472,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           {/* Product Specification and Description Accordions */}
           <AccordionSpecification
             description={product?.description || ""}
-            specifications={product?.specifications}
+            specifications={(product?.specifications ?? {}) as Record<string, string[]>}
           />
 
           {/* Service Highlights - Same Day, 24*7, 100% Refundable */}

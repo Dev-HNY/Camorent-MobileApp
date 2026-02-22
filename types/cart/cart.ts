@@ -2,6 +2,7 @@ import { SKU } from "@/types/products/product";
 
 export interface APICartSkuItem {
   sku_id: string;
+  sku_name?: string;
   quantity: number;
   price_per_day: string;
   added_at: string;
@@ -46,6 +47,9 @@ export interface CrewCartItem {
   crew_price_0_12: string;
   crew_price_12_18: string;
   crew_price_18_24: string;
+  quantity: number;
+  price_per_day: number;
+  totalPrice: number;
 }
 
 export interface CartSummary {

@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import { Counter } from "@/components/ui/Counter";
 import { APICartSkuItem } from "@/types/cart/cart";
 import { useCartStore } from "@/store/cart/cart";
-import { LinearGradient } from "expo-linear-gradient";
 import { VerifiedIcon } from "../ui/VerifiedIcon";
 import { hp, wp, fp } from "@/utils/responsive";
 import { BodyText, Heading2 } from "../ui/Typography";
@@ -15,7 +14,7 @@ import { useModifyQuantity, Operation } from "@/hooks/cart/useModifyQuantity";
 import { useGetSkuById } from "@/hooks/product/useGetSkuById";
 import { DeleteIcon } from "../ui/DeleteIcon";
 import { formatPrice } from "@/utils/format";
-import { Animated } from "react-native";
+import { Animated, View } from "react-native";
 import * as Haptics from "expo-haptics";
 
 interface CartItemProps {
@@ -120,16 +119,14 @@ export function CartItem({ item }: CartItemProps) {
         elevation={2}
       >
         <XStack gap={wp(14)} alignItems="center">
-          <LinearGradient
-            colors={["#F5EDFF", "#FDFBFF", "#FFFFFF"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+          <View
             style={{
               height: hp(80),
               width: wp(80),
               justifyContent: "center",
               alignItems: "center",
               borderRadius: wp(10),
+              backgroundColor: "#E8E8E8",
               padding: wp(6),
             }}
           >
@@ -140,7 +137,7 @@ export function CartItem({ item }: CartItemProps) {
               cachePolicy="memory-disk"
               style={{ width: wp(68), height: wp(68) }}
             />
-          </LinearGradient>
+          </View>
 
           <YStack flex={1} gap={hp(8)}>
             <YStack gap={hp(4)} alignItems="flex-start">

@@ -12,7 +12,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import { ArrowLeft, Star, Trash2, ChevronRight } from "lucide-react-native";
 import { Link, router, useLocalSearchParams } from "expo-router";
 import { fp, hp, wp } from "@/utils/responsive";
@@ -20,8 +20,10 @@ import { BodySmall, BodyText, Heading2 } from "@/components/ui/Typography";
 import { BottomSheetButton } from "@/components/ui/BottomSheetButton";
 import { useCartStore } from "@/store/cart/cart";
 import { Image } from "expo-image";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 export default function ReorderPage() {
+  const tabBarHeight = useBottomTabBarHeight();
   const { items, crewItems, calculateRentalDays } = useCartStore();
   const addressData = {
     address: "302, Lotus Residency, Lane No. 5, Kothrud",
@@ -38,21 +40,21 @@ export default function ReorderPage() {
     days: rentalDays,
     price: parseFloat(item.product.price_per_day.replace(/[^0-9.]/g, "")),
     image:
-      item.product.primary_image.image_url || "https://via.placeholder.com/60",
+      item.product.primary_image_url || "https://via.placeholder.com/60",
   }));
 
   const crewData = crewItems.map((item) => ({
     id: item.id,
-    name: item.crew_type_name,
-    quantity: item.quantity,
+    name: item.crew_name,
+    quantity: 1,
     days: rentalDays,
-    price: item.price_per_day,
-    image: item.image || "https://via.placeholder.com/60",
+    price: parseFloat(item.crew_price_0_12.replace(/[^0-9.]/g, "")),
+    image: item.image_url || "https://via.placeholder.com/60",
   }));
 
   // const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
 
-  const orderData = null;
+  const totalPrice = productData.reduce((sum, item) => sum + item.price * item.quantity * item.days, 0);
 
   const handleRateClick = () => {
     router.push("/(tabs)/(shoots)/rating");
@@ -100,7 +102,7 @@ export default function ReorderPage() {
 
         <ScrollView
           flex={1}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{ paddingBottom: tabBarHeight + hp(24) }}
         >
           <YStack gap="$4" padding={wp(16)} paddingBottom="$6">
             {/* Status Card */}
@@ -250,10 +252,14 @@ export default function ReorderPage() {
                       {crewData.map((item) => (
                         <Card key={item.id}>
                           <XStack alignItems="center" gap={wp(12)}>
-                            <Image
-                              source={require("@/assets/images/pdp3.png")}
-                              style={{ width: wp(60), height: wp(60) }}
-                            />
+                            <View style={{ width: wp(60), height: wp(60), borderRadius: wp(10), backgroundColor: "#E8E8E8", justifyContent: "center", alignItems: "center" }}>
+                              <Image
+                                source={{ uri: item.image }}
+                                contentFit="contain"
+                                cachePolicy="memory-disk"
+                                style={{ width: wp(48), height: wp(48) }}
+                              />
+                            </View>
                             <YStack flex={1} gap={hp(4)}>
                               <Heading2>{item.name}</Heading2>
                               <XStack
@@ -284,7 +290,7 @@ export default function ReorderPage() {
                       lineHeight={hp(24)}
                       color="black"
                     >
-                      Rs {orderData.totalPrice.toLocaleString()}
+                      Rs {totalPrice.toLocaleString()}
                     </Text>
                     <Pressable>
                       <BodySmall>Price breakup</BodySmall>

@@ -4,12 +4,13 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { Alert, Keyboard } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { Alert, BackHandler, Keyboard } from "react-native";
 import * as Haptics from "expo-haptics";
 import * as Linking from "expo-linking";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useCartStore } from "@/store/cart/cart";
+import { useAuthStore } from "@/store/auth/auth";
 import { CartProgressIndicator } from "@/components/cart/CartProgressIndicator";
 import { InsideScreenHeader } from "@/components/ui/InsideScreenHeader";
 import { StickyBottomCart } from "@/components/PDP/StickyBottomCart";
@@ -46,6 +47,7 @@ export default function PaymentPage() {
     shootName: storeShootName,
     calculateRentalDays,
   } = useCartStore();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [showShootSettings, setShowShootSettings] = useState<boolean>(false);
@@ -79,8 +81,36 @@ export default function PaymentPage() {
   const bookingMutation = useCreateDraftBooking();
   const paymentMutation = useCreateTransaction();
   const clearCartMutation = useCLearCart();
+  const isOrganization = user?.user_type === "organisation";
 
   const isLoading = isLoadingBooking || isLoadingAddresses;
+
+  const handleBackPress = React.useCallback(() => {
+    if (isOrganization) {
+      router.replace("/(tabs)/(shoots)");
+    } else {
+      Alert.alert(
+        "Leave payment?",
+        "You need to complete payment to confirm your booking. Are you sure you want to go back?",
+        [
+          { text: "Stay", style: "cancel" },
+          { text: "Go back", style: "destructive", onPress: () => router.back() },
+        ]
+      );
+    }
+  }, [isOrganization]);
+
+  // Intercept Android hardware back press on payment page
+  useFocusEffect(
+    React.useCallback(() => {
+      const onHardwareBack = () => {
+        handleBackPress();
+        return true; // always intercept — handler decides what to do
+      };
+      const sub = BackHandler.addEventListener("hardwareBackPress", onHardwareBack);
+      return () => sub.remove();
+    }, [handleBackPress])
+  );
 
   // Sync shoot details when rental dates or booking details change
   useEffect(() => {
@@ -275,7 +305,7 @@ export default function PaymentPage() {
         >
           <Animated.View entering={FadeInDown.duration(300).springify()}>
             <YStack>
-              <InsideScreenHeader />
+              <InsideScreenHeader onBackPress={handleBackPress} />
             </YStack>
 
             <YStack
@@ -363,7 +393,7 @@ export default function PaymentPage() {
                 </Animated.View>
 
                 {/* Promocode Section */}
-                <Animated.View
+                {/* <Animated.View
                   entering={FadeInDown.delay(150)
                     .duration(400)
                     .springify()
@@ -389,7 +419,7 @@ export default function PaymentPage() {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }}
                   />
-                </Animated.View>
+                </Animated.View> */}
 
                 {/* Billing Summary with staggered animation */}
                 <Animated.View
@@ -443,6 +473,7 @@ export default function PaymentPage() {
               embedded
               isPaymentScreen={true}
               isAdminApproved={bookingDetails.admin_approval === "True"}
+              isOrganization={isOrganization}
               onContinue={handlePayNow}
               amount={bookingDetails?.total_amount}
             />

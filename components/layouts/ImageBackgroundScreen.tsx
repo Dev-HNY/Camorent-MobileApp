@@ -10,14 +10,14 @@ const { width, height } = Dimensions.get("window");
 interface ImageBackgroundScreenProps {
   source: ImageSourcePropType | string;
   children: ReactNode;
-  gradient?: string[];
+  gradient?: readonly [string, string, ...string[]];
   safeAreaStyle?: any;
 }
 
 export function ImageBackgroundScreen({
   source,
   children,
-  gradient = ["rgba(0,0,0,0.3)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.8)"],
+  gradient = ["rgba(0,0,0,0.3)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.8)"] as const,
   safeAreaStyle,
 }: ImageBackgroundScreenProps) {
   return (

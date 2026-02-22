@@ -9,10 +9,19 @@ import { ArrowLeft, Calendar, Clock, AlertCircle } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { router } from "expo-router";
 import { hp, wp } from "@/utils/responsive";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { BodySmall, Heading2 } from "@/components/ui/Typography";
 import { Badge } from "@/components/ui/Badge";
-import { MOCK_TRACKING_DATA, TimelineItem } from "./track-order";
+import { TimelineItem } from "./track-order";
 import { DateRangePicker } from "@/components/checkout/DateRangePicker";
+
+const MOCK_TRACKING_DATA = {
+  timeline: [
+    { id: 1, status: "Order Confirmed", description: "Your order has been confirmed", date: "10 Jan 2025", isCompleted: true, isActive: false },
+    { id: 2, status: "Gear Dispatched", description: "Gear is on the way", date: "12 Jan 2025", isCompleted: true, isActive: false },
+    { id: 3, status: "Delivered", description: "Gear delivered successfully", date: "13 Jan 2025", isCompleted: false, isActive: true },
+  ],
+};
 
 const EXTENSION_OPTIONS = [
   { days: 1, price: 500, originalPrice: 600 },
@@ -22,6 +31,7 @@ const EXTENSION_OPTIONS = [
 ];
 
 export default function ExtendRentalScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   const [selectedDays, setSelectedDays] = useState<number | null>(null);
   const currentEndDate = "15 Jan 2025";
   const currentEndTime = "6:00 PM";
@@ -104,7 +114,7 @@ export default function ExtendRentalScreen() {
         <ScrollView
           flex={1}
           contentContainerStyle={{
-            paddingBottom: useSafeAreaInsets().bottom + 24,
+            paddingBottom: tabBarHeight + hp(24),
           }}
         >
           <YStack gap={hp(16)} padding={wp(16)}>

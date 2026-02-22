@@ -133,7 +133,7 @@ export default function ReportIssueScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-        <ScrollView flex={1} paddingHorizontal={wp(16)} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+        <ScrollView flex={1} paddingHorizontal={wp(16)} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: tabBarHeight + hp(24) }}>
           {step === "categories" && (
             <YStack gap={hp(0)}>
               {filteredCategories.map((category, index) => (

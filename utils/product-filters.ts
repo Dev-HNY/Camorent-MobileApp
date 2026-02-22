@@ -61,7 +61,7 @@ export const filterProducts = (
           ? product.available
             ? "In Stock"
             : "Out of Stock"
-          : product.availability;
+          : (product as any).availability;
       if (!options.filters.availability.includes(availability)) {
         return false;
       }

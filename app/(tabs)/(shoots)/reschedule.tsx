@@ -7,12 +7,22 @@ import {
 import { ArrowLeft } from "lucide-react-native";
 import { router } from "expo-router";
 import { hp, wp } from "@/utils/responsive";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { BodySmall, Heading2 } from "@/components/ui/Typography";
 import { Badge } from "@/components/ui/Badge";
-import { MOCK_TRACKING_DATA, TimelineItem } from "./track-order";
+import { TimelineItem } from "./track-order";
 import { DateRangePicker } from "@/components/checkout/DateRangePicker";
 
+const MOCK_TRACKING_DATA = {
+  timeline: [
+    { id: 1, status: "Order Confirmed", description: "Your order has been confirmed", date: "10 Jan 2025", isCompleted: true, isActive: false },
+    { id: 2, status: "Gear Dispatched", description: "Gear is on the way", date: "12 Jan 2025", isCompleted: true, isActive: false },
+    { id: 3, status: "Delivered", description: "Gear delivered successfully", date: "13 Jan 2025", isCompleted: false, isActive: true },
+  ],
+};
+
 export default function RescheduleScreen() {
+  const tabBarHeight = useBottomTabBarHeight();
   // Initialize date range state
   const getDefaultDates = () => {
     const today = new Date();
@@ -85,7 +95,7 @@ export default function RescheduleScreen() {
         <ScrollView
           flex={1}
           contentContainerStyle={{
-            paddingBottom: useSafeAreaInsets().bottom + 24,
+            paddingBottom: tabBarHeight + hp(24),
           }}
         >
           <YStack gap={hp(16)} padding={wp(16)}>
