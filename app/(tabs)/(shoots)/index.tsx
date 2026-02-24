@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   YStack,
   XStack,
@@ -11,7 +11,7 @@ import { router } from "expo-router";
 import { ShootStatus } from "@/types/shoots/shoots";
 import { ShootCard } from "@/components/shoots/ShootCard";
 import { BodyText } from "@/components/ui/Typography";
-import { Camera, Package, Calendar, ChevronLeft, Video as VideoIcon } from "lucide-react-native";
+import { Camera, Package, Calendar, ChevronLeft } from "lucide-react-native";
 import { hp, wp, fp } from "@/utils/responsive";
 import { ShootsToast } from "@/components/ui/ShootsToast";
 import { useToastState } from "@tamagui/toast";
@@ -72,25 +72,53 @@ export default function Shoots() {
     transform: [{ translateY: tabsTranslateY.value }],
   }));
 
-  const handleOrderDetailsClick = (booking_id: string) => {
+  const handleOrderDetailsClick = useCallback((booking_id: string) => {
     router.push({
       pathname: "/(tabs)/(shoots)/order-details",
       params: { booking_id, status: activeTab },
     });
-  };
+  }, [activeTab]);
 
-  const handleTabChange = (tabKey: ShootStatus) => {
+  const handleTabChange = useCallback((tabKey: ShootStatus) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setActiveTab(tabKey);
-  };
+  }, []);
 
-  const handleCancelOrder = (_booking_id: string) => {
+  const handleCancelOrder = useCallback((_booking_id: string) => {
     setShowCancelSheet(true);
-  };
+  }, []);
 
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = useCallback(() => {
     setShowCancelSheet(false);
-  };
+  }, []);
+
+  const handleBrowseProducts = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push("/(tabs)/(home)");
+  }, []);
+
+  const currentShoots =
+    activeTab === "past" ? past : activeTab === "upcoming" ? upcoming : ongoing;
+  const currentCount = currentShoots.length;
+
+  const renderShootItem = useCallback(
+    ({ item, index }: { item: (typeof currentShoots)[0]; index: number }) => (
+      <ShootCard
+        shoot={item}
+        tab={activeTab}
+        index={index}
+        onOrderDetailsClick={() => handleOrderDetailsClick(item.booking_id)}
+        onCancelOrder={() => handleCancelOrder(item.booking_id)}
+      />
+    ),
+    [activeTab, handleOrderDetailsClick, handleCancelOrder]
+  );
+
+  const ItemSeparator = useCallback(
+    () => <YStack height={hp(12)} />,
+    []
+  );
+
 
   const state = useToastState();
 
@@ -182,7 +210,7 @@ export default function Shoots() {
           }}
         >
           <XStack width="100%" justifyContent="space-between" alignItems="center">
-            {TABS.map((tab, index) => {
+            {TABS.map((tab) => {
               const count =
                 tab.key === "past"
                   ? past.length
@@ -268,154 +296,70 @@ export default function Shoots() {
               Loading your shoots...
             </Text>
           </YStack>
+        ) : currentCount === 0 ? (
+          <YStack flex={1} justifyContent="center" alignItems="center" paddingBottom={hp(60)}>
+            <LinearGradient
+              colors={[
+                "rgba(142, 15, 255, 0.1)",
+                "rgba(142, 15, 255, 0.02)",
+                "rgba(255, 255, 255, 1)",
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                width: wp(120),
+                height: wp(120),
+                borderRadius: wp(60),
+                justifyContent: "center",
+                alignItems: "center",
+                marginBottom: hp(24),
+              }}
+            >
+              {activeTab === "past" ? (
+                <Package size={wp(56)} color="#8E0FFF" strokeWidth={1.5} />
+              ) : activeTab === "ongoing" ? (
+                <Camera size={wp(56)} color="#10B981" strokeWidth={1.5} />
+              ) : (
+                <Calendar size={wp(56)} color="#F59E0B" strokeWidth={1.5} />
+              )}
+            </LinearGradient>
+            <Text fontSize={fp(20)} fontWeight="700" color="#1C1C1E" textAlign="center" marginBottom={hp(8)}>
+              No {activeTab} shoots
+            </Text>
+            <Text fontSize={fp(14)} color="#6B7280" textAlign="center" lineHeight={fp(20)} paddingHorizontal={wp(32)}>
+              {activeTab === "past"
+                ? "Your completed rentals will appear here"
+                : activeTab === "ongoing"
+                  ? "Active rentals will show up here"
+                  : "Your upcoming bookings will be listed here"}
+            </Text>
+            <Pressable
+              onPress={handleBrowseProducts}
+              style={{
+                marginTop: hp(24),
+                paddingHorizontal: wp(24),
+                paddingVertical: hp(12),
+                backgroundColor: "#8E0FFF",
+                borderRadius: wp(12),
+              }}
+            >
+              <Text fontSize={fp(15)} fontWeight="600" color="#FFFFFF">
+                Browse Products
+              </Text>
+            </Pressable>
+          </YStack>
         ) : (
-          (() => {
-            const currentShoots =
-              activeTab === "past"
-                ? past
-                : activeTab === "upcoming"
-                  ? upcoming
-                  : ongoing;
-            const count = currentShoots.length;
-
-            if (count === 0) {
-              return (
-                <YStack flex={1} justifyContent="center" alignItems="center" paddingBottom={hp(60)}>
-                  <LinearGradient
-                    colors={[
-                      "rgba(142, 15, 255, 0.1)",
-                      "rgba(142, 15, 255, 0.02)",
-                      "rgba(255, 255, 255, 1)",
-                    ]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{
-                      width: wp(120),
-                      height: wp(120),
-                      borderRadius: wp(60),
-                      justifyContent: "center",
-                      alignItems: "center",
-                      marginBottom: hp(24),
-                    }}
-                  >
-                    {activeTab === "past" ? (
-                      <Package size={wp(56)} color="#8E0FFF" strokeWidth={1.5} />
-                    ) : activeTab === "ongoing" ? (
-                      <Camera size={wp(56)} color="#10B981" strokeWidth={1.5} />
-                    ) : (
-                      <Calendar size={wp(56)} color="#F59E0B" strokeWidth={1.5} />
-                    )}
-                  </LinearGradient>
-                  <Text fontSize={fp(20)} fontWeight="700" color="#1C1C1E" textAlign="center" marginBottom={hp(8)}>
-                    No {activeTab} shoots
-                  </Text>
-                  <Text fontSize={fp(14)} color="#6B7280" textAlign="center" lineHeight={fp(20)} paddingHorizontal={wp(32)}>
-                    {activeTab === "past"
-                      ? "Your completed rentals will appear here"
-                      : activeTab === "ongoing"
-                        ? "Active rentals will show up here"
-                        : "Your upcoming bookings will be listed here"}
-                  </Text>
-                  <Pressable
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push("/(tabs)/(home)");
-                    }}
-                    style={{
-                      marginTop: hp(24),
-                      paddingHorizontal: wp(24),
-                      paddingVertical: hp(12),
-                      backgroundColor: "#8E0FFF",
-                      borderRadius: wp(12),
-                    }}
-                  >
-                    <Text fontSize={fp(15)} fontWeight="600" color="#FFFFFF">
-                      Browse Products
-                    </Text>
-                  </Pressable>
-                </YStack>
-              );
-            }
-
-            return (
-              <FlatList
-                data={currentShoots}
-                keyExtractor={(item) => item.booking_id}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{
-                  paddingTop: hp(16),
-                  paddingBottom: insets.bottom + hp(100),
-                }}
-                ListHeaderComponent={() => (
-                  <LinearGradient
-                    colors={[
-                      activeTab === "ongoing"
-                        ? "rgba(16, 185, 129, 0.08)"
-                        : activeTab === "past"
-                          ? "rgba(142, 15, 255, 0.08)"
-                          : "rgba(245, 158, 11, 0.08)",
-                      "rgba(255, 255, 255, 0.5)",
-                    ]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={{
-                      paddingVertical: hp(10),
-                      paddingHorizontal: wp(14),
-                      borderRadius: wp(12),
-                      marginBottom: hp(16),
-                      alignSelf: "flex-start",
-                      borderWidth: 1,
-                      borderColor:
-                        activeTab === "ongoing"
-                          ? "rgba(16, 185, 129, 0.15)"
-                          : activeTab === "past"
-                            ? "rgba(142, 15, 255, 0.15)"
-                            : "rgba(245, 158, 11, 0.15)",
-                    }}
-                  >
-                    <XStack alignItems="center" gap={wp(8)}>
-                      <VideoIcon
-                        size={18}
-                        color={
-                          activeTab === "ongoing"
-                            ? "#10B981"
-                            : activeTab === "past"
-                              ? "#8E0FFF"
-                              : "#F59E0B"
-                        }
-                        strokeWidth={2}
-                      />
-                      <Text
-                        fontSize={fp(13)}
-                        color={
-                          activeTab === "ongoing"
-                            ? "#10B981"
-                            : activeTab === "past"
-                              ? "#8E0FFF"
-                              : "#F59E0B"
-                        }
-                        fontWeight="600"
-                        letterSpacing={-0.1}
-                      >
-                        {count} {activeTab} shoot{count !== 1 ? "s" : ""}
-                      </Text>
-                    </XStack>
-                  </LinearGradient>
-                )}
-                renderItem={({ item, index }) => (
-                  <ShootCard
-                    key={item.booking_id}
-                    shoot={item}
-                    tab={activeTab}
-                    index={index}
-                    onOrderDetailsClick={() => handleOrderDetailsClick(item.booking_id)}
-                    onCancelOrder={() => handleCancelOrder(item.booking_id)}
-                  />
-                )}
-                ItemSeparatorComponent={() => <YStack height={hp(12)} />}
-              />
-            );
-          })()
+          <FlatList
+            data={currentShoots}
+            keyExtractor={(item) => item.booking_id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingTop: hp(16),
+              paddingBottom: insets.bottom + hp(100),
+            }}
+            renderItem={renderShootItem}
+            ItemSeparatorComponent={ItemSeparator}
+          />
         )}
       </YStack>
 

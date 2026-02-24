@@ -18,13 +18,8 @@ export const useTokenValidator = () => {
     try {
       // Make a lightweight API call to check if token is valid
       await apiClient.get("/auth/me");
-      console.log("✅ Token is valid");
     } catch (error: any) {
       // Error will be handled by interceptor (auto-logout on 401/403)
-      console.log("Token validation failed");
-      console.log("Error status:", error.response?.status);
-      console.log("Error message:", error.message);
-      console.log("Error details:", error.response?.data);
     }
   };
 

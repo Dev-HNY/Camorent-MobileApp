@@ -1,14 +1,24 @@
 import React from "react";
-import { YStack, XStack, Separator } from "tamagui";
+import { YStack, XStack, Text } from "tamagui";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pen } from "lucide-react-native";
-import { BodyText, Heading2 } from "@/components/ui/Typography";
 import { ShootDateTimeCard } from "@/components/checkout/ShootDateTimeCard";
 import { AddressDetailsCard } from "@/components/checkout/AddressDetailsCard";
 import { CamocareCard } from "@/components/checkout/CamocareCard";
 import { ProductDetailsSection } from "@/components/checkout/ProductDetailsSection";
 import { CrewDetailsSection } from "@/components/checkout/CrewDetailsSection";
-import { hp, wp } from "@/utils/responsive";
+import { hp, wp, fp } from "@/utils/responsive";
+
+// local helpers replacing removed Typography imports
+const Heading2 = ({ color, children }: { color?: string; children: React.ReactNode }) => (
+  <Text fontSize={fp(15)} fontWeight="600" color={color ?? "#1C1C1E"}>{children}</Text>
+);
+const BodyText = ({ color, children }: { color?: string; children: React.ReactNode }) => (
+  <Text fontSize={fp(14)} fontWeight="400" color={color ?? "#1C1C1E"}>{children}</Text>
+);
+const Separator = ({ borderColor }: { borderColor?: string }) => (
+  <YStack height={1} backgroundColor={borderColor ?? "#E5E7EB"} />
+);
 
 interface PaymentDetailsProps {
   shootName?: string;
@@ -62,22 +72,36 @@ export function PaymentDetails({
       {/* Shoot Name */}
       {shootName && (
         <LinearGradient
-          colors={["#FFF9EB", "#FFFFFF"]}
-          locations={[0, 1]}
+          colors={["#FFFBF0", "#FFF8E7", "#FFFFFF"]}
+          locations={[0, 0.5, 1]}
           start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
+          end={{ x: 1, y: 1 }}
           style={{
-            borderRadius: 12,
+            borderRadius: 14,
             borderWidth: 1,
-            borderColor: "#FFDA85",
+            borderColor: "#FFE08A",
+            shadowColor: "#F59E0B",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            elevation: 2,
           }}
         >
-          <YStack padding={wp(16)} borderRadius={wp(12)} gap={hp(12)}>
+          <YStack padding={wp(16)} gap={hp(14)}>
             <XStack alignItems="center" gap={wp(8)}>
-              <Pen size={wp(18)} color="#6C6C70" strokeWidth={2} />
+              <XStack
+                width={32}
+                height={32}
+                borderRadius={8}
+                backgroundColor="rgba(245, 158, 11, 0.12)"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Pen size={15} color="#D97706" strokeWidth={2} />
+              </XStack>
               <Heading2 color="#1C1C1E">Shoot Name</Heading2>
             </XStack>
-            <Separator borderColor={"#FFDA85"} />
+            <Separator borderColor="rgba(255, 218, 133, 0.5)" />
             <BodyText color="#1C1C1E">{shootName}</BodyText>
           </YStack>
         </LinearGradient>

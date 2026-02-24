@@ -195,15 +195,12 @@ export function OTPInput({
     if (Platform.OS === "android") {
       RNOtpVerify.getHash()
         .then((hash) => {
-          console.log("SMS Hash:", hash);
         })
-        .catch((error) => console.log("Error getting hash:", error));
 
       RNOtpVerify.getOtp()
         .then(() => {
           RNOtpVerify.addListener(handleSmsReceived);
         })
-        .catch((error) => console.log("Error starting OTP listener:", error));
 
       return () => {
         RNOtpVerify.removeListener();
@@ -226,7 +223,6 @@ export function OTPInput({
 
       RNOtpVerify.removeListener();
     } catch (error) {
-      console.log("Error processing SMS:", error);
     }
   };
 

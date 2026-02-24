@@ -131,7 +131,7 @@ function ProductCardComponent({
         <Card
           width="100%"
           borderRadius={wp(12)}
-          backgroundColor="white"
+          backgroundColor="#F8F9FA"
           overflow="hidden"
           borderWidth={1}
           borderColor="#EBEBEF"
@@ -227,6 +227,8 @@ function ProductCardComponent({
             <YStack
               padding={wp(10)}
               paddingTop={hp(5)}
+              borderTopRightRadius={wp(20)}
+              borderTopLeftRadius={wp(20)}
               gap={hp(5)}
               backgroundColor="white"
             >

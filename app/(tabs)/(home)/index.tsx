@@ -4,7 +4,6 @@ import { Dimensions, Pressable, Animated, ScrollView as RNScrollView, NativeScro
 import { Redirect, router } from "expo-router";
 import { useAuthStore } from "@/store/auth/auth";
 import { CategoriesSection } from "@/components/home/CategoriesSection";
-import { DiscoverSection } from "@/components/home/DiscoverSection";
 import { ProductListSection } from "@/components/home/ProductListSection";
 import { OffersSection } from "@/components/home/OffersSection";
 import { Footer } from "@/components/home/Footer";
@@ -12,7 +11,6 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { HowDoIRollSection } from "@/components/home/HowDoIRollSection";
 import { BrandsSection } from "@/components/home/BrandsSection";
 import { ClientTestimonialsSection } from "@/components/home/ClientTestimonialsSection";
-import { AnimatedSection } from "@/components/ui/AnimatedSection";
 import { RentNowCards } from "@/components/home/RentNowCards";
 import { Image } from "expo-image";
 import { hp, wp, fp } from "@/utils/responsive";
@@ -20,7 +18,6 @@ import { UseGetAllProducts } from "@/hooks/product/useGetAllProducts";
 import { StickyCartButton } from "@/components/ui/StickyCartButton";
 import { ChevronDown, Search, Heart, ShoppingCart, Mic } from "lucide-react-native";
 import { useState, useEffect, useRef, useCallback, memo } from "react";
-import { TextInput } from "react-native";
 import { CitySelectionModal } from "@/components/city/CitySelectionModal";
 import { useWishlistCount } from "@/hooks/wishlist";
 import { useGetCart } from "@/hooks/cart/useGetCart";
@@ -29,52 +26,24 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 
 // Extracted carousel item — each item owns its own animation ref (fixes hooks-in-loop)
+// Hero images are 750×313 — maintain exact aspect ratio so nothing is cropped
+const HERO_ASPECT_RATIO = 313 / 750;
+
 const CarouselItem = memo(({ image, index, screenWidth }: {
   image: number;
   index: number;
   screenWidth: number;
 }) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = useCallback(() => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.96,
-      useNativeDriver: true,
-      friction: 8,
-      tension: 100,
-    }).start();
-  }, [scaleAnim]);
-
-  const handlePressOut = useCallback(() => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      friction: 8,
-      tension: 100,
-    }).start();
-  }, [scaleAnim]);
+  const itemHeight = screenWidth * HERO_ASPECT_RATIO;
 
   return (
-    <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-    >
-      <Animated.View
-        style={{
-          width: screenWidth,
-          height: 200,
-          overflow: "hidden",
-          transform: [{ scale: scaleAnim }],
-        }}
-      >
-        <Image
-          source={image}
-          contentFit="cover"
-          style={{ width: "100%", height: "100%" }}
-          transition={300}
-        />
-      </Animated.View>
-    </Pressable>
+    <View style={{ width: screenWidth, height: itemHeight }}>
+      <Image
+        source={image}
+        contentFit="contain"
+        style={{ width: "100%", height: "100%" }}
+      />
+    </View>
   );
 });
 
@@ -107,137 +76,60 @@ export default function Home() {
   const city = userPreferencesData?.preferred_city || "Gurugram";
   const cartItemCount = cart?.total_items || 0;
 
-  // Premium Continuous Typewriter Animation for Search Keywords
-  const SEARCH_KEYWORDS = ["cameras", "lights", "audio", "gimbals", "lenses"];
-  const [activeKeywordIndex, setActiveKeywordIndex] = useState(0);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [displayedText, setDisplayedText] = useState("");
-  const searchInputRef = useRef<TextInput>(null);
-  const animationStateRef = useRef<{
-    isTyping: boolean;
-    charIndex: number;
-    timeoutId: ReturnType<typeof setTimeout> | null;
-  }>({
-    isTyping: true,
-    charIndex: 0,
-    timeoutId: null,
-  });
-
-  // Continuous, elegant typewriter loop - Apple/Airbnb level
-  useEffect(() => {
-    if (isSearchFocused) {
-      // Pause animation when focused
-      if (animationStateRef.current.timeoutId) {
-        clearTimeout(animationStateRef.current.timeoutId);
-        animationStateRef.current.timeoutId = null;
-      }
-      return;
-    }
-
-    const currentKeyword = SEARCH_KEYWORDS[activeKeywordIndex];
-    const state = animationStateRef.current;
-
-    const runAnimation = () => {
-      if (state.isTyping) {
-        // TYPING PHASE
-        if (state.charIndex <= currentKeyword.length) {
-          setDisplayedText(currentKeyword.slice(0, state.charIndex));
-          state.charIndex++;
-          state.timeoutId = setTimeout(runAnimation, 60); // Calm 80ms per char
-        } else {
-          // Full word displayed - pause before erasing
-          state.timeoutId = setTimeout(() => {
-            state.isTyping = false;
-            state.charIndex = currentKeyword.length;
-            runAnimation();
-          }, 500); // 2s pause to read
-        }
-      } else {
-        // ERASING PHASE
-        if (state.charIndex > 0) {
-          state.charIndex--;
-          setDisplayedText(currentKeyword.slice(0, state.charIndex));
-          state.timeoutId = setTimeout(runAnimation, 50); // Faster erase 50ms
-        } else {
-          // Fully erased - brief pause, then next word
-          state.timeoutId = setTimeout(() => {
-            setActiveKeywordIndex((prev) => (prev + 1) % SEARCH_KEYWORDS.length);
-            state.isTyping = true;
-            state.charIndex = 0;
-          }, 400); // 400ms pause before next word
-        }
-      }
-    };
-
-    // Start the animation loop
-    runAnimation();
-
-    return () => {
-      if (state.timeoutId) {
-        clearTimeout(state.timeoutId);
-        state.timeoutId = null;
-      }
-    };
-  }, [activeKeywordIndex, isSearchFocused]);
-
   // Premium Carousel state with swipeable ScrollView
   const [activeSlide, setActiveSlide] = useState(0);
-  // Animated slide index for smooth gradient transitions (JS-side, reliable on Hermes)
-  const animatedSlideIndex = useRef(new Animated.Value(0)).current;
+  const { width: SCREEN_WIDTH } = Dimensions.get("window");
+  // scrollX drives all color transitions directly — no JS hop, perfectly in sync with finger
+  const scrollX = useRef(new Animated.Value(0)).current;
   const carouselRef = useRef<RNScrollView>(null);
   const autoScrollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [isUserInteracting, setIsUserInteracting] = useState(false);
-  const { width: SCREEN_WIDTH } = Dimensions.get("window");
+  const isUserInteracting = useRef(false);
 
   // Auto-scroll carousel with pause on user interaction
   useEffect(() => {
-    if (!isUserInteracting) {
-      autoScrollTimer.current = setInterval(() => {
+    autoScrollTimer.current = setInterval(() => {
+      if (!isUserInteracting.current) {
         setActiveSlide((prev) => {
-          const nextSlide = (prev + 1) % CAROUSEL_IMAGES.length;
-          carouselRef.current?.scrollTo({
-            x: nextSlide * SCREEN_WIDTH,
-            animated: true,
-          });
-          return nextSlide;
+          const next = (prev + 1) % CAROUSEL_IMAGES.length;
+          carouselRef.current?.scrollTo({ x: next * SCREEN_WIDTH, animated: true });
+          return next;
         });
-      }, 4000); // 4 seconds per slide
-    }
-
-    return () => {
-      if (autoScrollTimer.current) {
-        clearInterval(autoScrollTimer.current);
       }
+    }, 4000);
+    return () => {
+      if (autoScrollTimer.current) clearInterval(autoScrollTimer.current);
     };
-  }, [isUserInteracting, SCREEN_WIDTH]);
-
-  // Animate gradient smoothly whenever active slide changes
-  useEffect(() => {
-    Animated.timing(animatedSlideIndex, {
-      toValue: activeSlide,
-      duration: 350,
-      useNativeDriver: false,
-    }).start();
-  }, [activeSlide]);
-
-  // Update activeSlide (for dots + gradient) on every scroll event
-  const handleCarouselScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = event.nativeEvent.contentOffset.x;
-    const slideIndex = Math.round(x / SCREEN_WIDTH);
-    if (slideIndex >= 0 && slideIndex < CAROUSEL_IMAGES.length) {
-      setActiveSlide(slideIndex);
-    }
   }, [SCREEN_WIDTH]);
 
-  // Pause auto-scroll when user swipes
+  // scrollX → slide index (0-based float) for interpolation
+  const animatedSlideIndex = scrollX.interpolate({
+    inputRange: CAROUSEL_IMAGES.map((_, i) => i * SCREEN_WIDTH),
+    outputRange: CAROUSEL_IMAGES.map((_, i) => i),
+    extrapolate: "clamp",
+  });
+
+  // Driven directly by the ScrollView's scroll position — zero lag
+  const handleCarouselScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+    {
+      useNativeDriver: false,
+      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        const x = event.nativeEvent.contentOffset.x;
+        const slideIndex = Math.round(x / SCREEN_WIDTH);
+        if (slideIndex >= 0 && slideIndex < CAROUSEL_IMAGES.length) {
+          setActiveSlide(slideIndex);
+        }
+      },
+    }
+  );
+
   const handleScrollBeginDrag = useCallback(() => {
-    setIsUserInteracting(true);
+    isUserInteracting.current = true;
   }, []);
 
-  // Resume auto-scroll after 3 seconds of no interaction
   const handleScrollEndDrag = useCallback(() => {
     setTimeout(() => {
-      setIsUserInteracting(false);
+      isUserInteracting.current = false;
     }, 3000);
   }, []);
 
@@ -298,29 +190,17 @@ export default function Home() {
     router.push("/cart");
   }, []);
 
-  const handleDiscoverPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push("./categories");
-  }, []);
-
   const handleCloseCityModal = useCallback(() => setShowCityModal(false), []);
 
   const handleSearchFocus = useCallback(() => {
-    setIsSearchFocused(true);
     router.push("/search");
-  }, []);
-
-  const handleSearchBlur = useCallback(() => setIsSearchFocused(false), []);
-
-  const handleSearchPress = useCallback(() => {
-    searchInputRef.current?.focus();
   }, []);
 
   const handleDotPress = useCallback((index: number) => {
     setActiveSlide(index);
-    setIsUserInteracting(true);
+    isUserInteracting.current = true;
     carouselRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
-    setTimeout(() => setIsUserInteracting(false), 3000);
+    setTimeout(() => { isUserInteracting.current = false; }, 3000);
   }, [SCREEN_WIDTH]);
 
   if (!user) {
@@ -458,7 +338,7 @@ export default function Home() {
               paddingHorizontal={wp(16)}
               paddingBottom={hp(14)}
             >
-              <Pressable onPress={handleSearchPress} style={{ flex: 1 }}>
+              <Pressable onPress={handleSearchFocus} style={{ flex: 1 }}>
                 <XStack
                   flex={1}
                   paddingLeft={wp(14)}
@@ -471,19 +351,7 @@ export default function Home() {
                 >
                   <Search size={18} color="#8E0FFF" strokeWidth={2.2} />
                   <XStack flex={1} alignItems="center" height={20} marginLeft={wp(10)}>
-                    <TextInput
-                      ref={searchInputRef}
-                      placeholder=""
-                      onFocus={handleSearchFocus}
-                      onBlur={handleSearchBlur}
-                      style={{ flex: 1, fontSize: 14, color: "#1C1C1E", padding: 0, margin: 0 }}
-                      placeholderTextColor="#9CA3AF"
-                      editable={false}
-                      pointerEvents="none"
-                    />
-                    <XStack position="absolute" left={0} alignItems="baseline" pointerEvents="none">
-                      <Text fontSize={14} fontWeight="400" color="#9CA3AF">Search "Camera Gear"....</Text>
-                    </XStack>
+                    <Text fontSize={14} fontWeight="400" color="#9CA3AF">Search "Camera Gear"....</Text>
                   </XStack>
                   <YStack width={1} height={20} backgroundColor="#EBEBEF" marginHorizontal={wp(10)} />
                   <YStack paddingRight={wp(12)}>
@@ -590,74 +458,51 @@ export default function Home() {
           </XStack>
 
           {/* 1. Crafted for Creators — category grid */}
-          <AnimatedSection delay={100}>
-            <CategoriesSection onCategoryPress={handleCategories} />
-          </AnimatedSection>
+          <CategoriesSection onCategoryPress={handleCategories} />
 
           {/* 2. Deals of the day */}
-          <AnimatedSection delay={200}>
-            {isLoadingTopPicks ? (
-              <Spinner color="#8E0FFF" />
-            ) : (
-              <ProductListSection
-                title="Deals of the day"
-                products={topPicks?.data}
-                onViewAllPress={() => router.push("./selections")}
-                onProductPress={handleProductPress}
-              />
-            )}
-          </AnimatedSection>
-
-          {/* 3. Discover */}
-          {/* <AnimatedSection delay={250}>
-            <DiscoverSection onItemPress={handleDiscoverPress} />
-          </AnimatedSection> */}
+          {isLoadingTopPicks ? (
+            <Spinner color="#8E0FFF" />
+          ) : (
+            <ProductListSection
+              title="Deals of the day"
+              products={topPicks?.data}
+              onViewAllPress={() => router.push("./selections")}
+              onProductPress={handleProductPress}
+            />
+          )}
 
           {/* 4. Our clients + testimonials */}
-          <AnimatedSection delay={300}>
-            <ClientTestimonialsSection />
-          </AnimatedSection>
+          <ClientTestimonialsSection />
 
           {/* 5. Search by Brands (3-col grid + projects delivered) */}
-          <AnimatedSection delay={350}>
-            <BrandsSection
-              onBrandPress={handleBrandPress}
-              onViewAllPress={handleViewAllBrands}
-            />
-          </AnimatedSection>
+          <BrandsSection
+            onBrandPress={handleBrandPress}
+            onViewAllPress={handleViewAllBrands}
+          />
 
           {/* 6. Offers — purple 25%-off banner + offer cards */}
-          <AnimatedSection delay={400}>
-            <OffersSection onViewAllPress={() => router.push("./offers")} />
-          </AnimatedSection>
+          <OffersSection onViewAllPress={() => router.push("./offers")} />
 
           {/* 7. DOP's First Choice */}
-          <AnimatedSection delay={460}>
-            {isLoadingDop ? (
-              <Spinner color="#8E0FFF" />
-            ) : (
-              <ProductListSection
-                title="DOP's First Choice"
-                products={dop?.data}
-                onViewAllPress={() => router.push("./selections")}
-                onProductPress={handleProductPress}
-              />
-            )}
-          </AnimatedSection>
+          {isLoadingDop ? (
+            <Spinner color="#8E0FFF" />
+          ) : (
+            <ProductListSection
+              title="DOP's First Choice"
+              products={dop?.data}
+              onViewAllPress={() => router.push("./selections")}
+              onProductPress={handleProductPress}
+            />
+          )}
 
           {/* 9. Rent Now cards */}
-          <AnimatedSection delay={500}>
-            <RentNowCards />
-          </AnimatedSection>
+          <RentNowCards />
 
           {/* 10. How Do I Roll */}
-          <AnimatedSection delay={530}>
-            <HowDoIRollSection />
-          </AnimatedSection>
+          <HowDoIRollSection />
 
-          <AnimatedSection delay={560}>
-            <Footer />
-          </AnimatedSection>
+          <Footer />
         </YStack>
       </RNScrollView>
       <StickyCartButton />

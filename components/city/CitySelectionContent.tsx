@@ -1,16 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { XStack, YStack, Stack, Text, Spinner } from "tamagui";
-import { Heading2, BodyText } from "@/components/ui/Typography";
+import { XStack, YStack, Text, Spinner } from "tamagui";
 import { useAuthStore } from "@/store/auth/auth";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  Animated,
-  ScrollView,
-} from "react-native";
+import { Animated, Pressable, ScrollView, StyleSheet } from "react-native";
 import { wp, hp, fp } from "@/utils/responsive";
 import { CITIES } from "@/constants/cities";
 import { CityCard } from "@/components/ui/CityCard";
@@ -40,36 +32,29 @@ export function CitySelectionContent({
 
   const updateCityMutation = useUpdateCityMutation();
 
-  // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerAnim = useRef(new Animated.Value(0)).current;
   const buttonAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Staggered entrance animations
-    Animated.sequence([
-      Animated.spring(headerAnim, {
+    Animated.parallel([
+      Animated.timing(headerAnim, {
         toValue: 1,
-        friction: 8,
-        tension: 40,
+        duration: 220,
         useNativeDriver: true,
       }),
-      Animated.spring(fadeAnim, {
+      Animated.timing(fadeAnim, {
         toValue: 1,
-        friction: 8,
-        tension: 40,
-        delay: 100,
+        duration: 260,
         useNativeDriver: true,
       }),
     ]).start();
   }, []);
 
   useEffect(() => {
-    // Button appears when city is selected
-    Animated.spring(buttonAnim, {
+    Animated.timing(buttonAnim, {
       toValue: selectedCity ? 1 : 0,
-      friction: 8,
-      tension: 40,
+      duration: 150,
       useNativeDriver: true,
     }).start();
   }, [selectedCity]);
@@ -87,14 +72,13 @@ export function CitySelectionContent({
   const handleCitySelect = (cityName: string, isDisabled?: boolean) => {
     if (isDisabled) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    updateCityMutation.mutate({ preferred_city: cityName });
     setSelectedCity(cityName);
 
-    // For 'change' mode, immediately apply the selection
     if (mode === "change") {
+      updateCityMutation.mutate({ preferred_city: cityName });
       setCity(cityName);
       onCitySelect?.(cityName);
-      onClose?.();
+      requestAnimationFrame(() => onClose?.());
     }
   };
 
@@ -106,7 +90,7 @@ export function CitySelectionContent({
 
   const headerTranslateY = headerAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-20, 0],
+    outputRange: [-16, 0],
   });
 
   const gridOpacity = fadeAnim.interpolate({
@@ -116,128 +100,160 @@ export function CitySelectionContent({
 
   const gridTranslateY = fadeAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [20, 0],
-  });
-
-  const buttonTranslateY = buttonAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [20, 0],
+    outputRange: [16, 0],
   });
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <YStack padding={wp(16)} flex={1}>
-          {/* Header */}
+    <YStack flex={1} backgroundColor="#F2F2F7">
+      {/* Header */}
+      <Animated.View
+        style={{
+          opacity: headerAnim,
+          transform: [{ translateY: headerTranslateY }],
+        }}
+      >
+        <YStack
+          backgroundColor="#FFFFFF"
+          paddingHorizontal={wp(20)}
+          paddingTop={hp(20)}
+          paddingBottom={hp(16)}
+          style={styles.headerCard}
+        >
+          <XStack justifyContent="space-between" alignItems="flex-start">
+            <XStack alignItems="center" gap={wp(10)} flex={1}>
+              <YStack style={styles.mapPinCircle}>
+                <MapPin size={hp(18)} color="#8E0FFF" strokeWidth={2.2} />
+              </YStack>
+              <YStack gap={hp(3)} flex={1}>
+                <Text fontSize={fp(18)} fontWeight="700" color="#1C1C1E" letterSpacing={-0.3}>
+                  {title || "Select Your City"}
+                </Text>
+                <Text fontSize={fp(13)} color="#8E8E93" fontWeight="400">
+                  Choose your city to see available gear
+                </Text>
+              </YStack>
+            </XStack>
+
+            {showCloseButton && (
+              <Pressable onPress={handleClose} hitSlop={8} style={styles.closeBtn}>
+                <X size={hp(16)} color="#3C3C43" strokeWidth={2.5} />
+              </Pressable>
+            )}
+          </XStack>
+        </YStack>
+      </Animated.View>
+
+      {/* Section label */}
+      <Animated.View
+        style={{
+          opacity: gridOpacity,
+          transform: [{ translateY: gridTranslateY }],
+        }}
+      >
+        <Text style={styles.sectionLabel}>AVAILABLE CITIES</Text>
+      </Animated.View>
+
+      {/* Cities Grid */}
+      <YStack flex={1}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: wp(16), paddingBottom: hp(24) }}
+        >
           <Animated.View
             style={{
-              opacity: headerAnim,
-              transform: [{ translateY: headerTranslateY }],
+              opacity: gridOpacity,
+              transform: [{ translateY: gridTranslateY }],
             }}
           >
-            <XStack
-              justifyContent="space-between"
-              alignItems="center"
-              marginBottom={hp(24)}
-            >
-              <YStack gap={hp(8)} flex={1}>
-                <XStack alignItems="center" gap={wp(8)}>
-                  <MapPin size={hp(24)} color="#8E0FFF" strokeWidth={2} />
-                  <Heading2 lineHeight={hp(28)}>{title || "Select Your City"}</Heading2>
-                </XStack>
-                <BodyText color="#6C6C89" fontSize={fp(14)}>
-                  Choose your preferred city to see relevant equipment
-                </BodyText>
-              </YStack>
-              {showCloseButton && (
-                <Stack
-                  padding={wp(8)}
-                  borderRadius={wp(20)}
-                  backgroundColor="#F5F5F5"
-                  pressStyle={{ opacity: 0.7, scale: 0.95 }}
-                  onPress={handleClose}
-                  cursor="pointer"
-                >
-                  <X size={hp(20)} color="#666" />
-                </Stack>
-              )}
+            <XStack flexWrap="wrap" gap={wp(12)} justifyContent="space-between">
+              {CITIES.map((city) => {
+                const isDisabled = city.id !== "delhi";
+                return (
+                  <CityCard
+                    key={city.id}
+                    name={city.name}
+                    image={city.image}
+                    isSelected={
+                      selectedCity === city.name ||
+                      (mode === "change" &&
+                        !selectedCity &&
+                        currentCity === city.name)
+                    }
+                    onPress={() => handleCitySelect(city.name, isDisabled)}
+                    disabled={isDisabled}
+                  />
+                );
+              })}
             </XStack>
           </Animated.View>
+        </ScrollView>
+      </YStack>
 
-          {/* Cities Grid */}
-          <YStack flex={1}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{
-                paddingBottom: hp(20),
-              }}
-            >
-            <Animated.View
-              style={{
-                opacity: gridOpacity,
-                transform: [{ translateY: gridTranslateY }],
-              }}
-            >
-              <XStack flexWrap="wrap" gap={wp(12)} justifyContent="space-between">
-                {CITIES.map((city) => {
-                  const isDisabled = city.id !== "delhi";
-                  return (
-                    <CityCard
-                      key={city.id}
-                      name={city.name}
-                      image={city.image}
-                      isSelected={
-                        selectedCity === city.name ||
-                        (mode === "change" &&
-                          !selectedCity &&
-                          currentCity === city.name)
-                      }
-                      onPress={() => handleCitySelect(city.name, isDisabled)}
-                      disabled={isDisabled}
-                    />
-                  );
-                })}
-              </XStack>
-            </Animated.View>
-            </ScrollView>
-          </YStack>
-
-          {/* Continue Button */}
-          {showContinueButton && (
-            <Animated.View
-              style={{
-                opacity: buttonAnim,
-                transform: [{ translateY: buttonTranslateY }],
-              }}
-            >
-              <XStack paddingTop={hp(16)}>
-                <Button
-                  size="lg"
-                  width="100%"
-                  onPress={handleContinue}
-                  backgroundColor="#8E0FFF"
-                  disabled={!selectedCity || updateCityMutation.isPending}
-                  opacity={!selectedCity || updateCityMutation.isPending ? 0.5 : 1}
-                >
-                  <XStack alignItems="center" gap={wp(8)}>
-                    {updateCityMutation.isPending ? (
-                      <Spinner color="white" size="small" />
-                    ) : (
-                      <Text fontSize={fp(16)} fontWeight="600" color="#FFF">
-                        Continue to Camorent
-                      </Text>
-                    )}
-                  </XStack>
-                </Button>
-              </XStack>
-            </Animated.View>
-          )}
-        </YStack>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+      {/* Continue Button */}
+      {showContinueButton && (
+        <Animated.View style={[styles.continueBar, { opacity: buttonAnim }]}>
+          <Button
+            size="lg"
+            width="100%"
+            onPress={handleContinue}
+            disabled={!selectedCity || updateCityMutation.isPending}
+            opacity={!selectedCity || updateCityMutation.isPending ? 0.5 : 1}
+          >
+            <XStack alignItems="center" justifyContent="center" height={hp(24)}>
+              {updateCityMutation.isPending ? (
+                <Spinner color="white" size="small" />
+              ) : (
+                <Text fontSize={fp(16)} fontWeight="600" color="#FFF">
+                  Continue to Camorent
+                </Text>
+              )}
+            </XStack>
+          </Button>
+        </Animated.View>
+      )}
+    </YStack>
   );
 }
+
+const styles = StyleSheet.create({
+  headerCard: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  mapPinCircle: {
+    width: wp(38),
+    height: wp(38),
+    borderRadius: wp(19),
+    backgroundColor: "#F5EEFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  closeBtn: {
+    width: wp(32),
+    height: wp(32),
+    borderRadius: wp(16),
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sectionLabel: {
+    fontSize: fp(13),
+    fontWeight: "600",
+    color: "#8E8E93",
+    letterSpacing: 0.4,
+    paddingHorizontal: wp(20),
+    paddingTop: hp(20),
+    paddingBottom: hp(10),
+  },
+  continueBar: {
+    paddingHorizontal: wp(16),
+    paddingTop: hp(12),
+    paddingBottom: hp(16),
+    borderTopWidth: 1,
+    borderTopColor: "#F2F2F7",
+    backgroundColor: "#FFFFFF",
+  },
+});

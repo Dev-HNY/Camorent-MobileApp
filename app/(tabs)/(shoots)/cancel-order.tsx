@@ -28,11 +28,6 @@ export default function CancelOrderScreen() {
     if (!selectedReason) return;
 
     // TODO: Submit cancellation request to backend
-    console.log({
-      reason: selectedReason,
-      additionalDetails,
-      refundMethod,
-    });
     router.back();
   };
 
@@ -59,7 +54,7 @@ export default function CancelOrderScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-        <ScrollView flex={1} paddingHorizontal="$4" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: tabBarHeight + hp(24) }}>
+        <ScrollView flex={1} paddingHorizontal="$4" keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: tabBarHeight + hp(60) }}>
           <YStack gap="$4" paddingBottom="$6" paddingTop="$4">
             <XStack
               backgroundColor="#fef3c7"

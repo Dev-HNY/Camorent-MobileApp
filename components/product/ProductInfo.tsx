@@ -77,7 +77,6 @@ export function ProductInfo({ product }: ProductInfoProps) {
         message: `Check out ${product?.name} on Camorent!`,
       });
     } catch (error) {
-      console.log('Error sharing:', error);
     }
   };
 
@@ -300,11 +299,16 @@ export function ProductInfo({ product }: ProductInfoProps) {
                     width={wp(72)}
                     height={hp(72)}
                     borderRadius={wp(10)}
-                    borderWidth={isActive ? 2 : 1}
-                    borderColor={isActive ? "#121217" : "#E5E7EB"}
+                    borderWidth={isActive ? 2 : 0}
+                    borderColor={isActive ? "#1C1C1E" : "transparent"}
                     justifyContent="center"
                     alignItems="center"
-                    backgroundColor="#FFFFFF"
+                    backgroundColor="#F8F8FA"
+                    shadowColor="#000"
+                    shadowOffset={{ width: 0, height: 1 }}
+                    shadowOpacity={isActive ? 0 : 0.04}
+                    shadowRadius={3}
+                    elevation={isActive ? 0 : 1}
                   >
                     <Image
                       source={{ uri: image }}
@@ -444,17 +448,24 @@ export function ProductInfo({ product }: ProductInfoProps) {
             </YStack>
           )}
 
-          {/* Need Help Section */}
-          <XStack gap={wp(6)} flexWrap="wrap" alignItems="center">
-            <Link href="mailto:support@camorent.co.in">
+          {/* Need Help pill */}
+          <Link href="mailto:support@camorent.co.in">
+            <XStack
+              backgroundColor="#F5EEFF"
+              paddingHorizontal={wp(14)}
+              paddingVertical={hp(10)}
+              borderRadius={wp(12)}
+              alignItems="center"
+              gap={wp(6)}
+            >
               <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">
                 Need help?
               </Text>
-            </Link>
-            <Text fontSize={fp(13)} fontWeight="400" color="#6B7280">
-              Talk to our equipment specialist
-            </Text>
-          </XStack>
+              <Text fontSize={fp(13)} fontWeight="400" color="#8E0FFF" opacity={0.7}>
+                Talk to our equipment specialist →
+              </Text>
+            </XStack>
+          </Link>
 
           {/* Divider - Gradient Line */}
           <LinearGradient

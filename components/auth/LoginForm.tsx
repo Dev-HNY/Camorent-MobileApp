@@ -81,7 +81,6 @@ export function LoginForm() {
           }
         },
         onError: (error: any) => {
-          console.log("Login error:", error.response?.data || error.message);
         },
       }
     );

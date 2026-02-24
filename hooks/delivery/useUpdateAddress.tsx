@@ -21,7 +21,6 @@ export const useUpdateAddress = () => {
         `/users/me/addresses/${address_id}`,
         addressData
       );
-      console.log("Update address response:");
       return res.data;
     },
   });

@@ -68,9 +68,6 @@ export default function ExtendRentalScreen() {
     if (selectedDays === null) return;
 
     // TODO: Submit extension request to backend
-    console.log({
-      extensionDays: selectedDays,
-    });
     router.back();
   };
 
@@ -114,7 +111,7 @@ export default function ExtendRentalScreen() {
         <ScrollView
           flex={1}
           contentContainerStyle={{
-            paddingBottom: tabBarHeight + hp(24),
+            paddingBottom: tabBarHeight + hp(60),
           }}
         >
           <YStack gap={hp(16)} padding={wp(16)}>

@@ -1,18 +1,14 @@
-import React, { useEffect, useRef } from "react";
-import { YStack, Text, Button } from "tamagui";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import React, { useEffect } from "react";
+import { YStack, XStack, Text } from "tamagui";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 import { SuccessIcon } from "@/components/payment/SuccessIcon";
-import { ArrowRight } from "lucide-react-native";
 import { BottomSheetButton } from "@/components/ui/BottomSheetButton";
-import { hp } from "@/utils/responsive";
-import { BodySmall, BodyText, Heading2 } from "@/components/ui/Typography";
+import { hp, wp, fp } from "@/utils/responsive";
+import { BodySmall, BodyText } from "@/components/ui/Typography";
 import { BackHandler } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown, FadeIn, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, ZoomIn } from "react-native-reanimated";
 
 export default function PaymentSuccessScreen() {
   const insets = useSafeAreaInsets();
@@ -21,86 +17,95 @@ export default function PaymentSuccessScreen() {
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
-      () => {
-        return true; // Prevent back navigation
-      }
+      () => true
     );
-
     return () => backHandler.remove();
   }, []);
-  // const payment_id = "hii";
-  // const booking_id = "byy";
-  const handleTrackDetails = () => {
-    router.push("/(tabs)/(shoots)");
+
+  const handleGoToShoots = () => {
+    router.replace("/(tabs)/(shoots)");
   };
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F9F7FF" }}>
       <LinearGradient
-        colors={[
-          'rgba(142, 15, 255, 0.03)',
-          'rgba(255, 255, 255, 1)',
-          'rgba(142, 15, 255, 0.02)',
-        ]}
+        colors={["#EDE0FF", "#F9F7FF", "#FFFFFF"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={{ flex: 1 }}
       >
         <YStack
           flex={1}
           alignItems="center"
           justifyContent="center"
-          padding="$4"
-          paddingBottom={insets.bottom + 40}
-          gap="$6"
+          paddingHorizontal={wp(24)}
+          paddingBottom={insets.bottom + hp(60)}
+          gap={hp(32)}
         >
-          {/* Success Icon with zoom animation */}
+          {/* Success icon */}
           <Animated.View entering={ZoomIn.duration(500).springify().damping(12)}>
-            <YStack alignItems="center" gap="$4">
-              <SuccessIcon />
-            </YStack>
+            <SuccessIcon />
           </Animated.View>
 
-          {/* Text content with fade-in animation */}
+          {/* Text content */}
           <Animated.View
             entering={FadeInDown.delay(200).duration(400).springify().damping(15)}
+            style={{ width: "100%", alignItems: "center" }}
           >
-            <YStack alignItems="center" gap="$3">
-              <Heading2>Order successful</Heading2>
-              <BodyText maxWidth={"60%"} textAlign="center" color={"#6C6C89"}>
-                Thank you for patronizing us today. We value you!
+            <YStack alignItems="center" gap={hp(10)}>
+              <Text
+                fontSize={fp(24)}
+                fontWeight="700"
+                color="#121217"
+                textAlign="center"
+              >
+                Payment Successful!
+              </Text>
+              <BodyText textAlign="center" color="#6C6C89">
+                Your booking is confirmed.{"\n"}We're getting your gear ready.
               </BodyText>
 
-              {/* Verification Details */}
+              {/* Booking / Payment ID card */}
               {(booking_id || payment_id) && (
                 <YStack
-                  gap="$2"
-                  marginTop="$3"
-                  padding="$3"
-                  backgroundColor="$gray2"
-                  borderRadius="$2"
+                  marginTop={hp(8)}
+                  paddingVertical={hp(12)}
+                  paddingHorizontal={wp(16)}
+                  backgroundColor="white"
+                  borderRadius={wp(12)}
+                  borderWidth={1}
+                  borderColor="#E8E0FF"
                   width="100%"
+                  gap={hp(8)}
                 >
                   {booking_id && (
-                    <Text fontSize="$3" color="$color" opacity={0.7}>
-                      Booking ID: {booking_id}
-                    </Text>
+                    <XStack justifyContent="space-between" alignItems="center">
+                      <BodySmall color="#6C6C89">Booking ID</BodySmall>
+                      <BodySmall color="#121217" fontWeight="600">
+                        {String(booking_id)}
+                      </BodySmall>
+                    </XStack>
                   )}
                   {payment_id && (
-                    <Text fontSize="$3" color="$color" opacity={0.7}>
-                      Payment ID: {payment_id}
-                    </Text>
+                    <XStack justifyContent="space-between" alignItems="center">
+                      <BodySmall color="#6C6C89">Payment ID</BodySmall>
+                      <BodySmall color="#121217" fontWeight="600">
+                        {String(payment_id)}
+                      </BodySmall>
+                    </XStack>
                   )}
                 </YStack>
               )}
             </YStack>
           </Animated.View>
 
-          {/* Track Details Button with slide-up animation */}
+          {/* CTA */}
           <Animated.View
             entering={FadeInDown.delay(400).duration(500).springify().damping(15)}
-            style={{ width: '100%', maxWidth: '80%', marginTop: hp(32) }}
+            style={{ width: "100%" }}
           >
-            <BottomSheetButton size="md" onPress={handleTrackDetails}>
-              <BodySmall color={"white"}>Track Details</BodySmall>
-              {/* <ArrowRight color={"white"} /> */}
+            <BottomSheetButton size="lg" onPress={handleGoToShoots}>
+              View My Shoots
             </BottomSheetButton>
           </Animated.View>
         </YStack>

@@ -53,10 +53,6 @@ export default function RescheduleScreen() {
 
   const handleReschedule = () => {
     // TODO: Submit reschedule request to backend
-    console.log({
-      startDate: selectedDateRange.startDate,
-      endDate: selectedDateRange.endDate,
-    });
     router.back();
   };
 
@@ -95,7 +91,7 @@ export default function RescheduleScreen() {
         <ScrollView
           flex={1}
           contentContainerStyle={{
-            paddingBottom: tabBarHeight + hp(24),
+            paddingBottom: tabBarHeight + hp(60),
           }}
         >
           <YStack gap={hp(16)} padding={wp(16)}>

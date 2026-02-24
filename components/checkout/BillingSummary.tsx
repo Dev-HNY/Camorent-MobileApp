@@ -1,9 +1,8 @@
 import React from "react";
 import { YStack, XStack, Text } from "tamagui";
 import { Pressable } from "react-native";
-import { Heading2 } from "@/components/ui/Typography";
 import { RentCostBreakdown } from "@/components/checkout/RentCostBreakdown";
-import { hp, fp } from "@/utils/responsive";
+import { hp, fp, wp } from "@/utils/responsive";
 
 interface BillingSummaryProps {
   itemTotal: number;
@@ -40,18 +39,19 @@ export function BillingSummary({
   const canDownload = hasInvoice && !isLoadingInvoice && invoiceUrl;
 
   return (
-    <YStack gap={hp(8)}>
-      <XStack alignItems="center" justifyContent="space-between">
-        <Heading2>Bill Details</Heading2>
+    <YStack gap={hp(10)}>
+      <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={wp(4)}>
+        <Text fontSize={fp(13)} fontWeight="600" color="#8E8E93" letterSpacing={0.4}>
+          BILL DETAILS
+        </Text>
         {hasInvoice && (
-          <Pressable onPress={onDownloadInvoice} disabled={!canDownload}>
+          <Pressable onPress={onDownloadInvoice} disabled={!canDownload} hitSlop={8}>
             <Text
-              fontSize={fp(12)}
-              lineHeight={hp(16)}
-              fontWeight="500"
-              color={canDownload ? "#6D00DA" : "#B8B8C7"}
+              fontSize={fp(13)}
+              fontWeight="600"
+              color={canDownload ? "#8E0FFF" : "#C7C7CC"}
             >
-              {isLoadingInvoice ? "Loading..." : "Download Invoice"}
+              {isLoadingInvoice ? "Loading..." : "Invoice"}
             </Text>
           </Pressable>
         )}

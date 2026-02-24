@@ -9,7 +9,6 @@ export const useDeleteReviewsMutation = () => {
   return useMutation({
     mutationFn: async ({ review_id }: DeleteReviewProps) => {
       const res = await apiClient.delete(`/reviews/${review_id}`);
-      console.log(res.data);
       return res.data;
     },
   });

@@ -26,7 +26,6 @@ export const useUpdateBookingDelivery = () => {
       return res.data;
     },
     onError: (err) => {
-      console.error(err.message);
     },
   });
 };

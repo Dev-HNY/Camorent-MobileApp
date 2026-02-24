@@ -73,14 +73,11 @@ export function CityCard({ name, image, isSelected, onPress, disabled }: CityCar
         <Animated.View
           style={[
             styles.cardContainer,
-            {
-              borderWidth: isSelected ? 2 : 0,
-              borderColor: "#8E0FFF",
-              opacity: disabled ? 0.6 : 1,
-            },
+            isSelected && styles.cardSelected,
+            { opacity: disabled ? 0.6 : 1 },
           ]}
         >
-          <ImageBackground source={image} style={styles.imageBackground} resizeMode="contain">
+          <ImageBackground source={image} style={styles.imageBackground} resizeMode="cover">
             {/* Coming Soon Overlay for disabled cities */}
             {disabled && (
               <YStack
@@ -170,6 +167,13 @@ const styles = StyleSheet.create({
     borderRadius: wp(12),
     overflow: "hidden",
     backgroundColor: "transparent",
+  },
+  cardSelected: {
+    shadowColor: "#8E0FFF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.55,
+    shadowRadius: 10,
+    elevation: 8,
   },
   imageBackground: {
     flex: 1,

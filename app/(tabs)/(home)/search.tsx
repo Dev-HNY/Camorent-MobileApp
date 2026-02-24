@@ -1,70 +1,70 @@
 import { useState, useEffect, useRef } from "react";
-import { TextInput, Keyboard, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { TextInput, Keyboard, Platform, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { YStack, XStack, Text, ScrollView, Button, Stack } from "tamagui";
-import {
-  Search,
-  ArrowLeft,
-  X,
-  ArrowRight,
-  ChevronRight,
-} from "lucide-react-native";
+import { YStack, XStack, Text, ScrollView } from "tamagui";
+import { Search, X, ChevronRight, TrendingUp } from "lucide-react-native";
 import { UseGetAllProducts } from "@/hooks/product/useGetAllProducts";
-import { SearchSKUResult, SKU } from "@/types/products/product";
+import { SKU } from "@/types/products/product";
 import { Image } from "expo-image";
-import { wp } from "@/utils/responsive";
-import { BodySmall, BodyText } from "@/components/ui/Typography";
-import Animated, { FadeInDown, FadeIn, FadeOut } from "react-native-reanimated";
+import { wp, hp, fp } from "@/utils/responsive";
 import * as Haptics from "expo-haptics";
-import { DURATION } from "@/components/animations/constants";
-import { LinearGradient } from "expo-linear-gradient";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { KeyboardAvoidingView } from "react-native";
 
-export default function SearchModal() {
-  const tabBarHeight = useBottomTabBarHeight();
+const TRENDING_SEARCHES = [
+  "Sony FX3",
+  "DJI Ronin",
+  "Aputure 600d",
+  "Canon C70",
+  "Gimbal",
+  "Drone",
+];
+
+export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SKU[]>([]);
 
   const { data: products } = UseGetAllProducts({ is_active: true, limit: 100 });
   const inputRef = useRef<TextInput>(null);
 
-  // Auto-focus when modal opens
   useEffect(() => {
-    const timer = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 100);
+    const timer = setTimeout(() => inputRef.current?.focus(), 100);
     return () => clearTimeout(timer);
   }, []);
 
-  // Search products with debouncing
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim()) {
-        searchProducts(searchQuery);
+        const filtered =
+          products?.data.filter(
+            (p: SKU) =>
+              p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              p.brand.toLowerCase().includes(searchQuery.toLowerCase())
+          ) ?? [];
+        setSearchResults(filtered.slice(0, 12));
       } else {
         setSearchResults([]);
       }
-    }, 300);
-
+    }, 250);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, products]);
 
-  const searchProducts = (query: string) => {
-    const filtered =
-      products?.data.filter(
-        (product: SKU) =>
-          product.name.toLowerCase().includes(query.toLowerCase()) ||
-          product.brand.toLowerCase().includes(query.toLowerCase())
-      ) ?? [];
-    setSearchResults(filtered?.slice(0, 10));
+  const handleProductPress = (product: SKU) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Keyboard.dismiss();
+    router.back();
+    router.push(`/product/${product.id}`);
   };
 
-  const handleSearch = (query: string) => {
-    if (query.trim()) {
-      router.back();
-      // You can implement search result navigation here
-    }
+  const handleTrendingPress = (query: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSearchQuery(query);
+  };
+
+  const handleClose = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Keyboard.dismiss();
+    router.back();
   };
 
   const clearSearch = () => {
@@ -73,170 +73,285 @@ export default function SearchModal() {
     inputRef.current?.focus();
   };
 
-  const handleClose = () => {
-    Keyboard.dismiss();
-    router.back();
-  };
-
-  const handleQuickSearch = (query: string) => {
-    setSearchQuery(query);
-    handleSearch(query);
-  };
+  const showResults = searchQuery.trim().length > 0;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF" }}>
-      <LinearGradient
-        colors={['rgba(142, 15, 255, 0.02)', 'rgba(255, 255, 255, 1)']}
-        style={{ flex: 1 }}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
+      {/* Search Bar */}
+      <XStack
+        alignItems="center"
+        gap={wp(10)}
+        paddingHorizontal={wp(16)}
+        paddingTop={hp(8)}
+        paddingBottom={hp(12)}
+        backgroundColor="#F2F2F7"
       >
-        <YStack flex={1}>
-        {/* Header */}
         <XStack
-          paddingHorizontal="$4"
-          paddingVertical="$3"
+          flex={1}
           alignItems="center"
-          gap="$3"
-          borderBottomWidth={1}
-          borderBottomColor="$gray5"
+          backgroundColor="#FFFFFF"
+          borderRadius={12}
+          paddingHorizontal={wp(12)}
+          height={hp(44)}
+          gap={wp(8)}
+          style={{
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.06,
+            shadowRadius: 4,
+            elevation: 2,
+          }}
         >
-          <XStack
-            borderRadius={28}
-            borderWidth={1}
-            padding={"$2"}
-            borderColor={"$gray7"}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={18} />
-          </XStack>
-
-          <XStack flex={1} position="relative" alignItems="center">
-            <TextInput
-              ref={inputRef}
-              style={styles.searchInput}
-              placeholder="Search products, categories..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={() => handleSearch(searchQuery)}
-              returnKeyType="search"
-              placeholderTextColor="#999"
-              autoFocus={true}
-            />
-            <Search
-              size={20}
-              color="#666"
-              style={{
-                position: "absolute",
-                left: 16,
-                zIndex: 1,
-              }}
-            />
-            {searchQuery.length > 0 && (
-              <Stack
-                position="absolute"
-                right="$2"
-                padding="$2"
-                pressStyle={{ opacity: 0.6 }}
-                cursor="pointer"
-                onPress={clearSearch}
+          <Search size={18} color="#8E0FFF" strokeWidth={2.2} />
+          <TextInput
+            ref={inputRef}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search cameras, lenses, lights..."
+            placeholderTextColor="#9CA3AF"
+            returnKeyType="search"
+            autoFocus
+            style={{
+              flex: 1,
+              fontSize: fp(15),
+              color: "#1C1C1E",
+              padding: 0,
+              margin: 0,
+              height: hp(44),
+            }}
+          />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={clearSearch} hitSlop={8}>
+              <XStack
+                width={20}
+                height={20}
+                borderRadius={10}
+                backgroundColor="#C7C7CC"
+                alignItems="center"
+                justifyContent="center"
               >
-                <X size={20} color="#666" />
-              </Stack>
-            )}
-          </XStack>
+                <X size={12} color="#FFFFFF" strokeWidth={2.5} />
+              </XStack>
+            </Pressable>
+          )}
         </XStack>
 
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
+        <Pressable onPress={handleClose} hitSlop={8}>
+          <Text fontSize={fp(16)} fontWeight="500" color="#8E0FFF">
+            Cancel
+          </Text>
+        </Pressable>
+      </XStack>
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <ScrollView
           flex={1}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
+          contentContainerStyle={{ paddingBottom: hp(40) }}
         >
           {/* Search Results */}
-          {searchQuery.trim() && searchResults.length > 0 && (
-            <YStack padding="$4" gap="$2">
-              {/* <Text fontSize="$5" fontWeight="600" marginBottom="$2">
-                Products
-              </Text> */}
+          {showResults && searchResults.length > 0 && (
+            <YStack
+              backgroundColor="#FFFFFF"
+              marginHorizontal={wp(16)}
+              marginTop={hp(4)}
+              borderRadius={14}
+              overflow="hidden"
+              style={{
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+            >
               {searchResults.map((product, index) => (
-                <XStack
+                <Pressable
                   key={product.sku_id}
-                  padding="$3"
-                  alignItems="center"
-                  gap="$3"
-                  backgroundColor={"$blue4"}
-                  borderRadius={wp(12)}
-                  onPress={() => {
-                    handleSearch(product.name);
-                    router.push(`/product/${product.id}`);
-                  }}
+                  onPress={() => handleProductPress(product)}
+                  style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
                 >
-                  <XStack gap={wp(12)} alignItems="center">
-                    <XStack justifyContent="center" alignItems="center">
+                  <XStack
+                    alignItems="center"
+                    gap={wp(12)}
+                    paddingHorizontal={wp(14)}
+                    paddingVertical={hp(10)}
+                    borderTopWidth={index === 0 ? 0 : 1}
+                    borderTopColor="#F2F2F7"
+                  >
+                    {/* Product thumbnail */}
+                    <XStack
+                      width={hp(48)}
+                      height={hp(48)}
+                      borderRadius={10}
+                      backgroundColor="#F8F8FA"
+                      alignItems="center"
+                      justifyContent="center"
+                      overflow="hidden"
+                    >
                       <Image
                         source={{ uri: product.primary_image_url }}
-                        contentFit="cover"
-                        transition={300}
-                        style={{
-                          width: 60,
-                          height: 60,
-                          borderRadius: 8,
-                        }}
+                        contentFit="contain"
+                        style={{ width: hp(44), height: hp(44) }}
                       />
                     </XStack>
-                    <YStack flex={1}>
-                      <BodySmall color={"#121217"} numberOfLines={1}>
+
+                    {/* Text */}
+                    <YStack flex={1} gap={hp(2)}>
+                      <Text
+                        fontSize={fp(14)}
+                        fontWeight="500"
+                        color="#1C1C1E"
+                        numberOfLines={1}
+                      >
                         {product.name}
-                      </BodySmall>
-                      <Text fontSize="$3" color="$gray9" numberOfLines={1}>
-                        in{" "}
-                        <BodySmall color={"#121217"}>{product.brand}</BodySmall>
+                      </Text>
+                      <Text fontSize={fp(12)} color="#8E8E93" numberOfLines={1}>
+                        {product.brand}
                       </Text>
                     </YStack>
-                    <XStack justifyContent="flex-end">
-                      <ChevronRight />
-                    </XStack>
+
+                    <ChevronRight size={16} color="#C7C7CC" strokeWidth={2} />
                   </XStack>
-                </XStack>
+                </Pressable>
               ))}
             </YStack>
           )}
 
           {/* No Results */}
-          {searchQuery.trim() && searchResults.length === 0 && (
-            <YStack padding="$4" alignItems="center" gap="$2">
-              <Search size={48} color="#ccc" />
-              <Text fontSize="$5" fontWeight="600" color="$gray9">
-                No products found
+          {showResults && searchResults.length === 0 && (
+            <YStack
+              alignItems="center"
+              paddingTop={hp(60)}
+              paddingHorizontal={wp(32)}
+              gap={hp(10)}
+            >
+              <XStack
+                width={hp(64)}
+                height={hp(64)}
+                borderRadius={hp(32)}
+                backgroundColor="#F2F2F7"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Search size={hp(28)} color="#C7C7CC" strokeWidth={1.8} />
+              </XStack>
+              <Text fontSize={fp(17)} fontWeight="600" color="#1C1C1E">
+                No results found
               </Text>
-              <Text fontSize="$3" color="$gray7" textAlign="center">
-                Try searching with different keywords
+              <Text
+                fontSize={fp(14)}
+                color="#8E8E93"
+                textAlign="center"
+                lineHeight={fp(20)}
+              >
+                Try a different search — brand names, lens types, or lighting gear
               </Text>
             </YStack>
           )}
+
+          {/* Empty state: Trending + Quick suggestions */}
+          {!showResults && (
+            <YStack gap={hp(24)} paddingTop={hp(8)}>
+              {/* Trending Searches */}
+              <YStack gap={hp(2)}>
+                <XStack
+                  alignItems="center"
+                  gap={wp(6)}
+                  paddingHorizontal={wp(20)}
+                  paddingBottom={hp(10)}
+                >
+                  <TrendingUp size={15} color="#8E0FFF" strokeWidth={2} />
+                  <Text fontSize={fp(13)} fontWeight="600" color="#8E8E93" letterSpacing={0.5}>
+                    TRENDING
+                  </Text>
+                </XStack>
+
+                <YStack
+                  backgroundColor="#FFFFFF"
+                  marginHorizontal={wp(16)}
+                  borderRadius={14}
+                  overflow="hidden"
+                  style={{
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.06,
+                    shadowRadius: 6,
+                    elevation: 2,
+                  }}
+                >
+                  {TRENDING_SEARCHES.map((term, index) => (
+                    <Pressable
+                      key={term}
+                      onPress={() => handleTrendingPress(term)}
+                      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+                    >
+                      <XStack
+                        alignItems="center"
+                        gap={wp(12)}
+                        paddingHorizontal={wp(14)}
+                        paddingVertical={hp(13)}
+                        borderTopWidth={index === 0 ? 0 : 1}
+                        borderTopColor="#F2F2F7"
+                      >
+                        <XStack
+                          width={32}
+                          height={32}
+                          borderRadius={8}
+                          backgroundColor="#F5EEFF"
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          <TrendingUp size={15} color="#8E0FFF" strokeWidth={2} />
+                        </XStack>
+                        <Text flex={1} fontSize={fp(14)} fontWeight="400" color="#1C1C1E">
+                          {term}
+                        </Text>
+                        <ChevronRight size={15} color="#C7C7CC" strokeWidth={2} />
+                      </XStack>
+                    </Pressable>
+                  ))}
+                </YStack>
+              </YStack>
+
+              {/* Camorent hint */}
+              <XStack
+                marginHorizontal={wp(16)}
+                backgroundColor="#F5EEFF"
+                borderRadius={12}
+                paddingHorizontal={wp(14)}
+                paddingVertical={hp(12)}
+                alignItems="center"
+                gap={wp(10)}
+              >
+                <XStack
+                  width={36}
+                  height={36}
+                  borderRadius={18}
+                  backgroundColor="#8E0FFF"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <Search size={16} color="#FFFFFF" strokeWidth={2.2} />
+                </XStack>
+                <YStack flex={1} gap={hp(2)}>
+                  <Text fontSize={fp(13)} fontWeight="600" color="#5F00BA">
+                    Search the full catalog
+                  </Text>
+                  <Text fontSize={fp(12)} color="#8E0FFF">
+                    500+ cameras, lenses & lighting gear
+                  </Text>
+                </YStack>
+              </XStack>
+            </YStack>
+          )}
         </ScrollView>
-        </KeyboardAvoidingView>
-        </YStack>
-      </LinearGradient>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  searchInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    padding: 8,
-    paddingLeft: 48, // Space for search icon
-    fontSize: 16,
-    backgroundColor: "#fff",
-    minHeight: 24,
-    color: "#000",
-  },
-});

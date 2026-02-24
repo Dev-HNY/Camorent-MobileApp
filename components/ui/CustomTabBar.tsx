@@ -41,7 +41,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
       case '(home)':
         return 'Home';
       case '(shoots)':
-        return 'Video';
+        return 'Shoots';
       case '(profile)':
         return 'Profile';
       default:

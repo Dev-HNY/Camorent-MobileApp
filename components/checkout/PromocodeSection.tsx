@@ -1,9 +1,9 @@
 import React from "react";
-import { YStack, XStack } from "tamagui";
-import { LinearGradient } from "expo-linear-gradient";
-import { Percent, Check, ChevronRight } from "lucide-react-native";
-import { wp, hp } from "@/utils/responsive";
-import { BodyText, Heading2 } from "@/components/ui/Typography";
+import { XStack, YStack, Text } from "tamagui";
+import { Percent, Check, ChevronRight, Tag } from "lucide-react-native";
+import { wp, hp, fp } from "@/utils/responsive";
+import { Pressable, StyleSheet } from "react-native";
+import * as Haptics from "expo-haptics";
 
 interface PromocodeSectionProps {
   isApplied: boolean;
@@ -28,104 +28,130 @@ export const PromocodeSection = ({
   onRemove,
   onViewAll,
 }: PromocodeSectionProps) => {
-  const PromoCard = (
-    <XStack
-      paddingHorizontal={wp(12)}
-      paddingVertical={hp(12)}
-      justifyContent="space-between"
-      alignItems="center"
-      borderRadius={wp(12)}
-      borderWidth={wp(1)}
-      borderColor={!isApplied ? "#EBEBEF" : "transparent"}
-      backgroundColor={isApplied ? undefined : "#FFFFFF"}
-    >
-      <YStack flex={1}>
-        <XStack alignItems="flex-start" gap={wp(8)}>
-          {isApplied ? (
-            <Check
-              size={wp(20)}
-              color="#FFFFFF"
-              strokeWidth={wp(1.2)}
-              style={{
-                backgroundColor: "#5F00BA",
-                borderRadius: wp(4),
-                padding: wp(2),
-              }}
-            />
-          ) : (
-            <Percent size={wp(16)} color="#8A8AA3" />
-          )}
-          <YStack gap={hp(4)} flex={1}>
-            <BodyText fontWeight={"600"} color={"#141414"}>
-              {isApplied
-                ? `${code} applied!`
-                : `Get flat ${discount}% off with ${code}`}
-            </BodyText>
+  return (
+    <YStack gap={hp(10)}>
+      {/* Section label */}
+      <Text style={styles.sectionLabel}>PROMO CODE</Text>
+
+      {/* Card */}
+      <YStack style={[styles.card, isApplied && styles.cardApplied]}>
+        <XStack alignItems="center" gap={wp(12)}>
+          {/* Icon */}
+          <YStack style={[styles.iconCircle, isApplied && styles.iconCircleApplied]}>
             {isApplied ? (
-              <BodyText fontWeight={"500"} color="#141414">
-                You saved ₹{discountAmount}
-              </BodyText>
+              <Check size={hp(16)} color="#FFFFFF" strokeWidth={2.5} />
+            ) : (
+              <Percent size={hp(16)} color="#8E0FFF" strokeWidth={2} />
+            )}
+          </YStack>
+
+          {/* Text */}
+          <YStack flex={1} gap={hp(3)}>
+            <Text fontSize={fp(14)} fontWeight="600" color="#1C1C1E" letterSpacing={-0.2}>
+              {isApplied
+                ? `${code} applied`
+                : `Get ${discount}% off with ${code}`}
+            </Text>
+            {isApplied ? (
+              <XStack alignItems="center" gap={wp(4)}>
+                <Text fontSize={fp(12)} color="#34C759" fontWeight="500">
+                  You saved ₹{discountAmount}
+                </Text>
+              </XStack>
             ) : (
               cartTotal < minAmount && (
-                <XStack gap={wp(4)} alignItems="center">
-                  <BodyText fontWeight={"500"}>
-                    Add items worth ₹{minAmount - cartTotal} more
-                  </BodyText>
-                  <ChevronRight size={wp(14)} color={"#A9A9BC"} />
-                </XStack>
+                <Text fontSize={fp(12)} color="#8E8E93">
+                  Add ₹{minAmount - cartTotal} more to unlock
+                </Text>
               )
             )}
           </YStack>
+
+          {/* Action button */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              isApplied ? onRemove() : onApply();
+            }}
+            style={[styles.actionBtn, isApplied && styles.actionBtnRemove]}
+          >
+            <Text
+              fontSize={fp(12)}
+              fontWeight="600"
+              color={isApplied ? "#FF3B30" : "#8E0FFF"}
+            >
+              {isApplied ? "Remove" : "Apply"}
+            </Text>
+          </Pressable>
         </XStack>
       </YStack>
-      <XStack
-        borderWidth={1}
-        borderColor="#8E0FFF"
-        borderRadius={wp(8)}
-        paddingHorizontal={wp(12)}
-        paddingVertical={hp(6)}
-        onPress={isApplied ? onRemove : onApply}
+
+      {/* View all link */}
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onViewAll();
+        }}
+        style={styles.viewAllRow}
       >
-        <BodyText color="#8E0FFF" fontWeight="500">
-          {isApplied ? "Remove" : "Apply"}
-        </BodyText>
-      </XStack>
-    </XStack>
-  );
-
-  return (
-    <YStack gap={hp(12)}>
-      <Heading2>Promocode</Heading2>
-
-      {isApplied ? (
-        <LinearGradient
-          colors={["#F0FAFF", "#F0FAFF"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={{
-            borderRadius: wp(12),
-            borderWidth: wp(1),
-            borderColor: "#EBEBEF",
-            overflow: "hidden",
-          }}
-        >
-          {PromoCard}
-        </LinearGradient>
-      ) : (
-        PromoCard
-      )}
-
-      <XStack
-        justifyContent="center"
-        alignItems="center"
-        gap={wp(4)}
-        paddingHorizontal={wp(2)}
-        paddingVertical={wp(4)}
-        onPress={onViewAll}
-      >
-        <BodyText fontWeight={"500"}>View all coupons</BodyText>
-        <ChevronRight size={wp(14)} color={"#A9A9BC"} />
-      </XStack>
+        <Tag size={hp(13)} color="#8E0FFF" strokeWidth={2} />
+        <Text fontSize={fp(13)} fontWeight="500" color="#8E0FFF">
+          View all coupons
+        </Text>
+        <ChevronRight size={hp(14)} color="#8E0FFF" strokeWidth={2.5} />
+      </Pressable>
     </YStack>
   );
 };
+
+const styles = StyleSheet.create({
+  sectionLabel: {
+    fontSize: fp(13),
+    fontWeight: "600",
+    color: "#8E8E93",
+    letterSpacing: 0.4,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: wp(14),
+    padding: wp(14),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  cardApplied: {
+    backgroundColor: "#F5EEFF",
+    shadowColor: "#8E0FFF",
+    shadowOpacity: 0.08,
+  },
+  iconCircle: {
+    width: wp(34),
+    height: wp(34),
+    borderRadius: wp(17),
+    backgroundColor: "#F5EEFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconCircleApplied: {
+    backgroundColor: "#8E0FFF",
+  },
+  actionBtn: {
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(7),
+    borderRadius: wp(10),
+    borderWidth: 1,
+    borderColor: "#8E0FFF",
+  },
+  actionBtnRemove: {
+    borderColor: "#FF3B30",
+  },
+  viewAllRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: wp(5),
+    paddingVertical: hp(4),
+  },
+});

@@ -73,7 +73,6 @@ export default function ReorderPage() {
 
   const handleAddToCart = () => {
     // TODO: Implement add to cart logic for reordering
-    console.log("Adding items to cart for reorder");
     router.push("/(tabs)/(home)");
   };
 
@@ -102,7 +101,7 @@ export default function ReorderPage() {
 
         <ScrollView
           flex={1}
-          contentContainerStyle={{ paddingBottom: tabBarHeight + hp(24) }}
+          contentContainerStyle={{ paddingBottom: tabBarHeight + hp(60) }}
         >
           <YStack gap="$4" padding={wp(16)} paddingBottom="$6">
             {/* Status Card */}

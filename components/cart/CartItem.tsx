@@ -61,7 +61,6 @@ export function CartItem({ item }: CartItemProps) {
       },
       {
         onError: (error) => {
-          console.error("Failed to update quantity:", error);
         },
       }
     );
@@ -82,7 +81,6 @@ export function CartItem({ item }: CartItemProps) {
             queryClient.invalidateQueries({ queryKey: ["cart"] });
           },
           onError: (error) => {
-            console.error(error.message);
           },
         }
       );
@@ -108,13 +106,11 @@ export function CartItem({ item }: CartItemProps) {
       <YStack
         backgroundColor="#FFFFFF"
         borderRadius={wp(14)}
-        borderWidth={1}
-        borderColor="#F3F4F6"
         marginBottom={hp(12)}
         padding={wp(14)}
         shadowColor="#000"
         shadowOffset={{ width: 0, height: 1 }}
-        shadowOpacity={0.04}
+        shadowOpacity={0.05}
         shadowRadius={4}
         elevation={2}
       >
@@ -126,7 +122,7 @@ export function CartItem({ item }: CartItemProps) {
               justifyContent: "center",
               alignItems: "center",
               borderRadius: wp(10),
-              backgroundColor: "#E8E8E8",
+              backgroundColor: "#F8F8FA",
               padding: wp(6),
             }}
           >

@@ -10,7 +10,6 @@ export const useUpdateReviewsMutation = () => {
   return useMutation({
     mutationFn: async ({ review_id, requestData }: UpdateReviewProps) => {
       const res = await apiClient.patch(`/reviews/${review_id}`, requestData);
-      console.log(res.data);
       return res.data;
     },
   });

@@ -149,9 +149,7 @@ export async function handleError(
 
   // Log in development
   if (logToConsole) {
-    console.error('Error handled:', appError);
     if (appError.originalError) {
-      console.error('Original error:', appError.originalError);
     }
   }
 
@@ -217,7 +215,6 @@ export async function retryWithBackoff<T>(
       await new Promise(resolve => setTimeout(resolve, delay));
 
       if (__DEV__) {
-        console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`);
       }
     }
   }

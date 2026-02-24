@@ -64,21 +64,15 @@ export default function ReplaceItemScreen() {
     if (!selectedReason) return;
 
     // TODO: Submit replacement request to backend
-    console.log({
-      reason: selectedReason,
-      additionalInfo,
-    });
     router.back();
   };
 
   const handleProductPress = (productId: string) => {
     // TODO: Navigate to product details or add to replacement request
-    console.log("Product pressed:", productId);
   };
 
   const handleAddToCart = (productId: string) => {
     // TODO: Add product to cart or replacement request
-    console.log("Add to cart:", productId);
   };
 
   const isFormValid = selectedReason.length > 0;
@@ -108,7 +102,7 @@ export default function ReplaceItemScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-        <ScrollView flex={1} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: tabBarHeight + hp(24) }}>
+        <ScrollView flex={1} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: tabBarHeight + hp(60) }}>
           <YStack
             gap={hp(24)}
             paddingTop={hp(24)}
@@ -233,7 +227,7 @@ export default function ReplaceItemScreen() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{
-                  paddingBottom: tabBarHeight,
+                  paddingBottom: tabBarHeight + hp(60),
                 }}
               >
                 <XStack gap={wp(12)}>

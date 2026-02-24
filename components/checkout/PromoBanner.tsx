@@ -2,43 +2,44 @@ import React from "react";
 import { XStack, Text } from "tamagui";
 import { Zap } from "lucide-react-native";
 import { wp, hp, fp } from "@/utils/responsive";
-import { LinearGradient } from "expo-linear-gradient";
+import { StyleSheet } from "react-native";
 
 interface PromoBannerProps {
   message?: string;
 }
 
 export const PromoBanner = ({
-  message = "Add rentals worth ₹2500 to get 20% off .",
+  message = "Add rentals worth ₹2500 to get 20% off.",
 }: PromoBannerProps) => {
   return (
-    <LinearGradient
-      colors={["#FFF3D6", "#FFE8A8"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={{
-        borderRadius: wp(12),
-        marginHorizontal: wp(16),
-        marginBottom: hp(8),
-      }}
-    >
-      <XStack
-        paddingVertical={hp(12)}
-        paddingHorizontal={wp(16)}
-        alignItems="center"
-        gap={wp(8)}
-      >
-        <Zap size={wp(18)} color="#D97706" fill="#D97706" strokeWidth={2} />
-        <Text
-          fontSize={fp(13)}
-          fontWeight="500"
-          color="#92400E"
-          flex={1}
-          lineHeight={fp(18)}
-        >
-          {message}
-        </Text>
+    <XStack style={styles.banner} alignItems="center" gap={wp(10)}>
+      <XStack style={styles.iconBox}>
+        <Zap size={hp(14)} color="#D97706" fill="#D97706" strokeWidth={2} />
       </XStack>
-    </LinearGradient>
+      <Text fontSize={fp(13)} fontWeight="500" color="#92400E" flex={1} lineHeight={fp(18)}>
+        {message}
+      </Text>
+    </XStack>
   );
 };
+
+const styles = StyleSheet.create({
+  banner: {
+    backgroundColor: "#FFFBEB",
+    borderRadius: wp(12),
+    marginHorizontal: wp(16),
+    marginBottom: hp(8),
+    paddingVertical: hp(11),
+    paddingHorizontal: wp(14),
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+  },
+  iconBox: {
+    width: wp(28),
+    height: wp(28),
+    borderRadius: wp(14),
+    backgroundColor: "#FEF3C7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

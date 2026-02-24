@@ -1,7 +1,6 @@
 import { YStack, XStack, Text } from "tamagui";
-import { Pressable } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import { Star, ChevronRight } from "lucide-react-native";
-import { Heading2 } from "@/components/ui/Typography";
 import { wp, hp, fp } from "@/utils/responsive";
 
 interface RatingCardProps {
@@ -14,54 +13,61 @@ export function RatingCard({ onPress, rating, review }: RatingCardProps) {
   const hasRating = rating !== undefined && rating > 0;
 
   return (
-    <Pressable onPress={onPress} disabled={hasRating}>
-      <YStack
-        backgroundColor="white"
-        paddingHorizontal={wp(12)}
-        paddingVertical={hp(16)}
-        borderRadius={wp(12)}
-        gap={hp(12)}
-        borderWidth={1}
-        borderColor="#EBEBEF"
-      >
-        <YStack gap={hp(12)} justifyContent="center" alignItems="center">
-          <Heading2>{hasRating ? "Your Rating" : "How was the shoot?"}</Heading2>
-          <XStack gap={wp(8)}>
-            {Array.from({ length: 5 }, (_, i) => (
-              <Star
-                key={i}
-                size={28}
-                color={hasRating && i < rating ? "#fbbf24" : "#9ca3af"}
-                fill={hasRating && i < rating ? "#fbbf24" : "transparent"}
-                strokeWidth={1.5}
-              />
-            ))}
-          </XStack>
-        </YStack>
-        {hasRating && review && (
-          <Text
-            fontSize={fp(14)}
-            lineHeight={hp(20)}
-            color="#6C6C89"
-            textAlign="center"
-          >
-            {review}
-          </Text>
-        )}
-        {!hasRating && (
-          <XStack alignItems="center" justifyContent="flex-end">
-            <Text
-              fontSize={fp(12)}
-              lineHeight={hp(16)}
-              fontWeight="500"
-              color="#6D00DA"
-            >
-              Help us Improve
-            </Text>
-            <ChevronRight size={16} color="#7c3aed" />
-          </XStack>
-        )}
+    <Pressable
+      onPress={onPress}
+      disabled={hasRating}
+      style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}
+    >
+      <YStack gap={hp(12)} alignItems="center">
+        <Text fontSize={fp(15)} fontWeight="600" color="#1C1C1E" letterSpacing={-0.2}>
+          {hasRating ? "Your Rating" : "How was the shoot?"}
+        </Text>
+        <XStack gap={wp(10)}>
+          {Array.from({ length: 5 }, (_, i) => (
+            <Star
+              key={i}
+              size={28}
+              color={hasRating && i < rating ? "#FBBF24" : "#D1D1D6"}
+              fill={hasRating && i < rating ? "#FBBF24" : "transparent"}
+              strokeWidth={1.5}
+            />
+          ))}
+        </XStack>
       </YStack>
+
+      {hasRating && review && (
+        <Text
+          fontSize={fp(14)}
+          lineHeight={hp(20)}
+          color="#6C6C70"
+          textAlign="center"
+          marginTop={hp(10)}
+        >
+          {review}
+        </Text>
+      )}
+
+      {!hasRating && (
+        <XStack alignItems="center" justifyContent="flex-end" marginTop={hp(6)}>
+          <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">
+            Rate your experience
+          </Text>
+          <ChevronRight size={15} color="#8E0FFF" strokeWidth={2.5} />
+        </XStack>
+      )}
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: wp(14),
+    padding: wp(16),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+});

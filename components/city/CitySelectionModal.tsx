@@ -20,11 +20,11 @@ export function CitySelectionModal({
   return (
     <Modal
       visible={isOpen}
-      animationType="slide"
-      presentationStyle="pageSheet"
+      animationType="fade"
+      transparent={false}
       onRequestClose={onClose}
     >
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
         <CitySelectionContent
           onCitySelect={onCitySelect}
           onClose={onClose}

@@ -44,7 +44,6 @@ export function useAuthFlow(options: UseAuthFlowOptions = {}) {
           onOtpSent?.(variables.phone_number);
         },
         onError: (err) => {
-          console.error(err.name);
         },
       }
     );

@@ -1,9 +1,8 @@
 import React from "react";
-import { YStack, XStack, Separator } from "tamagui";
+import { YStack, XStack, Text } from "tamagui";
 import { LinearGradient } from "expo-linear-gradient";
-import { MapPin, Edit } from "lucide-react-native";
-import { wp, hp } from "@/utils/responsive";
-import { BodyText, Heading2 } from "@/components/ui/Typography";
+import { MapPin } from "lucide-react-native";
+import { wp, hp, fp } from "@/utils/responsive";
 
 interface AddressDetailsCardProps {
   address: string;
@@ -18,60 +17,63 @@ export const AddressDetailsCard = ({
   city,
   state,
   pinCode,
-  onEdit,
 }: AddressDetailsCardProps) => {
   return (
     <LinearGradient
-      colors={["#FFF9EB", "#FFFFFF"]}
-      locations={[0, 1]}
+      colors={["#FFFBF0", "#FFF8E7", "#FFFFFF"]}
+      locations={[0, 0.5, 1]}
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+      end={{ x: 1, y: 1 }}
       style={{
-        borderRadius: 12,
+        borderRadius: 14,
         borderWidth: 1,
-        borderColor: "#FFDA85",
+        borderColor: "#FFE08A",
+        shadowColor: "#F59E0B",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 2,
       }}
     >
-      <YStack padding={wp(16)} borderRadius={wp(12)} gap={hp(12)}>
-        <XStack alignItems="center" justifyContent="space-between">
-          <XStack alignItems="center" gap={wp(8)}>
-            <MapPin size={wp(18)} color="#6C6C70" strokeWidth={2} />
-            <Heading2 color="#1C1C1E">Address details</Heading2>
-          </XStack>
-        </XStack>
-        <Separator borderColor={"#FFDA85"} />
-        <XStack justifyContent="space-between" gap={wp(12)} alignItems="flex-start">
-          <YStack gap={hp(6)} flex={1}>
-            <BodyText lineHeight={hp(20)} color="#1C1C1E">
-              <BodyText fontWeight="600" color="#1C1C1E">Address: </BodyText>
-              <BodyText fontWeight="400" color="#6C6C70">{address}</BodyText>
-            </BodyText>
-            <BodyText lineHeight={hp(20)} color="#1C1C1E">
-              <BodyText fontWeight="600" color="#1C1C1E">City: </BodyText>
-              <BodyText fontWeight="400" color="#6C6C70">{city}</BodyText>
-            </BodyText>
-            <BodyText lineHeight={hp(20)} color="#1C1C1E">
-              <BodyText fontWeight="600" color="#1C1C1E">State: </BodyText>
-              <BodyText fontWeight="400" color="#6C6C70">{state}</BodyText>
-            </BodyText>
-            <BodyText lineHeight={hp(20)} color="#1C1C1E">
-              <BodyText fontWeight="600" color="#1C1C1E">Pin code: </BodyText>
-              <BodyText fontWeight="400" color="#6C6C70">{pinCode}</BodyText>
-            </BodyText>
-          </YStack>
+      <YStack padding={wp(16)} gap={hp(14)}>
+        {/* Header */}
+        <XStack alignItems="center" gap={wp(8)}>
           <XStack
-            gap={wp(6)}
+            width={32}
+            height={32}
+            borderRadius={8}
+            backgroundColor="rgba(245, 158, 11, 0.12)"
             alignItems="center"
-            flexShrink={0}
-            paddingLeft={wp(8)}
-            // onPress={onEdit}
+            justifyContent="center"
           >
-            <BodyText color={"#8E0FFF"} fontWeight="500">
-              Edit
-            </BodyText>
-            <Edit size={wp(16)} color="#8E0FFF" strokeWidth={2} />
+            <MapPin size={16} color="#D97706" strokeWidth={2} />
           </XStack>
+          <Text fontSize={fp(15)} fontWeight="600" color="#1C1C1E">
+            Address details
+          </Text>
         </XStack>
+
+        {/* Divider */}
+        <YStack height={1} backgroundColor="rgba(255, 218, 133, 0.5)" />
+
+        {/* Details */}
+        <YStack gap={hp(10)}>
+          {[
+            { label: "Address", value: address },
+            { label: "City", value: city },
+            { label: "State", value: state },
+            { label: "Pin code", value: pinCode },
+          ].map(({ label, value }) => (
+            <XStack key={label} justifyContent="space-between" alignItems="flex-start" gap={wp(16)}>
+              <Text fontSize={fp(13)} color="#92754A" fontWeight="500" flexShrink={0}>
+                {label}
+              </Text>
+              <Text fontSize={fp(14)} color="#1C1C1E" fontWeight="600" textAlign="right" flex={1}>
+                {value}
+              </Text>
+            </XStack>
+          ))}
+        </YStack>
       </YStack>
     </LinearGradient>
   );

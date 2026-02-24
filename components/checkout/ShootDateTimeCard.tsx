@@ -1,9 +1,9 @@
 import React from "react";
-import { YStack, XStack, Separator } from "tamagui";
+import { YStack, XStack, Text } from "tamagui";
+import { Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Clock, Edit } from "lucide-react-native";
-import { wp, hp } from "@/utils/responsive";
-import { BodyText, Heading2 } from "@/components/ui/Typography";
+import { CalendarDays, Edit2 } from "lucide-react-native";
+import { wp, hp, fp } from "@/utils/responsive";
 
 interface ShootDateTimeCardProps {
   dates: string;
@@ -18,47 +18,71 @@ export const ShootDateTimeCard = ({
 }: ShootDateTimeCardProps) => {
   return (
     <LinearGradient
-      colors={["#FFF9EB", "#FFFFFF"]}
-      locations={[0, 1]}
+      colors={["#FFFBF0", "#FFF8E7", "#FFFFFF"]}
+      locations={[0, 0.5, 1]}
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+      end={{ x: 1, y: 1 }}
       style={{
-        borderRadius: 12,
+        borderRadius: 14,
         borderWidth: 1,
-        borderColor: "#FFDA85",
+        borderColor: "#FFE08A",
+        shadowColor: "#F59E0B",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 2,
       }}
     >
-      <YStack padding={wp(16)} borderRadius={wp(12)} gap={hp(12)}>
+      <YStack padding={wp(16)} gap={hp(14)}>
+        {/* Header */}
         <XStack alignItems="center" justifyContent="space-between">
           <XStack alignItems="center" gap={wp(8)}>
-            <Clock size={wp(18)} color="#6C6C70" strokeWidth={2} />
-            <Heading2 color="#1C1C1E">Shoot date & time</Heading2>
+            <XStack
+              width={32}
+              height={32}
+              borderRadius={8}
+              backgroundColor="rgba(245, 158, 11, 0.12)"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <CalendarDays size={16} color="#D97706" strokeWidth={2} />
+            </XStack>
+            <Text fontSize={fp(15)} fontWeight="600" color="#1C1C1E">
+              Shoot date & time
+            </Text>
           </XStack>
+          <Pressable onPress={onEdit} hitSlop={8}>
+            <XStack alignItems="center" gap={wp(4)}>
+              <Edit2 size={13} color="#8E0FFF" strokeWidth={2} />
+              <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">
+                Edit
+              </Text>
+            </XStack>
+          </Pressable>
         </XStack>
-        <Separator borderColor={"#FFDA85"} />
-        <XStack justifyContent="space-between" alignItems="flex-start">
-          <YStack gap={hp(6)} flex={1}>
-            <BodyText lineHeight={hp(20)} color="#1C1C1E">
-              <BodyText fontWeight="600" color="#1C1C1E">Shoot dates: </BodyText>
-              <BodyText fontWeight="400" color="#6C6C70">{dates}</BodyText>
-            </BodyText>
-            <BodyText lineHeight={hp(20)} color="#1C1C1E">
-              <BodyText fontWeight="600" color="#1C1C1E">Shoot start time: </BodyText>
-              <BodyText fontWeight="400" color="#6C6C70">{startTime}</BodyText>
-            </BodyText>
-          </YStack>
-          <XStack
-            gap={wp(6)}
-            alignItems="center"
-            onPress={onEdit}
-            paddingLeft={wp(12)}
-          >
-            <BodyText color={"#8E0FFF"} fontWeight="500">
-              Edit
-            </BodyText>
-            <Edit size={wp(16)} color="#8E0FFF" strokeWidth={2} />
+
+        {/* Divider */}
+        <YStack height={1} backgroundColor="rgba(255, 218, 133, 0.5)" />
+
+        {/* Details */}
+        <YStack gap={hp(10)}>
+          <XStack justifyContent="space-between" alignItems="center">
+            <Text fontSize={fp(13)} color="#92754A" fontWeight="500">
+              Shoot dates
+            </Text>
+            <Text fontSize={fp(14)} color="#1C1C1E" fontWeight="600" textAlign="right">
+              {dates}
+            </Text>
           </XStack>
-        </XStack>
+          <XStack justifyContent="space-between" alignItems="center">
+            <Text fontSize={fp(13)} color="#92754A" fontWeight="500">
+              Start time
+            </Text>
+            <Text fontSize={fp(14)} color="#1C1C1E" fontWeight="600">
+              {startTime}
+            </Text>
+          </XStack>
+        </YStack>
       </YStack>
     </LinearGradient>
   );

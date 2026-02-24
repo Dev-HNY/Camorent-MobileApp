@@ -118,7 +118,6 @@ export default function CamorentDeliveryScreen() {
         router.back();
       },
       onError: (error) => {
-        console.error("Error adding address:", error);
       },
     });
   };

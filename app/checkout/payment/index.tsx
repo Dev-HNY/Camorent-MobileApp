@@ -192,11 +192,9 @@ export default function PaymentPage() {
             clearCartMutation.mutate();
             queryClient.invalidateQueries({ queryKey: ["cart"] });
           } else {
-            console.error("payment url not recieved");
           }
         },
         onError: (error) => {
-          console.error("Payment initiation failed:", error);
         },
       }
     );
@@ -274,7 +272,6 @@ export default function PaymentPage() {
         });
       },
       onError: (error) => {
-        console.error("Failed to update booking:", error);
       },
     });
   };
@@ -294,7 +291,7 @@ export default function PaymentPage() {
   const camocareAmount = 0;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
       <YStack flex={1}>
         {/* Header - clean white */}
         <YStack
@@ -326,142 +323,80 @@ export default function PaymentPage() {
             </Text>
           </YStack>
         ) : (
-          <Animated.View
-            entering={FadeInDown.duration(400).springify().damping(15)}
-            style={{ flex: 1 }}
-          >
-            <ScrollView
+          <ScrollView
               flex={1}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               onScrollBeginDrag={Keyboard.dismiss}
               contentContainerStyle={{
-                paddingBottom:
-                  items.length > 0 ? insets.bottom + 200 : insets.bottom + 24,
+                paddingBottom: insets.bottom + hp(220),
               }}
             >
-              <YStack padding={wp(16)} gap={hp(10)}>
-                {/* Payment Details with staggered animation */}
-                <Animated.View
-                  entering={FadeInDown.delay(100)
-                    .duration(400)
-                    .springify()
-                    .damping(15)
-                    .stiffness(200)}
-                >
-                  <PaymentDetails
-                    shootName={shootName}
-                    shootDates={shootData.dates}
-                    shootStartTime={shootData.startTime}
-                    addressData={addressData}
-                    productData={productData}
-                    crewData={crewData}
-                    deliveryDate={
-                      bookingDetails
-                        ? formatBookingDate(bookingDetails.rental_start_date)
-                        : ""
+              <YStack padding={wp(16)} gap={hp(12)}>
+                <PaymentDetails
+                  shootName={shootName}
+                  shootDates={shootData.dates}
+                  shootStartTime={shootData.startTime}
+                  addressData={addressData}
+                  productData={productData}
+                  crewData={crewData}
+                  deliveryDate={
+                    bookingDetails
+                      ? formatBookingDate(bookingDetails.rental_start_date)
+                      : ""
+                  }
+                  onEditShootSettings={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (bookingDetails) {
+                      setTempStartDate(
+                        formatBookingDate(bookingDetails.rental_start_date)
+                      );
+                      setTempEndDate(
+                        formatBookingDate(bookingDetails.rental_end_date)
+                      );
+                    } else {
+                      setTempStartDate(rentalDates?.startDate || "");
+                      setTempEndDate(rentalDates?.endDate || "");
                     }
-                    onEditShootSettings={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      if (bookingDetails) {
-                        setTempStartDate(
-                          formatBookingDate(bookingDetails.rental_start_date)
-                        );
-                        setTempEndDate(
-                          formatBookingDate(bookingDetails.rental_end_date)
-                        );
-                      } else {
-                        setTempStartDate(rentalDates?.startDate || "");
-                        setTempEndDate(rentalDates?.endDate || "");
-                      }
-                      setShootName(storeShootName || "");
-                      setShowShootSettings(true);
-                    }}
-                    onEditAddress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push("/(tabs)/(home)/categories");
-                    }}
-                    onAddMoreProducts={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push("/(tabs)/(home)/categories");
-                    }}
-                    onAddMoreCrew={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push("/(tabs)/(home)/categories");
-                    }}
-                  />
-                </Animated.View>
+                    setShootName(storeShootName || "");
+                    setShowShootSettings(true);
+                  }}
+                  onEditAddress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push("/(tabs)/(home)/categories");
+                  }}
+                  onAddMoreProducts={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push("/(tabs)/(home)/categories");
+                  }}
+                  onAddMoreCrew={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push("/(tabs)/(home)/categories");
+                  }}
+                />
 
-                {/* Promocode Section */}
-                {/* <Animated.View
-                  entering={FadeInDown.delay(150)
-                    .duration(400)
-                    .springify()
-                    .damping(15)
-                    .stiffness(200)}
-                >
-                  <PromocodeSection
-                    isApplied={isPromoApplied}
-                    code="RAINYSO"
-                    discount="30"
-                    discountAmount={couponDiscount}
-                    cartTotal={billDetails.totalAmount}
-                    minAmount={1200}
-                    onApply={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setIsPromoApplied(true);
-                    }}
-                    onRemove={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setIsPromoApplied(false);
-                    }}
-                    onViewAll={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }}
-                  />
-                </Animated.View> */}
+                <BillingSummary
+                  itemTotal={billDetails.itemTotal}
+                  crewTotal={billDetails.crewTotal}
+                  gstCharges={billDetails.gstCharges}
+                  cgstAmount={billDetails.cgstAmount}
+                  sgstAmount={billDetails.sgstAmount}
+                  igstAmount={billDetails.igstAmount}
+                  couponDiscount={couponDiscount}
+                  camocareAmount={camocareAmount}
+                  totalAmount={billDetails.totalAmount}
+                  invoiceId={bookingDetails?.invoice_id}
+                  isLoadingInvoice={isLoadingInvoice}
+                  invoiceUrl={invoiceData?.pdf_url}
+                  onDownloadInvoice={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    invoiceData?.pdf_url && Linking.openURL(invoiceData.pdf_url);
+                  }}
+                />
 
-                {/* Billing Summary with staggered animation */}
-                <Animated.View
-                  entering={FadeInDown.delay(200)
-                    .duration(400)
-                    .springify()
-                    .damping(15)
-                    .stiffness(200)}
-                >
-                  <BillingSummary
-                    itemTotal={billDetails.itemTotal}
-                    crewTotal={billDetails.crewTotal}
-                    gstCharges={billDetails.gstCharges}
-                    cgstAmount={billDetails.cgstAmount}
-                    sgstAmount={billDetails.sgstAmount}
-                    igstAmount={billDetails.igstAmount}
-                    couponDiscount={couponDiscount}
-                    camocareAmount={camocareAmount}
-                    totalAmount={billDetails.totalAmount}
-                    invoiceId={bookingDetails?.invoice_id}
-                    isLoadingInvoice={isLoadingInvoice}
-                    invoiceUrl={invoiceData?.pdf_url}
-                    onDownloadInvoice={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      invoiceData?.pdf_url && Linking.openURL(invoiceData.pdf_url);
-                    }}
-                  />
-                </Animated.View>
-
-                {/* Rent Info Banner */}
-                <Animated.View
-                  entering={FadeInDown.delay(250)
-                    .duration(400)
-                    .springify()
-                    .damping(15)
-                    .stiffness(200)}
-                >
-                  <RentInfoBanner />
-                </Animated.View>
+                <RentInfoBanner />
               </YStack>
             </ScrollView>
-          </Animated.View>
         )}
         {/* Animated Sticky Bottom */}
         {bookingDetails?.sku_items && bookingDetails.sku_items.length > 0 && (

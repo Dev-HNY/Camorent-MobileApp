@@ -104,7 +104,7 @@ export default function Index() {
     {
       icon: require("@/assets/profile/payment.png"),
       label: "Payments",
-      onPress: () => console.log("Payments"),
+      onPress: () => {},
       showChevron: true,
     },
     {

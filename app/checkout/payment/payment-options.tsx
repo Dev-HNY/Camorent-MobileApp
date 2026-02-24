@@ -94,7 +94,7 @@ export default function PaymentOptionsScreen() {
         <ScrollView
           flex={1}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + hp(60) }}
         >
           <YStack paddingHorizontal={wp(16)} gap="$5">
             {/* When do you prefer to pay */}

@@ -9,6 +9,7 @@ export default function TabsLayout() {
       <Stack.Screen name="help-center" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="faqs" />
+      <Stack.Screen name="legal" />
     </Stack>
   );
 }

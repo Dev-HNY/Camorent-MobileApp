@@ -1,21 +1,22 @@
 import { useState } from "react";
-import { XStack, YStack, Text, Stack, Spinner } from "tamagui";
+import { XStack, YStack, Text, Spinner } from "tamagui";
 import {
   Search,
   ShoppingCart,
   ChevronDown,
-  ArrowLeft,
+  ChevronLeft,
 } from "lucide-react-native";
-import { BodySmall, BodyText } from "./Typography";
 import { useAuthStore } from "@/store/auth/auth";
 import { router, usePathname } from "expo-router";
 import { LocationIcon } from "./LocationIcon";
 import { HeartIcon } from "./HeartIcon";
-import { hp, wp } from "@/utils/responsive";
+import { hp, wp, fp } from "@/utils/responsive";
 import { CitySelectionModal } from "../city/CitySelectionModal";
 import { useWishlistCount } from "@/hooks/wishlist";
 import { useGetCart } from "@/hooks/cart/useGetCart";
 import { useGetUserPreferences } from "@/hooks/user/useGetUserPreferences";
+import { Pressable, StyleSheet } from "react-native";
+import * as Haptics from "expo-haptics";
 
 interface InsideScreenHeaderProps {
   onBackPress?: () => void;
@@ -39,6 +40,7 @@ export function InsideScreenHeader({
     pathname === "payment" ||
     pathname === "crew" ||
     pathname.startsWith("/product/");
+
   const handleCityPress = () => {
     if (onCityPress) {
       onCityPress();
@@ -53,129 +55,89 @@ export function InsideScreenHeader({
       justifyContent="space-between"
       paddingHorizontal={wp(16)}
     >
-      <XStack justifyContent="space-between" alignItems="center" gap={"$1"}>
-        <XStack
-          borderRadius={28}
-          borderWidth={1}
-          padding={"$2"}
-          borderColor={"$gray7"}
-          onPress={onBackPress || (() => router.back())}
+      {/* Left: back button + city selector */}
+      <XStack alignItems="center" gap={wp(8)}>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            if (onBackPress) onBackPress();
+            else router.back();
+          }}
+          hitSlop={8}
+          style={styles.iconBtn}
         >
-          <ArrowLeft size={18} />
-        </XStack>
-        <XStack
-          borderRadius={28}
-          borderWidth={1}
-          padding={"$2"}
-          borderColor={"$gray7"}
-          onPress={handleCityPress}
-          pressStyle={{ opacity: 0.7 }}
-          cursor="pointer"
-        >
-          <LocationIcon width={20} height={20} stroke="#ff0000" />
-        </XStack>
+          <ChevronLeft size={20} color="#1C1C1E" strokeWidth={2.5} />
+        </Pressable>
 
-        {isLoadingPreferences ? (
-          <Spinner />
-        ) : (
-          <Stack
-            onPress={handleCityPress}
-            pressStyle={{ opacity: 0.7 }}
-            cursor="pointer"
-          >
-            <YStack>
-              <XStack alignItems="center" gap={"$1"}>
-                <BodyText>{city}</BodyText>
-                <ChevronDown size={18} />
-              </XStack>
-              <BodySmall fontSize={12}>India</BodySmall>
-            </YStack>
-          </Stack>
-        )}
+        <Pressable
+          onPress={handleCityPress}
+          hitSlop={8}
+          style={styles.cityBtn}
+        >
+          <LocationIcon width={14} height={14} stroke="#8E0FFF" />
+          {isLoadingPreferences ? (
+            <Spinner size="small" color="#8E0FFF" />
+          ) : (
+            <XStack alignItems="center" gap={wp(2)}>
+              <Text fontSize={fp(14)} fontWeight="600" color="#1C1C1E" letterSpacing={-0.2}>
+                {city}
+              </Text>
+              <ChevronDown size={14} color="#8E8E93" strokeWidth={2} />
+            </XStack>
+          )}
+        </Pressable>
       </XStack>
 
-      <XStack justifyContent="space-between" alignItems="center" gap={"$1"}>
-        <XStack
-          borderRadius={28}
-          borderWidth={1}
-          padding={"$2"}
-          borderColor={"$gray7"}
-          alignItems="center"
-          justifyContent="center"
-          onPress={() => router.push("/search")}
-          pressStyle={{ opacity: 0.7 }}
-          cursor="pointer"
+      {/* Right: icon buttons */}
+      <XStack alignItems="center" gap={wp(8)}>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push("/search");
+          }}
+          hitSlop={8}
+          style={styles.iconBtn}
         >
-          <Search size={18} color={"gray"} />
-        </XStack>
-        <YStack position="relative">
-          <XStack
-            borderRadius={28}
-            borderWidth={1}
-            padding={"$2"}
-            borderColor={"$gray7"}
-            alignItems="center"
-            justifyContent="center"
-            onPress={() => router.push("/(tabs)/(profile)/wishlist")}
-            pressStyle={{ opacity: 0.7 }}
-            cursor="pointer"
+          <Search size={18} color="#1C1C1E" strokeWidth={2} />
+        </Pressable>
+
+        {/* Wishlist */}
+        <YStack>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/(tabs)/(profile)/wishlist");
+            }}
+            hitSlop={8}
+            style={styles.iconBtn}
           >
-            <HeartIcon width={18} height={18} color={"gray"} />
-          </XStack>
+            <HeartIcon width={18} height={18} color="#1C1C1E" />
+          </Pressable>
           {wishlistCount > 0 && (
-            <XStack
-              position="absolute"
-              top={-8}
-              right={-8}
-              backgroundColor="$red10"
-              borderRadius={10}
-              minWidth={20}
-              height={20}
-              alignItems="center"
-              justifyContent="center"
-            >
-              <Text
-                color="white"
-                fontSize={12}
-                fontWeight="600"
-                textAlign="center"
-              >
+            <XStack style={styles.badge}>
+              <Text color="white" fontSize={fp(10)} fontWeight="700" textAlign="center">
                 {wishlistCount > 99 ? "99+" : wishlistCount}
               </Text>
             </XStack>
           )}
         </YStack>
+
+        {/* Cart (hidden on cart/payment/crew/product) */}
         {!isCartScreen && (
-          <YStack position="relative">
-            <XStack
-              borderRadius={36}
-              borderWidth={1}
-              borderColor={"$gray7"}
-              padding={"$2"}
-              alignItems="center"
-              justifyContent="center"
-              onPress={() => router.push("/cart")}
+          <YStack>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/cart");
+              }}
+              hitSlop={8}
+              style={styles.iconBtn}
             >
-              <ShoppingCart size={18} color={"gray"} />
-            </XStack>
+              <ShoppingCart size={18} color="#1C1C1E" strokeWidth={2} />
+            </Pressable>
             {cartCount > 0 && (
-              <XStack
-                position="absolute"
-                top={-8}
-                right={-8}
-                backgroundColor="$red10"
-                borderRadius={10}
-                minWidth={20}
-                height={20}
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Text
-                  color="white"
-                  fontSize={12}
-                  fontWeight="600"
-                  textAlign="center"
-                >
+              <XStack style={styles.badge}>
+                <Text color="white" fontSize={fp(10)} fontWeight="700" textAlign="center">
                   {cartCount > 99 ? "99+" : cartCount}
                 </Text>
               </XStack>
@@ -193,3 +155,35 @@ export function InsideScreenHeader({
     </XStack>
   );
 }
+
+const styles = StyleSheet.create({
+  iconBtn: {
+    width: wp(36),
+    height: wp(36),
+    borderRadius: wp(18),
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cityBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: wp(5),
+    paddingHorizontal: wp(10),
+    paddingVertical: hp(6),
+    borderRadius: wp(20),
+    backgroundColor: "#F3F4F6",
+  },
+  badge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: "#FF3B30",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+});

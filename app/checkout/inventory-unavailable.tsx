@@ -13,6 +13,7 @@ import {
 } from "lucide-react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Button } from "@/components/ui/Button";
+import { hp } from "@/utils/responsive";
 
 export default function InventoryUnavailableScreen() {
   const insets = useSafeAreaInsets();
@@ -23,7 +24,6 @@ export default function InventoryUnavailableScreen() {
   };
 
   const handleAddToCart = (itemId: string) => {
-    console.log("Add to cart:", itemId);
     // Handle add to cart functionality
   };
 
@@ -90,7 +90,7 @@ export default function InventoryUnavailableScreen() {
         <ScrollView
           flex={1}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 18 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + hp(60) }}
         >
           <YStack
             flex={1}

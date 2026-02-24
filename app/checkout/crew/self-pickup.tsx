@@ -1,18 +1,24 @@
 import React, { useState } from "react";
-import { YStack, ScrollView, XStack, Text, Card } from "tamagui";
+import { YStack, ScrollView, XStack, Text } from "tamagui";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Image } from "expo-image";
-import { ArrowLeft, ChevronDown, X } from "lucide-react-native";
-import { TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from "react-native";
+import { ChevronLeft, ChevronDown, X } from "lucide-react-native";
+import {
+  Pressable,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { hp, wp, fp } from "@/utils/responsive";
 import { BottomSheetButton } from "@/components/ui/BottomSheetButton";
 import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { BodySmall, BodyText, Heading2 } from "@/components/ui/Typography";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -20,6 +26,7 @@ import {
   type PickupPersonFormData,
   type PickupLocation,
 } from "@/types/address";
+import * as Haptics from "expo-haptics";
 
 const pickupLocations: PickupLocation[] = [
   {
@@ -74,77 +81,96 @@ export default function SelfPickupScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <YStack flex={1} paddingHorizontal={wp(16)}>
-        <XStack alignItems="center" paddingTop={hp(8)}>
-          <XStack
-            borderRadius={wp(30)}
-            borderWidth={wp(0.7)}
-            padding={wp(6)}
-            borderColor={"#EBEBEF"}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={18} />
-          </XStack>
-          <XStack paddingLeft={wp(88)}>
-            <Heading2>Self Pickup</Heading2>
-          </XStack>
-        </XStack>
-
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <SafeAreaView style={styles.root}>
+      {/* Header */}
+      <XStack
+        alignItems="center"
+        paddingHorizontal={wp(16)}
+        height={hp(52)}
+        backgroundColor="#FFFFFF"
+        borderBottomWidth={1}
+        borderBottomColor="#F2F2F7"
+      >
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.back();
+          }}
+          hitSlop={8}
+          style={styles.backBtn}
         >
+          <ChevronLeft size={22} color="#1C1C1E" />
+        </Pressable>
+        <Text
+          fontSize={fp(17)}
+          fontWeight="600"
+          color="#1C1C1E"
+          marginLeft={wp(12)}
+          letterSpacing={-0.3}
+        >
+          Self Pickup
+        </Text>
+      </XStack>
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={hp(52)}
+      >
         <ScrollView
           flex={1}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           contentContainerStyle={{
-            paddingBottom: insets.bottom,
-            paddingTop: hp(24),
+            paddingBottom: insets.bottom + hp(100),
+            paddingTop: hp(16),
+            paddingHorizontal: wp(16),
           }}
         >
-          <YStack gap={hp(12)}>
-            <BodyText>
-              User can pickup the order from nearest location.
-            </BodyText>
+          <YStack gap={hp(20)}>
 
-            <Card
-              borderRadius={wp(12)}
-              paddingVertical={hp(16)}
-              paddingHorizontal={wp(12)}
-              borderWidth={1}
-              borderColor="#EBEBEF"
-            >
-              <YStack gap={hp(12)}>
-                <YStack gap={hp(6)}>
-                  <Heading2>Who will pickup the order?</Heading2>
+            <Text fontSize={fp(14)} color="#6C6C89" lineHeight={hp(20)}>
+              Pick up your order from the nearest Camorent location.
+            </Text>
 
-                  <Controller
-                    control={control}
-                    name="is_self_pickup"
-                    render={({ field: { onChange, value } }) => (
-                      <XStack gap={wp(12)} alignItems="center">
-                        <Checkbox
-                          checked={!!value}
-                          onCheckedChange={onChange}
-                        />
-                        <BodySmall color={"#121217"} fontWeight={"500"}>
-                          I am going to pick up the order.
-                        </BodySmall>
-                      </XStack>
-                    )}
-                  />
-                </YStack>
-                <YStack gap={hp(8)}>
-                  <Text fontSize={fp(13)} color="#6C6C89" lineHeight={hp(17)}>
+            {/* Pickup person card */}
+            <YStack gap={hp(10)}>
+              <Text fontSize={fp(13)} fontWeight="600" color="#8E8E93" letterSpacing={0.4} paddingHorizontal={wp(4)}>
+                WHO WILL PICKUP THE ORDER?
+              </Text>
+              <YStack style={styles.card}>
+
+                {/* Self-pickup checkbox row */}
+                <Controller
+                  control={control}
+                  name="is_self_pickup"
+                  render={({ field: { onChange, value } }) => (
+                    <XStack
+                      alignItems="center"
+                      gap={wp(12)}
+                      paddingHorizontal={wp(16)}
+                      paddingVertical={hp(14)}
+                    >
+                      <Checkbox checked={!!value} onCheckedChange={onChange} />
+                      <Text fontSize={fp(14)} fontWeight="500" color="#1C1C1E">
+                        I am going to pick up the order.
+                      </Text>
+                    </XStack>
+                  )}
+                />
+
+                <YStack height={1} backgroundColor="#F2F2F7" />
+
+                <YStack paddingHorizontal={wp(16)} paddingVertical={hp(14)} gap={hp(14)}>
+                  <Text fontSize={fp(13)} color="#6C6C89" lineHeight={hp(18)}>
                     Details of a person in charge.
                   </Text>
-                  {/* Full Name Input */}
-                  <YStack gap={hp(8)}>
-                    <Text fontSize={fp(14)} fontWeight="500" color="#282833">
-                      Full name <Text color="#FF4444">*</Text>
+
+                  {/* Full Name */}
+                  <YStack gap={hp(6)}>
+                    <Text fontSize={fp(13)} fontWeight="500" color="#1C1C1E">
+                      Full name <Text color="#FF3B30">*</Text>
                     </Text>
                     <Controller
                       control={control}
@@ -155,184 +181,170 @@ export default function SelfPickupScreen() {
                           value={value}
                           onChangeText={onChange}
                           onBlur={onBlur}
-                          placeholderTextColor="#8A8AA3"
+                          placeholderTextColor="#C7C7CC"
                         />
                       )}
                     />
                     {errors.full_name && (
-                      <Text fontSize={fp(12)} color="#FF4444">
+                      <Text fontSize={fp(12)} color="#FF3B30">
                         {errors.full_name.message}
                       </Text>
                     )}
                   </YStack>
-                  {/* Mobile Number Input */}
-                  <YStack gap={hp(8)}>
-                    <Text fontSize={fp(14)} fontWeight="500" color="#121217">
-                      Mobile Number <Text color="#FF4444">*</Text>
+
+                  {/* Mobile Number */}
+                  <YStack gap={hp(6)}>
+                    <Text fontSize={fp(13)} fontWeight="500" color="#1C1C1E">
+                      Mobile Number <Text color="#FF3B30">*</Text>
                     </Text>
                     <Controller
                       control={control}
                       name="mobile_number"
                       render={({ field: { onChange, onBlur, value } }) => (
-                        <>
-                          <XStack gap={wp(12)}>
-                            <XStack
-                              alignItems="center"
-                              borderWidth={1}
-                              borderColor={phoneFocus ? "#6D00DA" : "#d1d1db"}
-                              borderRadius={wp(8)}
-                              padding={wp(8)}
-                              paddingVertical={hp(10)}
-                              backgroundColor="white"
-                              boxShadow={"0 1px 2px 0 rgba(18, 18, 23, 0.05)"}
-                            >
-                              <Image
-                                source={require("@/assets/images/Flags.png")}
-                                style={{
-                                  height: hp(16),
-                                  width: wp(16),
-                                  borderRadius: 20,
-                                }}
-                              />
-                              <BodySmall color="#121217" marginLeft="$2">
-                                +91
-                              </BodySmall>
-                              <ChevronDown
-                                color="#8A8AA3"
-                                height={hp(18)}
-                                width={wp(18)}
-                              />
-                            </XStack>
-
-                            <XStack
-                              flex={1}
-                              borderWidth={1}
-                              borderColor={phoneFocus ? "#6D00DA" : "#d1d1db"}
-                              borderRadius={wp(8)}
-                              backgroundColor="white"
-                              boxShadow={"0 1px 2px 0 rgba(18, 18, 23, 0.05)"}
-                              alignItems="center"
-                              paddingRight={value ? wp(8) : 0}
-                            >
-                              <TextInput
-                                keyboardType="phone-pad"
-                                placeholder="99998 99999"
-                                value={value}
-                                onChangeText={onChange}
-                                onFocus={() => setPhoneFocus(true)}
-                                onBlur={() => {
-                                  setPhoneFocus(false);
-                                  onBlur();
-                                }}
-                                placeholderTextColor="#8A8AA3"
-                                maxLength={10}
-                                style={{
-                                  flex: 1,
-                                  padding: wp(8),
-                                  paddingVertical: hp(10),
-                                  fontSize: fp(14),
-                                  color: "#121217",
-                                  fontWeight: "400",
-                                  backgroundColor: "transparent",
-                                }}
-                              />
-                              {value && (
-                                <TouchableOpacity
-                                  onPress={() => onChange("")}
-                                  style={{ padding: wp(4) }}
-                                >
-                                  <X color="#999" size={hp(16)} />
-                                </TouchableOpacity>
-                              )}
-                            </XStack>
+                        <XStack gap={wp(8)}>
+                          {/* Country code */}
+                          <XStack
+                            alignItems="center"
+                            borderWidth={1}
+                            borderColor={phoneFocus ? "#8E0FFF" : "#E5E5EA"}
+                            borderRadius={wp(10)}
+                            paddingHorizontal={wp(10)}
+                            paddingVertical={hp(11)}
+                            backgroundColor="#FFFFFF"
+                            gap={wp(4)}
+                          >
+                            <Image
+                              source={require("@/assets/images/Flags.png")}
+                              style={{ height: hp(16), width: wp(16), borderRadius: 20 }}
+                            />
+                            <Text fontSize={fp(14)} color="#1C1C1E" fontWeight="500">+91</Text>
+                            <ChevronDown size={14} color="#8E8E93" />
                           </XStack>
-                        </>
+
+                          {/* Phone input */}
+                          <XStack
+                            flex={1}
+                            borderWidth={1}
+                            borderColor={phoneFocus ? "#8E0FFF" : "#E5E5EA"}
+                            borderRadius={wp(10)}
+                            backgroundColor="#FFFFFF"
+                            alignItems="center"
+                            paddingRight={value ? wp(8) : 0}
+                          >
+                            <TextInput
+                              keyboardType="phone-pad"
+                              placeholder="99998 99999"
+                              value={value}
+                              onChangeText={onChange}
+                              onFocus={() => setPhoneFocus(true)}
+                              onBlur={() => {
+                                setPhoneFocus(false);
+                                onBlur();
+                              }}
+                              placeholderTextColor="#C7C7CC"
+                              maxLength={10}
+                              style={styles.phoneInput}
+                            />
+                            {value ? (
+                              <TouchableOpacity onPress={() => onChange("")} style={{ padding: wp(4) }}>
+                                <X color="#8E8E93" size={hp(15)} />
+                              </TouchableOpacity>
+                            ) : null}
+                          </XStack>
+                        </XStack>
                       )}
                     />
                     {errors.mobile_number && (
-                      <Text fontSize={fp(12)} color="#FF4444">
+                      <Text fontSize={fp(12)} color="#FF3B30">
                         {errors.mobile_number.message}
                       </Text>
                     )}
                   </YStack>
                 </YStack>
-                <XStack paddingTop={hp(12)}>
-                  <BodyText color={"#6C6C89"}>
-                    <BodyText fontWeight="600">Note:</BodyText> OTP verification
-                    is required at handover. Please ensure the mentioned person
-                    picks up the order.
-                  </BodyText>
+
+                <YStack height={1} backgroundColor="#F2F2F7" />
+
+                {/* OTP note */}
+                <XStack paddingHorizontal={wp(16)} paddingVertical={hp(12)}>
+                  <Text fontSize={fp(13)} color="#6C6C89" lineHeight={hp(18)}>
+                    <Text fontWeight="600" color="#6C6C89">Note: </Text>
+                    OTP verification is required at handover. Please ensure the mentioned person picks up the order.
+                  </Text>
                 </XStack>
-              </YStack>
-            </Card>
 
-            {/* Available pickup locations */}
-            <YStack gap={hp(16)}>
-              <YStack gap={hp(4)}>
-                <Heading2>Available pickup locations</Heading2>
-                <BodyText>Choose your nearest location for pickup.</BodyText>
+              </YStack>
+            </YStack>
+
+            {/* Pickup locations */}
+            <YStack gap={hp(10)}>
+              <YStack gap={hp(4)} paddingHorizontal={wp(4)}>
+                <Text fontSize={fp(13)} fontWeight="600" color="#8E8E93" letterSpacing={0.4}>
+                  AVAILABLE PICKUP LOCATIONS
+                </Text>
+                <Text fontSize={fp(13)} color="#6C6C89">
+                  Choose your nearest location for pickup.
+                </Text>
               </YStack>
 
-              <YStack gap={hp(12)}>
-                {pickupLocations.map((location) => (
-                  <TouchableOpacity
-                    key={location.id}
-                    onPress={() => setValue("pickup_location_id", location.id)}
-                    activeOpacity={0.7}
-                  >
-                    <Card
-                      backgroundColor="white"
-                      borderRadius={wp(12)}
-                      padding={wp(16)}
-                      borderWidth={1.5}
-                      borderColor={
-                        selectedLocationId === location.id
-                          ? "#7047EB"
-                          : "#E8E8ED"
-                      }
+              <YStack gap={hp(10)}>
+                {pickupLocations.map((location) => {
+                  const isSelected = selectedLocationId === location.id;
+                  return (
+                    <Pressable
+                      key={location.id}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setValue("pickup_location_id", location.id);
+                      }}
                     >
-                      <XStack gap={wp(12)} alignItems="flex-start">
+                      <XStack
+                        style={[
+                          styles.locationCard,
+                          isSelected && styles.locationCardSelected,
+                        ]}
+                        gap={wp(12)}
+                        alignItems="flex-start"
+                      >
                         <YStack paddingTop={hp(2)}>
                           <Checkbox
-                            checked={selectedLocationId === location.id}
-                            onCheckedChange={() =>
-                              setValue("pickup_location_id", location.id)
-                            }
+                            checked={isSelected}
+                            onCheckedChange={() => setValue("pickup_location_id", location.id)}
                           />
                         </YStack>
-
-                        <YStack flex={1} gap={hp(4)}>
-                          <Text
-                            fontSize={fp(14)}
-                            fontWeight="600"
-                            color="#282833"
-                            lineHeight={hp(19)}
-                          >
+                        <YStack flex={1} gap={hp(3)}>
+                          <Text fontSize={fp(14)} fontWeight="600" color="#1C1C1E" lineHeight={hp(20)}>
                             {location.address}
                           </Text>
-                          <Text
-                            fontSize={fp(13)}
-                            color="#6C6C89"
-                            lineHeight={hp(17)}
-                          >
+                          <Text fontSize={fp(13)} color="#6C6C89" lineHeight={hp(18)}>
                             {location.hours}
                           </Text>
                         </YStack>
                       </XStack>
-                    </Card>
-                  </TouchableOpacity>
-                ))}
+                    </Pressable>
+                  );
+                })}
               </YStack>
+
               {errors.pickup_location_id && (
-                <Text fontSize={fp(12)} color="#FF4444">
+                <Text fontSize={fp(12)} color="#FF3B30">
                   {errors.pickup_location_id.message}
                 </Text>
               )}
             </YStack>
+
           </YStack>
         </ScrollView>
-        </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
 
+      {/* Sticky CTA */}
+      <YStack
+        paddingHorizontal={wp(16)}
+        paddingTop={hp(12)}
+        paddingBottom={Math.max(insets.bottom, hp(16))}
+        backgroundColor="#FFFFFF"
+        borderTopWidth={1}
+        borderTopColor="#F2F2F7"
+      >
         <BottomSheetButton
           variant="primary"
           size="lg"
@@ -344,3 +356,48 @@ export default function SelfPickupScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#F2F2F7" },
+  backBtn: {
+    width: wp(36),
+    height: wp(36),
+    borderRadius: wp(18),
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: wp(14),
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  phoneInput: {
+    flex: 1,
+    paddingHorizontal: wp(12),
+    paddingVertical: hp(12),
+    fontSize: fp(14),
+    color: "#1C1C1E",
+  },
+  locationCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: wp(14),
+    padding: wp(16),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  locationCardSelected: {
+    shadowColor: "#8E0FFF",
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+});

@@ -63,7 +63,6 @@ export default function ProductReviews() {
           setSelectedReview(null);
         },
         onError: (error) => {
-          console.error("Failed to update review:", error);
         },
       }
     );
@@ -79,7 +78,6 @@ export default function ProductReviews() {
           queryClient.invalidateQueries({ queryKey: ["sku", id] });
         },
         onError: (error) => {
-          console.error("Failed to delete review:", error);
         },
       }
     );
@@ -93,7 +91,7 @@ export default function ProductReviews() {
         <YStack flex={1}>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+            contentContainerStyle={{ paddingBottom: insets.bottom + hp(60) }}
           >
             <YStack gap="$3" paddingHorizontal={wp(16)}>
               <YStack gap={"$1"} marginBottom="$2">

@@ -33,7 +33,6 @@ import { calculateRentalDays } from "@/utils/date";
 import { useRentalForm } from "@/hooks/useRentalForm";
 import { CrewCartItem } from "@/types/cart/cart";
 import { useUpdateBookingDelivery } from "@/hooks/delivery/useUpdateBookingDelivery";
-import { LinearGradient } from "expo-linear-gradient";
 import { Button } from "@/components/ui/Button";
 
 export default function CrewSelectionPage() {
@@ -76,17 +75,14 @@ export default function CrewSelectionPage() {
   const bookingMutation = useCreateDraftBooking();
   const handleProceedToPayment = () => {
     if (!rentalDates?.startDate || !rentalDates?.endDate) {
-      console.error("Rental dates are required");
       return;
     }
 
     if (!cartData?.sku_items || cartData.sku_items.length === 0) {
-      console.error("Cart is empty");
       return;
     }
 
     if (!selectedAddress?.address_id) {
-      console.error("Address selection is required with address_id", selectedAddress);
       return;
     }
 
@@ -133,13 +129,11 @@ export default function CrewSelectionPage() {
               router.push("/checkout/payment");
             },
             onError: (error) => {
-              console.error("Delivery update failed", error);
             },
           }
         );
       },
       onError: (error) => {
-        console.error("Booking Failed", error);
       },
     });
   };
@@ -179,7 +173,7 @@ export default function CrewSelectionPage() {
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
       <YStack flex={1}>
         {/* Header - clean white, no gradient */}
         <YStack
@@ -187,7 +181,7 @@ export default function CrewSelectionPage() {
           paddingBottom={hp(12)}
           backgroundColor="#FFFFFF"
           borderBottomWidth={1}
-          borderBottomColor="#F3F4F6"
+          borderBottomColor="#F2F2F7"
         >
           <YStack paddingBottom={hp(12)}>
             <InsideScreenHeader />
@@ -240,7 +234,7 @@ export default function CrewSelectionPage() {
           keyboardShouldPersistTaps="handled"
           onScrollBeginDrag={Keyboard.dismiss}
           contentContainerStyle={{
-            paddingBottom: insets.bottom + hp(180),
+            paddingBottom: insets.bottom + hp(300),
             paddingTop: wp(8),
           }}
         >
@@ -317,7 +311,7 @@ export default function CrewSelectionPage() {
                 paddingHorizontal={wp(16)}
                 paddingVertical={hp(10)}
                 borderTopWidth={1}
-                borderTopColor="#EBEBEF"
+                borderTopColor="#F2F2F7"
               >
                 <XStack
                   justifyContent="space-between"
@@ -398,37 +392,30 @@ function CrewCard({
         backgroundColor="#FFFFFF"
         borderRadius={wp(14)}
         padding={wp(14)}
-        borderWidth={1}
-        borderColor="#F3F4F6"
         shadowColor="#000"
         shadowOffset={{ width: 0, height: 1 }}
-        shadowOpacity={0.04}
+        shadowOpacity={0.05}
         shadowRadius={6}
-        elevation={1}
+        elevation={2}
       >
-        <LinearGradient
-          colors={["#F5EDFF", "#FDFBFF", "#FFFFFF"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{
-            borderRadius: wp(12),
-            padding: wp(4),
-            width: wp(70),
-            height: hp(70),
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+        <YStack
+          width={wp(70)}
+          height={hp(70)}
+          borderRadius={wp(12)}
+          backgroundColor="#F8F8FA"
+          alignItems="center"
+          justifyContent="center"
         >
           <Image
             source={{
               uri: `https://img.camorent.co.in/crews/images/${crew.id}.webp`,
             }}
-            style={{ width: wp(60), height: hp(60) }}
+            style={{ width: wp(58), height: hp(58) }}
             contentFit="contain"
             transition={300}
             cachePolicy="memory-disk"
           />
-        </LinearGradient>
+        </YStack>
 
         <YStack flex={1} gap={hp(8)}>
           <XStack gap={wp(6)} alignItems="center">

@@ -95,7 +95,6 @@ export const useAddToCart = () => {
       if (context?.previousCart) {
         queryClient.setQueryData(["cart"], context.previousCart);
       }
-      console.error("Failed to add to cart:", error);
     },
   });
 };

@@ -114,7 +114,6 @@ export const preloadImages = async (imageUrls: string[]) => {
       )
     );
   } catch (error) {
-    console.warn('Image preload failed:', error);
   }
 };
 
@@ -126,7 +125,6 @@ export const clearImageCache = async () => {
     await Image.clearMemoryCache();
     await Image.clearDiskCache();
   } catch (error) {
-    console.error('Failed to clear image cache:', error);
   }
 };
 

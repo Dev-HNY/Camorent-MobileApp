@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { XStack, YStack, Text } from "tamagui";
 import { ProductCard } from "../ui/ProductCard";
-import { Heading2 } from "../ui/Typography";
+
 import { hp, wp, fp } from "@/utils/responsive";
 import { SKU } from "@/types/products/product";
 import { Pressable, ScrollView } from "react-native";
@@ -43,7 +43,9 @@ function SimilarProductsComponent({ products, onProductPress }: SimilarProductsP
         alignItems="center"
         paddingHorizontal={wp(16)}
       >
-        <Heading2>Add Ons</Heading2>
+        <Text fontSize={fp(13)} fontWeight="600" color="#8E8E93" letterSpacing={0.4}>
+          ADD ONS
+        </Text>
         <Pressable onPress={handleViewMore}>
           <Text fontSize={fp(14)} fontWeight="600" color="#8E0FFF">
             View More

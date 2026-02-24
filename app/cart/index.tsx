@@ -13,21 +13,18 @@ import { CartProgressIndicator } from "@/components/cart/CartProgressIndicator";
 import { DateRangePicker } from "@/components/checkout/DateRangePicker";
 import { ShootNameField } from "@/components/checkout/ShootNameField";
 import Animated, {
-  FadeInDown,
   FadeIn,
-  Layout,
+  FadeInDown,
+  ZoomIn,
   useAnimatedScrollHandler,
   useSharedValue,
   useAnimatedStyle,
   interpolate,
   Extrapolation,
-  withSpring,
-  ZoomIn
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { DURATION } from "@/components/animations/constants";
-import { RefreshControl, Keyboard } from "react-native";
+import { RefreshControl, Keyboard, TouchableWithoutFeedback } from "react-native";
 // import { CamocareSheet } from "@/components/PDP/CamocareSheet";
 // import { CartCamocare } from "@/components/cart/CartCamocare";
 import { fp, hp, wp } from "@/utils/responsive";
@@ -147,7 +144,8 @@ export default function Cart() {
     setShowAddressSheet(false);
   };
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF" }}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
       <YStack flex={1}>
         <YStack flex={1}>
           {/* Header - clean white */}
@@ -157,15 +155,12 @@ export default function Cart() {
               paddingBottom={hp(16)}
               backgroundColor="#FFFFFF"
               borderBottomWidth={1}
-              borderBottomColor="#F3F4F6"
+              borderBottomColor="#F2F2F7"
             >
               <YStack>
                 <InsideScreenHeader />
               </YStack>
 
-              <Animated.View
-                entering={FadeInDown.duration(300).springify()}
-              >
                 <YStack paddingHorizontal={wp(16)} paddingTop={hp(16)} gap={hp(8)}>
                   <CartProgressIndicator currentStep={"cart"} />
               {items.length > 0 && (
@@ -202,7 +197,6 @@ export default function Cart() {
                 </>
               )}
               </YStack>
-            </Animated.View>
           </YStack>
           </Animated.View>
 
@@ -316,51 +310,25 @@ export default function Cart() {
               </YStack>
             ) : (
               <YStack flex={1} gap={hp(16)}>
-                {/* Cart Items with Staggered Animation */}
+                {/* Cart Items */}
                 <YStack flex={1} gap={hp(12)}>
-                  {items.map((item, index) => (
-                    <Animated.View
-                      key={item.sku_id}
-                      entering={FadeInDown.delay(index * 100)
-                        .duration(400)
-                        .springify()
-                        .damping(15)
-                        .stiffness(200)}
-                      layout={Layout.springify().damping(15)}
-                    >
-                      <CartItem item={item} />
-                    </Animated.View>
+                  {items.map((item) => (
+                    <CartItem key={item.sku_id} item={item} />
                   ))}
                 </YStack>
 
-                {/* Total Amount with Animation */}
-                <Animated.View
-                  entering={FadeInDown.delay(items.length * 100 + 100)
-                    .duration(400)
-                    .springify()
-                    .damping(15)}
-                >
-                  <TotalAmountAccordion
-                    cartData={cartSummary}
-                    rentalDays={rentalDaysCount}
-                  />
-                </Animated.View>
+                <TotalAmountAccordion
+                  cartData={cartSummary}
+                  rentalDays={rentalDaysCount}
+                />
 
-                {/* Action Buttons with Animation */}
-                <Animated.View
-                  entering={FadeInDown.delay(items.length * 100 + 200)
-                    .duration(400)
-                    .springify()
-                    .damping(15)}
-                >
-                  <CartActionButtons
-                    onAddMoreItems={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push("/(tabs)/(home)/categories");
-                    }}
-                    onCompleteSetup={() => { }}
-                  />
-                </Animated.View>
+                <CartActionButtons
+                  onAddMoreItems={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push("/(tabs)/(home)/categories");
+                  }}
+                  onCompleteSetup={() => { }}
+                />
 
                 {/* {!isCamocareAdded && (
                 <CartCamocare
@@ -398,7 +366,7 @@ export default function Cart() {
         />
         {items.length > 0 && !draftAddress && !selectedAddress && (
           <Animated.View
-            entering={FadeInDown.duration(500).springify()}
+            entering={FadeIn.duration(200)}
             style={{
               position: "absolute",
               bottom: 0,
@@ -413,7 +381,7 @@ export default function Cart() {
                 paddingTop: hp(20),
                 paddingBottom: hp(16),
                 borderTopWidth: 1,
-                borderTopColor: "#EBEBEF",
+                borderTopColor: "#F2F2F7",
               }}
             >
               <BottomSheetButton
@@ -440,7 +408,7 @@ export default function Cart() {
               paddingHorizontal={wp(16)}
               paddingVertical={hp(12)}
               borderTopWidth={1}
-              borderTopColor="#EBEBEF"
+              borderTopColor="#F2F2F7"
             >
               <XStack
                 justifyContent="space-between"
@@ -491,7 +459,7 @@ export default function Cart() {
               paddingHorizontal={wp(16)}
               paddingVertical={hp(10)}
               borderTopWidth={1}
-              borderTopColor="#EBEBEF"
+              borderTopColor="#F2F2F7"
             >
               <XStack
                 justifyContent="space-between"
@@ -534,5 +502,6 @@ export default function Cart() {
         )}
       </YStack>
     </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }

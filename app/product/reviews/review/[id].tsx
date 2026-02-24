@@ -56,7 +56,7 @@ export default function ProductReviewDetail() {
         <YStack flex={1}>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+            contentContainerStyle={{ paddingBottom: insets.bottom + hp(60) }}
           >
             <YStack gap="$3" paddingHorizontal={wp(16)}>
               {/* Stories/Reviews Tabs */}

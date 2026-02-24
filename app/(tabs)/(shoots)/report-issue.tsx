@@ -63,11 +63,6 @@ export default function ReportIssueScreen() {
 
   const handleSubmit = () => {
     // TODO: Submit issue report to backend
-    console.log({
-      category: selectedCategory,
-      issues: selectedIssues,
-      description,
-    });
     router.back();
   };
 
@@ -133,7 +128,7 @@ export default function ReportIssueScreen() {
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-        <ScrollView flex={1} paddingHorizontal={wp(16)} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: tabBarHeight + hp(24) }}>
+        <ScrollView flex={1} paddingHorizontal={wp(16)} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingBottom: tabBarHeight + hp(60) }}>
           {step === "categories" && (
             <YStack gap={hp(0)}>
               {filteredCategories.map((category, index) => (

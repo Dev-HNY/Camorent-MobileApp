@@ -164,7 +164,7 @@ export function StickyBottomCart({
       })}
       backgroundColor="#FFFFFF"
       borderTopWidth={1}
-      borderTopColor="#E5E7EB"
+      borderTopColor="#F2F2F7"
     >
       <XStack
         alignItems="center"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { XStack, YStack, Text } from "tamagui";
 import { Calendar } from "lucide-react-native";
-import { Pressable } from "react-native";
+import { Keyboard, Pressable } from "react-native";
 import { wp, hp, fp } from "@/utils/responsive";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import DateTimePicker from "react-native-ui-datepicker";
@@ -11,6 +11,57 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 dayjs.extend(customParseFormat);
+
+// Static — defined once, never recreated on render
+const calendarStyles = {
+  day_cell: { padding: 2 },
+  day: { borderRadius: 8 },
+  day_label: { color: "#121217", fontSize: fp(13), fontWeight: "500" as const },
+  header: { marginBottom: 8 },
+  month_selector_label: {
+    fontSize: fp(16),
+    fontWeight: "700" as const,
+    color: "#121217",
+  },
+  year_selector_label: {
+    fontSize: fp(16),
+    fontWeight: "700" as const,
+    color: "#121217",
+  },
+  weekday_label: {
+    fontSize: fp(11),
+    textTransform: "uppercase" as const,
+    color: "#9CA3AF",
+    fontWeight: "600" as const,
+  },
+  button_next: {
+    tintColor: "#121217",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    padding: 8,
+  },
+  button_prev: {
+    tintColor: "#121217",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    padding: 8,
+  },
+  selected: { backgroundColor: "#8E0FFF" },
+  selected_label: { color: "#FFFFFF", fontWeight: "600" as const },
+  disabled_label: { color: "#D1D5DB" },
+  outside_label: { color: "#D1D5DB" },
+  today_label: { color: "#8E0FFF", fontWeight: "700" as const },
+  month: { borderColor: "#E5E7EB", borderWidth: 1, borderRadius: 8 },
+  month_label: { color: "#121217", fontSize: fp(12) },
+  year: { borderColor: "#E5E7EB", borderWidth: 1, borderRadius: 8 },
+  year_label: { color: "#121217", fontSize: fp(12) },
+  selected_month: { backgroundColor: "#8E0FFF", borderColor: "#8E0FFF" },
+  selected_month_label: { color: "#FFFFFF" },
+  selected_year: { backgroundColor: "#8E0FFF", borderColor: "#8E0FFF" },
+  selected_year_label: { color: "#FFFFFF" },
+  active_year: { backgroundColor: "#F5EDFF", borderColor: "#8E0FFF" },
+  active_year_label: { color: "#8E0FFF" },
+};
 
 interface DateRangePickerProps {
   startDate?: string;
@@ -58,6 +109,7 @@ export function DateRangePicker({
   };
 
   const handleOpen = () => {
+    Keyboard.dismiss();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Reset temp to current values when opening
     setTempStart(startDate ? dayjs(startDate, "DD-MM-YYYY") : undefined);
@@ -83,80 +135,6 @@ export function DateRangePicker({
     tempStart && tempEnd ? tempEnd.diff(tempStart, "day") : 0;
 
   const canApply = !!tempStart && !!tempEnd && rentalDays > 0;
-
-  const calendarStyles = {
-    day_cell: { padding: 2 },
-    day: { borderRadius: 8 },
-    day_label: { color: "#121217", fontSize: fp(13), fontWeight: "500" as const },
-    header: { marginBottom: 8 },
-    month_selector_label: {
-      fontSize: fp(16),
-      fontWeight: "700" as const,
-      color: "#121217",
-    },
-    year_selector_label: {
-      fontSize: fp(16),
-      fontWeight: "700" as const,
-      color: "#121217",
-    },
-    weekday_label: {
-      fontSize: fp(11),
-      textTransform: "uppercase" as const,
-      color: "#9CA3AF",
-      fontWeight: "600" as const,
-    },
-    button_next: {
-      tintColor: "#121217",
-      backgroundColor: "#F3F4F6",
-      borderRadius: 8,
-      padding: 8,
-    },
-    button_prev: {
-      tintColor: "#121217",
-      backgroundColor: "#F3F4F6",
-      borderRadius: 8,
-      padding: 8,
-    },
-    selected: {
-      backgroundColor: "#8E0FFF",
-    },
-    selected_label: {
-      color: "#FFFFFF",
-      fontWeight: "600" as const,
-    },
-    disabled_label: {
-      color: "#D1D5DB",
-    },
-    outside_label: { color: "#D1D5DB" },
-    today_label: { color: "#8E0FFF", fontWeight: "700" as const },
-    month: {
-      borderColor: "#E5E7EB",
-      borderWidth: 1,
-      borderRadius: 8,
-    },
-    month_label: { color: "#121217", fontSize: fp(12) },
-    year: {
-      borderColor: "#E5E7EB",
-      borderWidth: 1,
-      borderRadius: 8,
-    },
-    year_label: { color: "#121217", fontSize: fp(12) },
-    selected_month: {
-      backgroundColor: "#8E0FFF",
-      borderColor: "#8E0FFF",
-    },
-    selected_month_label: { color: "#FFFFFF" },
-    selected_year: {
-      backgroundColor: "#8E0FFF",
-      borderColor: "#8E0FFF",
-    },
-    selected_year_label: { color: "#FFFFFF" },
-    active_year: {
-      backgroundColor: "#F5EDFF",
-      borderColor: "#8E0FFF",
-    },
-    active_year_label: { color: "#8E0FFF" },
-  };
 
   return (
     <>
@@ -278,12 +256,12 @@ export function DateRangePicker({
                   minDate: dayjs(),
                   maxDate: dayjs().add(90, "day"),
                   onChange: (params: any) => {
-                    Haptics.selectionAsync();
                     if (params.startDate) {
                       setTempStart(dayjs(params.startDate));
                     }
                     if (params.endDate) {
                       setTempEnd(dayjs(params.endDate));
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }
                   },
                   headerButtonSize: 20,

@@ -75,7 +75,6 @@ export const useModifyQuantity = () => {
       if (context?.previousCart) {
         queryClient.setQueryData(["cart"], context.previousCart);
       }
-      console.error("Failed to update quantity:", err);
     },
   });
 };

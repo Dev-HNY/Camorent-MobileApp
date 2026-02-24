@@ -1,9 +1,11 @@
 import { YStack, XStack, Text } from "tamagui";
-import { Heading2 } from "../ui/Typography";
 import { ProductCard } from "../ui/ProductCard";
 import { SKU } from "@/types/products/product";
 import { hp, wp, fp } from "@/utils/responsive";
-import { ScrollView } from "react-native";
+import { Pressable, ScrollView } from "react-native";
+import { memo, useCallback } from "react";
+import { ChevronRight } from "lucide-react-native";
+import * as Haptics from "expo-haptics";
 
 interface ProductListSectionProps {
   title: string;
@@ -11,6 +13,21 @@ interface ProductListSectionProps {
   onViewAllPress?: () => void;
   onProductPress: (productId: string) => void;
 }
+
+const ProductItem = memo(({
+  product,
+  onProductPress,
+}: {
+  product: SKU;
+  onProductPress: (id: string) => void;
+}) => {
+  const handlePress = useCallback(() => onProductPress(product.sku_id), [product.sku_id, onProductPress]);
+  return (
+    <YStack marginRight={wp(12)}>
+      <ProductCard product={product} onProductPress={handlePress} maxWidth={wp(162)} />
+    </YStack>
+  );
+});
 
 export function ProductListSection({
   title,
@@ -23,22 +40,30 @@ export function ProductListSection({
   }
 
   return (
-    <YStack gap={hp(16)}>
+    <YStack gap={hp(14)}>
       <XStack
         paddingHorizontal={wp(16)}
         justifyContent="space-between"
         alignItems="center"
       >
-        <Text fontSize={fp(16)} fontWeight="600" color="#121217">{title}</Text>
+        <Text fontSize={fp(17)} fontWeight="700" color="#1C1C1E" letterSpacing={-0.3}>
+          {title}
+        </Text>
         {onViewAllPress && (
-          <Text
-            fontSize={fp(12)}
-            color="#3f3f50"
-            onPress={onViewAllPress}
-            pressStyle={{ opacity: 0.7 }}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onViewAllPress();
+            }}
+            hitSlop={8}
           >
-            View all
-          </Text>
+            <XStack alignItems="center" gap={wp(2)}>
+              <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">
+                View all
+              </Text>
+              <ChevronRight size={14} color="#8E0FFF" strokeWidth={2.5} />
+            </XStack>
+          </Pressable>
         )}
       </XStack>
       <ScrollView
@@ -50,13 +75,7 @@ export function ProductListSection({
         }}
       >
         {products.map((product) => (
-          <YStack key={product.sku_id} marginRight={wp(12)}>
-            <ProductCard
-              product={product}
-              onProductPress={() => onProductPress(product.sku_id)}
-              maxWidth={wp(162)}
-            />
-          </YStack>
+          <ProductItem key={product.sku_id} product={product} onProductPress={onProductPress} />
         ))}
       </ScrollView>
     </YStack>

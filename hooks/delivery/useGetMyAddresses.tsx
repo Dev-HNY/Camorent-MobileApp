@@ -6,7 +6,6 @@ export const useGetMyAddresses = () => {
     queryKey: ["addresses"],
     queryFn: async () => {
       const res = await apiClient.get("/users/me/addresses");
-      console.log("get address data :", res.data);
       return res.data;
     },
   });

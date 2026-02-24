@@ -59,7 +59,6 @@ export default function ProductDetails() {
       }
       : undefined
   );
-  console.log(similarSkusByBrand)
   const { data: user } = useGetCurrentUser();
   const { data: cart } = useGetCart();
 
@@ -85,7 +84,6 @@ export default function ProductDetails() {
       scrollY.value = event.contentOffset.y;
     },
   });
-  console.log(addOns)
 
   // Animated header background
   const animatedHeaderBg = useAnimatedStyle(() => {
@@ -206,7 +204,7 @@ export default function ProductDetails() {
             paddingTop: insets.top,
             backgroundColor: "#FFFFFF",
             borderBottomWidth: 1,
-            borderBottomColor: "#E5E7EB",
+            borderBottomColor: "#F2F2F7",
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.05,

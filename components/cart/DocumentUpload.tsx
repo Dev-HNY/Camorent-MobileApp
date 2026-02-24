@@ -77,9 +77,7 @@ export function DocumentUpload({
 
   const openCamera = async () => {
     try {
-      console.log("Requesting camera permissions...");
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      console.log("Camera permission status:", status);
 
       if (status !== "granted") {
         Alert.alert(
@@ -89,7 +87,6 @@ export function DocumentUpload({
         return;
       }
 
-      console.log("Launching camera...");
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -97,22 +94,18 @@ export function DocumentUpload({
         quality: 0.8,
       });
 
-      console.log("Camera result:", result);
       if (!result.canceled) {
         onUpload();
       }
     } catch (error) {
-      console.error("Camera error:", error);
       Alert.alert("Error", "Failed to open camera");
     }
   };
 
   const openGallery = async () => {
     try {
-      console.log("Requesting media library permissions...");
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
-      console.log("Media library permission status:", status);
 
       if (status !== "granted") {
         Alert.alert(
@@ -122,7 +115,6 @@ export function DocumentUpload({
         return;
       }
 
-      console.log("Launching image library...");
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -130,12 +122,10 @@ export function DocumentUpload({
         quality: 0.8,
       });
 
-      console.log("Gallery result:", result);
       if (!result.canceled) {
         onUpload();
       }
     } catch (error) {
-      console.error("Gallery error:", error);
       Alert.alert("Error", "Failed to open gallery");
     }
   };

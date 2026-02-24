@@ -15,7 +15,6 @@ export const useAddMyAddress = () => {
   return useMutation({
     mutationFn: async (addressData: AddAddressPayload) => {
       const res = await apiClient.post("/users/me/addresses", addressData);
-      console.log(res.data);
       return res.data;
     },
   });

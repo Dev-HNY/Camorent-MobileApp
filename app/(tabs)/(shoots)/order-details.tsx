@@ -1,16 +1,7 @@
 import React, { useState, useCallback } from "react";
-import {
-  YStack,
-  XStack,
-  Text,
-  Stack,
-  Separator,
-} from "tamagui";
+import { YStack, XStack, Text } from "tamagui";
 import * as Linking from "expo-linking";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable, StyleSheet } from "react-native";
 import Animated, {
   useSharedValue,
@@ -18,8 +9,8 @@ import Animated, {
   useAnimatedScrollHandler,
   interpolate,
   Extrapolation,
-  FadeInDown,
   FadeIn,
+  FadeInDown,
 } from "react-native-reanimated";
 import { router, useLocalSearchParams } from "expo-router";
 import { fp, hp, wp } from "@/utils/responsive";
@@ -32,47 +23,31 @@ import { OrderItemCard } from "@/components/shoots/OrderItemCard";
 import { useGetBookingInvoice } from "@/hooks/shoots/useGetBookingInvoice";
 import * as Haptics from "expo-haptics";
 import { SkeletonOrderDetails } from "@/components/animations/SkeletonLoader";
-import { DURATION } from "@/components/animations/constants";
-import { ChevronLeft } from "lucide-react-native";
+import { ChevronLeft, FileText } from "lucide-react-native";
 
 export default function OrderDetailsPage() {
   const { booking_id, status } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-
   const scrollY = useSharedValue(0);
 
-  const {
-    data: bookingDetails,
-    isLoading: isLoadingBookingDetails,
-    isError,
-    error,
-  } = useGetBookingById(booking_id as string);
+  const { data: bookingDetails, isLoading: isLoadingBookingDetails, isError, error } =
+    useGetBookingById(booking_id as string);
 
-  const { data: invoiceData, isLoading: isLoadingInvoice } =
-    useGetBookingInvoice({
-      bookingId: booking_id as string,
-      invoice_id: bookingDetails?.invoice_id ?? "",
-    });
+  const { data: invoiceData, isLoading: isLoadingInvoice } = useGetBookingInvoice({
+    bookingId: booking_id as string,
+    invoice_id: bookingDetails?.invoice_id ?? "",
+  });
 
   const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
   const [showCancelSheet, setShowCancelSheet] = useState(false);
 
   const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
-    },
+    onScroll: (e) => { scrollY.value = e.contentOffset.y; },
   });
 
-  // Header bottom border fades in after a bit of scroll
-  const animatedHeaderBorder = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      scrollY.value,
-      [0, 40],
-      [0, 1],
-      Extrapolation.CLAMP
-    );
-    return { borderBottomColor: `rgba(229, 231, 235, ${opacity})` };
-  });
+  const headerBorderStyle = useAnimatedStyle(() => ({
+    borderBottomColor: `rgba(229,231,235,${interpolate(scrollY.value, [0, 32], [0, 1], Extrapolation.CLAMP)})`,
+  }));
 
   const handleBackPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -81,21 +56,13 @@ export default function OrderDetailsPage() {
 
   if (isLoadingBookingDetails) {
     return (
-      <SafeAreaView style={styles.container}>
-        <XStack
-          alignItems="center"
-          paddingHorizontal={wp(16)}
-          paddingVertical={hp(12)}
-          gap={wp(12)}
-          borderBottomWidth={1}
-          borderBottomColor="#F3F4F6"
-        >
-          <Pressable onPress={handleBackPress} style={styles.backButton}>
+      <SafeAreaView style={styles.root}>
+        <XStack alignItems="center" paddingHorizontal={wp(16)} height={hp(52)} gap={wp(12)}
+          borderBottomWidth={1} borderBottomColor="#F3F4F6">
+          <Pressable onPress={handleBackPress} style={styles.backBtn}>
             <ChevronLeft size={22} color="#1C1C1E" />
           </Pressable>
-          <Text fontSize={fp(17)} fontWeight="600" color="#1C1C1E">
-            Order details
-          </Text>
+          <Text fontSize={fp(17)} fontWeight="600" color="#1C1C1E">Order details</Text>
         </XStack>
         <SkeletonOrderDetails />
       </SafeAreaView>
@@ -104,27 +71,16 @@ export default function OrderDetailsPage() {
 
   if (isError) {
     return (
-      <SafeAreaView style={styles.container}>
-        <XStack
-          alignItems="center"
-          paddingHorizontal={wp(16)}
-          paddingVertical={hp(12)}
-          gap={wp(12)}
-          borderBottomWidth={1}
-          borderBottomColor="#F3F4F6"
-        >
-          <Pressable onPress={handleBackPress} style={styles.backButton}>
+      <SafeAreaView style={styles.root}>
+        <XStack alignItems="center" paddingHorizontal={wp(16)} height={hp(52)} gap={wp(12)}
+          borderBottomWidth={1} borderBottomColor="#F3F4F6">
+          <Pressable onPress={handleBackPress} style={styles.backBtn}>
             <ChevronLeft size={22} color="#1C1C1E" />
           </Pressable>
-          <Text fontSize={fp(17)} fontWeight="600" color="#1C1C1E">
-            Order details
-          </Text>
+          <Text fontSize={fp(17)} fontWeight="600" color="#1C1C1E">Order details</Text>
         </XStack>
-        <Animated.View
-          entering={FadeIn.duration(300)}
-          style={styles.errorContainer}
-        >
-          <Text fontSize={fp(16)} color="#6C6C70" textAlign="center">
+        <Animated.View entering={FadeIn.duration(250)} style={styles.center}>
+          <Text fontSize={fp(15)} color="#6C6C70" textAlign="center">
             {error?.message || "Failed to load booking details"}
           </Text>
         </Animated.View>
@@ -132,92 +88,51 @@ export default function OrderDetailsPage() {
     );
   }
 
-  if (!bookingDetails) {
-    return null;
-  }
+  if (!bookingDetails) return null;
 
   const rentalDays = bookingDetails.total_rental_days;
+  const showRatingCard = status === "past";
+  const hasInvoice = !!(bookingDetails.invoice_id && bookingDetails.invoice_id !== "");
+  const canOpenInvoice = hasInvoice && !isLoadingInvoice && !!invoiceData?.pdf_url;
 
   const productData = bookingDetails.sku_items?.map((item) => ({
-    id: item.id,
-    name: item.name,
-    quantity: item.quantity,
-    days: rentalDays,
-    price: parseFloat(item.price_per_day),
-    total: parseFloat(item.total_price),
-  }));
+    id: item.id, name: item.name, quantity: item.quantity,
+    days: rentalDays, price: parseFloat(item.price_per_day), total: parseFloat(item.total_price),
+  })) ?? [];
 
   const crewData = bookingDetails.crew_items?.map((item) => ({
-    id: item.crew_id,
-    name: item.crew_type_name,
-    quantity: item.quantity,
-    days: rentalDays,
-    price: parseFloat(item.price_per_day),
-    total: parseFloat(item.total_price),
-  }));
+    id: item.crew_id, name: item.crew_type_name, quantity: item.quantity,
+    days: rentalDays, price: parseFloat(item.price_per_day), total: parseFloat(item.total_price),
+  })) ?? [];
 
-  const handleRateClick = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({
-      pathname: "/(tabs)/(shoots)/rating",
-      params: { booking_id },
-    });
-  };
-
-  const handleTrackOrder = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({
-      pathname: "/(tabs)/(shoots)/track-order",
-      params: { booking_id },
-    });
-  };
-
-  const handleReplaceItem = (itemId: string, itemName: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({
-      pathname: "/(tabs)/(shoots)/replace-item",
-      params: { itemId, itemName },
-    });
-  };
-
-  const handleConfirmCancel = () => {
-    setShowCancelSheet(false);
-    router.back();
-  };
-
-  const showReplaceButton = false;
-  const showRatingCard = status === "past";
+  const totalItems = productData.length + crewData.length;
+  const deliveryLabel = new Date(bookingDetails.rental_start_date).toLocaleDateString("en-IN", {
+    day: "numeric", month: "short", year: "numeric",
+  });
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Always-visible sticky header */}
-      <Animated.View style={[styles.header, animatedHeaderBorder]}>
-        <XStack
-          alignItems="center"
-          paddingHorizontal={wp(16)}
-          height={hp(52)}
-          gap={wp(12)}
-        >
-          <Pressable onPress={handleBackPress} style={styles.backButton}>
+    <SafeAreaView style={styles.root}>
+
+      {/* Sticky header */}
+      <Animated.View style={[styles.header, headerBorderStyle]}>
+        <XStack alignItems="center" paddingHorizontal={wp(16)} height={hp(52)} gap={wp(12)}>
+          <Pressable onPress={handleBackPress} style={styles.backBtn} hitSlop={8}>
             <ChevronLeft size={22} color="#1C1C1E" />
           </Pressable>
-          <Text fontSize={fp(17)} fontWeight="600" color="#1C1C1E" flex={1}>
+          <Text fontSize={fp(17)} fontWeight="600" color="#1C1C1E" flex={1} letterSpacing={-0.3}>
             Order #{booking_id?.toString().slice(-6)}
           </Text>
-          {bookingDetails?.invoice_id && bookingDetails.invoice_id !== "" && (
+          {hasInvoice && (
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                invoiceData?.pdf_url && Linking.openURL(invoiceData.pdf_url);
+                canOpenInvoice && Linking.openURL(invoiceData!.pdf_url);
               }}
-              disabled={isLoadingInvoice || !invoiceData?.pdf_url}
-              style={styles.invoiceButton}
+              disabled={!canOpenInvoice}
+              hitSlop={8}
+              style={styles.invoiceBtn}
             >
-              <Text
-                fontSize={fp(13)}
-                fontWeight="600"
-                color={isLoadingInvoice ? "#B8B8C7" : "#8E0FFF"}
-              >
+              <Text fontSize={fp(13)} fontWeight="600" color={canOpenInvoice ? "#8E0FFF" : "#C7C7CC"}>
                 {isLoadingInvoice ? "Loading..." : "Invoice"}
               </Text>
             </Pressable>
@@ -225,192 +140,159 @@ export default function OrderDetailsPage() {
         </XStack>
       </Animated.View>
 
-      <YStack flex={1}>
-        <Animated.ScrollView
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingTop: hp(16),
-            paddingBottom: insets.bottom + hp(24),
-          }}
-        >
-          <YStack gap={hp(20)} paddingHorizontal={wp(16)}>
-            {/* Order Status Card */}
-            <Animated.View
-              entering={FadeInDown.delay(0).springify().damping(18).stiffness(250)}
-            >
-              <OrderStatusCard
-                deliveryDate={new Date(bookingDetails.rental_start_date)}
-                status={bookingDetails.status}
-                onTrackOrder={handleTrackOrder}
+      {/* Scrollable body */}
+      <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: hp(20), paddingBottom: insets.bottom + hp(48) }}
+      >
+        <YStack gap={hp(12)} paddingHorizontal={wp(16)}>
+
+          {/* Status card */}
+          <Animated.View entering={FadeInDown.duration(280).springify().damping(20).stiffness(260)}>
+            <OrderStatusCard
+              deliveryDate={new Date(bookingDetails.rental_start_date)}
+              status={bookingDetails.status}
+              onTrackOrder={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push({ pathname: "/(tabs)/(shoots)/track-order", params: { booking_id } });
+              }}
+            />
+          </Animated.View>
+
+          {/* Rating card */}
+          {showRatingCard && (
+            <Animated.View entering={FadeInDown.delay(60).duration(280).springify().damping(20).stiffness(260)}>
+              <RatingCard
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push({ pathname: "/(tabs)/(shoots)/rating", params: { booking_id } });
+                }}
+                rating={bookingDetails.rating}
+                review={bookingDetails.review}
               />
             </Animated.View>
+          )}
 
-            {/* Rating Card - for past orders */}
-            {showRatingCard && (
-              <Animated.View
-                entering={FadeInDown.delay(DURATION.stagger).springify().damping(18).stiffness(250)}
-              >
-                <RatingCard
-                  onPress={handleRateClick}
-                  rating={bookingDetails.rating}
-                  review={bookingDetails.review}
-                />
-              </Animated.View>
-            )}
+          {/* Items section */}
+          <Animated.View entering={FadeInDown.delay(showRatingCard ? 120 : 60).duration(280).springify().damping(20).stiffness(260)}>
+            <YStack gap={hp(10)}>
+              {/* Section label */}
+              <XStack alignItems="center" justifyContent="space-between" paddingHorizontal={wp(4)}>
+                <Text fontSize={fp(13)} fontWeight="600" color="#8E8E93" letterSpacing={0.4}>
+                  ITEMS IN ORDER
+                </Text>
+                <Text fontSize={fp(13)} fontWeight="500" color="#8E8E93">
+                  {totalItems} {totalItems === 1 ? "item" : "items"}
+                </Text>
+              </XStack>
 
-            {/* All Items Card */}
-            <Animated.View
-              entering={FadeInDown.delay(DURATION.stagger * 2).springify().damping(18).stiffness(250)}
-            >
-              <YStack gap={hp(12)}>
-                <XStack alignItems="center" justifyContent="space-between">
-                  <Text fontSize={fp(18)} fontWeight="700" color="#1C1C1E" letterSpacing={-0.3}>
-                    All Items
-                  </Text>
-                  <Text fontSize={fp(13)} fontWeight="500" color="#8E8E93">
-                    {productData.length + crewData.length} item{productData.length + crewData.length !== 1 ? "s" : ""}
-                  </Text>
+              {/* Grouped white card */}
+              <YStack style={styles.card}>
+
+                {/* Delivery row */}
+                <XStack alignItems="center" justifyContent="space-between"
+                  paddingHorizontal={wp(16)} paddingVertical={hp(14)}>
+                  <Text fontSize={fp(14)} color="#8E8E93">Delivery scheduled</Text>
+                  <Text fontSize={fp(14)} fontWeight="600" color="#1C1C1E">{deliveryLabel}</Text>
                 </XStack>
 
-                {/* Clean white card — no gradient */}
-                <Stack style={styles.itemsCard}>
-                  <YStack gap={hp(16)}>
-                    {/* Delivery info */}
-                    <XStack justifyContent="space-between" alignItems="center">
-                      <YStack gap={hp(2)}>
-                        <Text fontSize={fp(12)} fontWeight="500" color="#8E8E93">
-                          Delivery scheduled on
-                        </Text>
-                        <Text fontSize={fp(14)} fontWeight="600" color="#1C1C1E">
-                          {new Date(bookingDetails.rental_start_date).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </Text>
-                      </YStack>
-                    </XStack>
+                <YStack height={1} backgroundColor="#F2F2F7" />
 
-                    <Separator borderColor="#F3F4F6" />
-
-                    {/* Product Items */}
-                    {productData.length > 0 && (
-                      <YStack gap={hp(16)}>
-                        {productData.map((item, index) => (
-                          <Animated.View
-                            key={item.id}
-                            entering={FadeInDown.delay(DURATION.stagger * (3 + index))
-                              .springify()
-                              .damping(18)
-                              .stiffness(250)}
-                                      >
-                            <OrderItemCard
-                              id={item.id}
-                              name={item.name}
-                              quantity={item.quantity}
-                              days={item.days}
-                              total={item.total}
-                              showReplaceButton={showReplaceButton}
-                              onReplace={() => handleReplaceItem(item.id, item.name)}
-                            />
-                          </Animated.View>
-                        ))}
-                      </YStack>
-                    )}
-
-                    {/* Crew Items */}
-                    {crewData.length > 0 && (
-                      <>
-                        {productData.length > 0 && (
-                          <Separator borderStyle="dashed" borderColor="#E5E7EB" />
+                {/* Products */}
+                {productData.length > 0 && (
+                  <YStack paddingHorizontal={wp(16)} paddingTop={hp(14)}>
+                    {productData.map((item, i) => (
+                      <React.Fragment key={item.id}>
+                        <OrderItemCard
+                          id={item.id} name={item.name} quantity={item.quantity}
+                          days={item.days} total={item.total} showReplaceButton={false}
+                        />
+                        {i < productData.length - 1 && (
+                          <YStack height={1} backgroundColor="#F2F2F7" marginVertical={hp(12)} />
                         )}
-                        <YStack gap={hp(16)}>
-                          {crewData.map((item, index) => (
-                            <Animated.View
-                              key={item.id}
-                              entering={FadeInDown.delay(
-                                DURATION.stagger * (3 + productData.length + index)
-                              )
-                                .springify()
-                                .damping(18)
-                                .stiffness(250)}
-                                          >
-                              <OrderItemCard
-                                id={item.id}
-                                name={item.name}
-                                quantity={item.quantity}
-                                days={item.days}
-                                imageUri={`https://img.camorent.co.in/crews/images/${item.id}.webp`}
-                                total={item.total}
-                                showReplaceButton={showReplaceButton}
-                                onReplace={() => handleReplaceItem(item.id, item.name)}
-                              />
-                            </Animated.View>
-                          ))}
-                        </YStack>
-                      </>
-                    )}
-
-                    <Separator borderColor="#F3F4F6" />
-
-                    {/* Total Price Row */}
-                    <XStack alignItems="center" justifyContent="space-between">
-                      <Text fontSize={fp(16)} fontWeight="700" color="#1C1C1E">
-                        Total Price
-                      </Text>
-                      <YStack alignItems="flex-end" gap={hp(4)}>
-                        <Text
-                          fontSize={fp(20)}
-                          fontWeight="700"
-                          color="#1C1C1E"
-                          letterSpacing={-0.5}
-                        >
-                          ₹{parseFloat(bookingDetails.total_amount).toLocaleString()}
-                        </Text>
-                        <Pressable
-                          onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            setShowPriceBreakdown(true);
-                          }}
-                          style={styles.priceBreakupButton}
-                        >
-                          <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">
-                            Price breakup
-                          </Text>
-                        </Pressable>
-                      </YStack>
-                    </XStack>
+                      </React.Fragment>
+                    ))}
                   </YStack>
-                </Stack>
-              </YStack>
-            </Animated.View>
+                )}
 
-            {/* Need Help */}
-            <Animated.View
-              entering={FadeInDown.delay(DURATION.stagger * 5).springify().damping(18).stiffness(250)}
-            >
-              <YStack gap={hp(12)}>
-                <Text fontSize={fp(18)} fontWeight="700" color="#1C1C1E" letterSpacing={-0.3}>
-                  Need help?
-                </Text>
-                <Pressable
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    Linking.openURL("mailto:support@camorent.co.in");
-                  }}
-                  style={styles.helpButton}
-                >
-                  <Text fontSize={fp(15)} fontWeight="600" color="#8E0FFF">
-                    Chat with us
-                  </Text>
-                </Pressable>
+                {/* Crew */}
+                {crewData.length > 0 && (
+                  <>
+                    <YStack height={1} backgroundColor="#F2F2F7" marginTop={hp(14)} />
+                    <YStack paddingHorizontal={wp(16)} paddingTop={hp(14)}>
+                      {crewData.map((item, i) => (
+                        <React.Fragment key={item.id}>
+                          <OrderItemCard
+                            id={item.id} name={item.name} quantity={item.quantity}
+                            days={item.days} total={item.total}
+                            imageUri={`https://img.camorent.co.in/crews/images/${item.id}.webp`}
+                            showReplaceButton={false}
+                          />
+                          {i < crewData.length - 1 && (
+                            <YStack height={1} backgroundColor="#F2F2F7" marginVertical={hp(12)} />
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </YStack>
+                  </>
+                )}
+
+                {/* Total row */}
+                <YStack height={1} backgroundColor="#F2F2F7" marginTop={hp(14)} />
+                <XStack alignItems="center" justifyContent="space-between"
+                  paddingHorizontal={wp(16)} paddingVertical={hp(16)}>
+                  <Text fontSize={fp(15)} fontWeight="600" color="#1C1C1E">Total</Text>
+                  <YStack alignItems="flex-end" gap={hp(4)}>
+                    <Text fontSize={fp(20)} fontWeight="700" color="#1C1C1E" letterSpacing={-0.5}>
+                      {"\u20B9"}{parseFloat(bookingDetails.total_amount).toLocaleString()}
+                    </Text>
+                    <Pressable hitSlop={8} onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowPriceBreakdown(true);
+                    }}>
+                      <Text fontSize={fp(12)} fontWeight="600" color="#8E0FFF">
+                        View price breakup
+                      </Text>
+                    </Pressable>
+                  </YStack>
+                </XStack>
               </YStack>
-            </Animated.View>
-          </YStack>
-        </Animated.ScrollView>
-      </YStack>
+            </YStack>
+          </Animated.View>
+
+          {/* Support */}
+          <Animated.View entering={FadeInDown.delay(showRatingCard ? 180 : 120).duration(280).springify().damping(20).stiffness(260)}>
+            <YStack gap={hp(10)}>
+              <Text fontSize={fp(13)} fontWeight="600" color="#8E8E93" letterSpacing={0.4} paddingHorizontal={wp(4)}>
+                SUPPORT
+              </Text>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  Linking.openURL("mailto:support@camorent.co.in");
+                }}
+                style={({ pressed }) => [styles.helpRow, { opacity: pressed ? 0.7 : 1 }]}
+              >
+                <XStack alignItems="center" gap={wp(12)} flex={1}>
+                  <XStack width={36} height={36} borderRadius={10}
+                    backgroundColor="#F5EEFF" alignItems="center" justifyContent="center">
+                    <FileText size={18} color="#8E0FFF" strokeWidth={2} />
+                  </XStack>
+                  <YStack gap={hp(2)}>
+                    <Text fontSize={fp(15)} fontWeight="500" color="#1C1C1E">Chat with us</Text>
+                    <Text fontSize={fp(12)} color="#8E8E93">support@camorent.co.in</Text>
+                  </YStack>
+                </XStack>
+                <ChevronLeft size={18} color="#C7C7CC"
+                  style={{ transform: [{ rotate: "180deg" }] }} strokeWidth={2} />
+              </Pressable>
+            </YStack>
+          </Animated.View>
+
+        </YStack>
+      </Animated.ScrollView>
 
       <PriceBreakdownSheet
         open={showPriceBreakdown}
@@ -430,57 +312,33 @@ export default function OrderDetailsPage() {
       <CancelOrderSheet
         open={showCancelSheet}
         onOpenChange={setShowCancelSheet}
-        onConfirmCancel={handleConfirmCancel}
+        onConfirmCancel={() => { setShowCancelSheet(false); router.back(); }}
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
+  root: { flex: 1, backgroundColor: "#F2F2F7" },
+  header: { backgroundColor: "#FFFFFF", borderBottomWidth: 1 },
+  backBtn: {
+    width: wp(36), height: wp(36), borderRadius: wp(18),
+    backgroundColor: "#F3F4F6", justifyContent: "center", alignItems: "center",
   },
-  header: {
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
+  invoiceBtn: {
+    paddingVertical: hp(6), paddingHorizontal: wp(10),
+    borderRadius: wp(8), backgroundColor: "#F5EEFF",
   },
-  backButton: {
-    width: wp(36),
-    height: wp(36),
-    borderRadius: wp(18),
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center",
-    alignItems: "center",
+  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: wp(24) },
+  card: {
+    backgroundColor: "#FFFFFF", borderRadius: wp(14), overflow: "hidden",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: wp(16),
-  },
-  itemsCard: {
-    borderRadius: wp(14),
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    padding: wp(16),
-    backgroundColor: "#FFFFFF",
-  },
-  invoiceButton: {
-    paddingVertical: hp(4),
-    paddingHorizontal: wp(8),
-  },
-  priceBreakupButton: {
-    paddingVertical: hp(2),
-  },
-  helpButton: {
-    width: "100%",
-    paddingVertical: hp(14),
-    paddingHorizontal: wp(16),
-    borderRadius: wp(10),
-    borderWidth: 1.5,
-    borderColor: "#E5D5FF",
-    backgroundColor: "#FAFAFF",
-    alignItems: "center",
+  helpRow: {
+    flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF",
+    borderRadius: wp(14), paddingHorizontal: wp(14), paddingVertical: hp(14),
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
 });

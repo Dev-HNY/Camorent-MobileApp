@@ -109,7 +109,7 @@ export default function HelpCenterScreen() {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: tabHeight + hp(20) }}
+          contentContainerStyle={{ paddingBottom: tabHeight + hp(60) }}
         >
           {/* Purple banner with illustration */}
           <XStack

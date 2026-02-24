@@ -1,9 +1,7 @@
 import React from "react";
-import { YStack, XStack, Stack, Separator, Text } from "tamagui";
-import { Package, Users, Percent, Truck, Shield } from "lucide-react-native";
+import { YStack, XStack, Text } from "tamagui";
+import { StyleSheet } from "react-native";
 import { wp, hp, fp } from "@/utils/responsive";
-import { BillDetailRow } from "./BillDetailRow";
-import { formatPrice } from "@/utils/format";
 import Price from "@/components/ui/Price";
 
 interface RentCostBreakdownProps {
@@ -19,75 +17,165 @@ interface RentCostBreakdownProps {
   totalAmount: number;
 }
 
+function BillRow({
+  label,
+  value,
+  valueColor,
+  isTotal,
+}: {
+  label: string;
+  value: React.ReactNode;
+  valueColor?: string;
+  isTotal?: boolean;
+}) {
+  return (
+    <XStack alignItems="center" justifyContent="space-between" paddingVertical={hp(12)}>
+      <Text
+        fontSize={isTotal ? fp(15) : fp(14)}
+        fontWeight={isTotal ? "600" : "400"}
+        color={isTotal ? "#1C1C1E" : "#6C6C70"}
+      >
+        {label}
+      </Text>
+      {typeof value === "string" ? (
+        <Text
+          fontSize={isTotal ? fp(16) : fp(14)}
+          fontWeight={isTotal ? "700" : "500"}
+          color={valueColor ?? (isTotal ? "#1C1C1E" : "#1C1C1E")}
+          letterSpacing={isTotal ? -0.3 : 0}
+        >
+          {value}
+        </Text>
+      ) : (
+        value
+      )}
+    </XStack>
+  );
+}
+
 export const RentCostBreakdown = ({
   itemTotal,
   crewTotal,
   couponDiscount = 0,
+  cgstAmount,
+  sgstAmount,
+  igstAmount,
   camocareAmount = 0,
   totalAmount,
 }: RentCostBreakdownProps) => {
+  const igstValue = igstAmount ?? 0;
+  const cgstValue = cgstAmount ?? 0;
+  const sgstValue = sgstAmount ?? 0;
+  const showIGST = igstValue > 0;
+
+  const rows: { label: string; value: React.ReactNode; valueColor?: string }[] = [
+    {
+      label: "Equipment total",
+      value: (
+        <Price value={itemTotal} fontSize={fp(14)} fontWeight="500" lineHeight={hp(20)} color="#1C1C1E" />
+      ),
+    },
+  ];
+
+  if (crewTotal > 0) {
+    rows.push({
+      label: "Crew total",
+      value: (
+        <Price value={crewTotal} fontSize={fp(14)} fontWeight="500" lineHeight={hp(20)} color="#1C1C1E" />
+      ),
+    });
+  }
+
+  if (couponDiscount > 0) {
+    rows.push({
+      label: "Coupon discount",
+      value: (
+        <XStack alignItems="center" gap={wp(1)}>
+          <Text fontSize={fp(14)} fontWeight="500" color="#34C759">−</Text>
+          <Price value={couponDiscount} fontSize={fp(14)} fontWeight="500" lineHeight={hp(20)} color="#34C759" />
+        </XStack>
+      ),
+    });
+  }
+
+  rows.push({ label: "Delivery", value: "Free", valueColor: "#34C759" });
+
+  if (camocareAmount > 0) {
+    rows.push({
+      label: "Camocare",
+      value: (
+        <Price value={camocareAmount} fontSize={fp(14)} fontWeight="500" lineHeight={hp(20)} color="#1C1C1E" />
+      ),
+    });
+  }
+
+  if (showIGST) {
+    rows.push({
+      label: "IGST",
+      value: (
+        <Price value={igstValue} fontSize={fp(14)} fontWeight="500" lineHeight={hp(20)} color="#6C6C70" />
+      ),
+    });
+  } else {
+    if (cgstValue > 0) {
+      rows.push({
+        label: "CGST",
+        value: (
+          <Price value={cgstValue} fontSize={fp(14)} fontWeight="500" lineHeight={hp(20)} color="#6C6C70" />
+        ),
+      });
+    }
+    if (sgstValue > 0) {
+      rows.push({
+        label: "SGST",
+        value: (
+          <Price value={sgstValue} fontSize={fp(14)} fontWeight="500" lineHeight={hp(20)} color="#6C6C70" />
+        ),
+      });
+    }
+  }
 
   return (
-    <Stack
-      paddingVertical={hp(14)}
-      paddingHorizontal={wp(14)}
-      borderRadius={wp(12)}
-      borderWidth={1}
-      borderColor={"#E5E7EB"}
-      backgroundColor="#FFFFFF"
-    >
-      <YStack gap={hp(12)}>
-        <YStack gap={hp(10)}>
-            <BillDetailRow
-              icon={Package}
-              label="Item Total"
-              value={formatPrice(itemTotal)}
-            />
-            {crewTotal > 0 && (
-              <BillDetailRow
-                icon={Users}
-                label="Crew Total"
-                value={formatPrice(crewTotal)}
-              />
-            )}
-            {couponDiscount > 0 && (
-              <BillDetailRow
-                icon={Percent}
-                label="Coupon Discount"
-                value={`-${formatPrice(couponDiscount)}`}
-                valueColor="#17663A"
-              />
-            )}
-            <BillDetailRow
-              icon={Truck}
-              label="Delivery fees"
-              value="Free"
-              valueColor="#17663A"
-            />
-            {camocareAmount > 0 && (
-              <BillDetailRow
-                icon={Shield}
-                label="Camocare"
-                value={formatPrice(camocareAmount)}
-              />
-            )}
-          </YStack>
+    <YStack style={styles.card}>
+      <YStack paddingHorizontal={wp(16)}>
+        {rows.map((row, i) => (
+          <React.Fragment key={row.label}>
+            <BillRow label={row.label} value={row.value} valueColor={row.valueColor} />
+            {i < rows.length - 1 && <YStack height={1} backgroundColor="#F2F2F7" />}
+          </React.Fragment>
+        ))}
+      </YStack>
 
-          <Separator borderColor="#E5E7EB" marginVertical={hp(4)} />
-
-          <XStack alignItems="center" justifyContent="space-between" paddingTop={hp(2)}>
-            <Text fontSize={fp(14)} fontWeight="600" color="#8E0FFF">
-              Total amount
-            </Text>
-            <Price
-              value={totalAmount}
-              fontSize={fp(17)}
-              fontWeight="700"
-              color="#1C1C1E"
-              lineHeight={hp(22)}
-            />
-          </XStack>
-        </YStack>
-    </Stack>
+      {/* Total */}
+      <YStack height={1} backgroundColor="#F2F2F7" />
+      <XStack
+        alignItems="center"
+        justifyContent="space-between"
+        paddingHorizontal={wp(16)}
+        paddingVertical={hp(14)}
+      >
+        <Text fontSize={fp(15)} fontWeight="600" color="#1C1C1E">Total</Text>
+        <Price
+          value={totalAmount}
+          fontSize={fp(20)}
+          fontWeight="700"
+          color="#1C1C1E"
+          lineHeight={hp(24)}
+        />
+      </XStack>
+    </YStack>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: wp(14),
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+});

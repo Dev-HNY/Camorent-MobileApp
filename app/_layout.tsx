@@ -12,12 +12,17 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSyncQueriesExternal } from "react-query-external-sync";
-import { Platform } from "react-native";
+import { Platform, LogBox } from "react-native";
 import * as ExpoDevice from "expo-device";
 import { storage } from "@/lib/mmkv";
 import Constants from "expo-constants";
 import { useTokenValidator } from "@/hooks/auth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+// Suppress known Tamagui/RN New Architecture false-positive warnings
+LogBox.ignoreLogs([
+  "Text strings must be rendered within a <Text> component",
+]);
 
 // Enhanced Query Client with better error handling and caching
 const queryClient = new QueryClient({
@@ -63,7 +68,7 @@ function AppContent() {
           headerShown: false,
           contentStyle: { backgroundColor: '#FFFFFF' },
           animation: 'ios_from_right',
-          animationDuration: 350,
+          animationDuration: 250,
           gestureEnabled: true,
           gestureDirection: 'horizontal',
           fullScreenGestureEnabled: true,
