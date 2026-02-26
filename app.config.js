@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: "Camorent",
     slug: "camorent",
-    version: "1.0.0",
+    version: "1.0.1",
     orientation: "portrait",
     icon: "./assets/images/ios-icon.png",
     scheme: "camorent-customer-app",
@@ -40,7 +40,7 @@ module.exports = {
       // },
       edgeToEdgeEnabled: false,
       package: "com.camorent.customermobileapp",
-      versionCode: 2,
+      versionCode: 3,
       allowBackup: false,
       intentFilters: [
         {
@@ -58,8 +58,6 @@ module.exports = {
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
-        "RECEIVE_SMS",
-        "READ_SMS",
       ],
     },
     web: {
@@ -84,10 +82,10 @@ module.exports = {
       [
         "expo-splash-screen",
         {
-          image: "./assets/images/Camorent-splash.png",
-          imageWidth: 200,
+          image: "./assets/images/android-icon.png",
+          imageWidth: 120,
           resizeMode: "contain",
-          backgroundColor: "#ffffff",
+          backgroundColor: "#0f0a1a",
         },
       ],
       // Removed expo-font - using system Helvetica Neue font
