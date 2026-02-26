@@ -304,11 +304,13 @@ export function ProductInfo({ product }: ProductInfoProps) {
                     justifyContent="center"
                     alignItems="center"
                     backgroundColor="#F8F8FA"
-                    shadowColor="#000"
-                    shadowOffset={{ width: 0, height: 1 }}
-                    shadowOpacity={isActive ? 0 : 0.04}
-                    shadowRadius={3}
-                    elevation={isActive ? 0 : 1}
+                    style={{
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: isActive ? 0 : 0.04,
+                      shadowRadius: 3,
+                      elevation: isActive ? 0 : 1,
+                    }}
                   >
                     <Image
                       source={{ uri: image }}
