@@ -26,6 +26,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Cache Gradle distributions
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/wrapper/dists
+            ~/.gradle/caches
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
@@ -93,7 +103,12 @@ jobs:
       - name: Build Android App Bundle (AAB)
         run: |
           cd android
-          ./gradlew bundleRelease --no-daemon --max-workers=2
+          for attempt in 1 2 3; do
+            echo "Build attempt $attempt..."
+            ./gradlew bundleRelease --no-daemon --max-workers=2 && break
+            echo "Attempt $attempt failed, retrying in 30s..."
+            sleep 30
+          done
         env:
           NODE_ENV: 'production'
           NODE_OPTIONS: '--max-old-space-size=8192'
