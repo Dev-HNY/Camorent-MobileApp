@@ -2,7 +2,7 @@ module.exports = {
   expo: {
     name: "Camorent",
     slug: "camorent",
-    version: "1.0.1",
+    version: "1.0.2",
     orientation: "portrait",
     icon: "./assets/images/ios-icon.png",
     scheme: "camorent-customer-app",
@@ -40,7 +40,7 @@ module.exports = {
       // },
       edgeToEdgeEnabled: false,
       package: "com.camorent.customermobileapp",
-      versionCode: 3,
+      versionCode: 4,
       allowBackup: false,
       intentFilters: [
         {
