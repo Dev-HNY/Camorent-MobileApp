@@ -4,11 +4,12 @@ import { TamaguiProvider } from "tamagui";
 import { ToastProvider, ToastViewport } from "@tamagui/toast";
 import config from "../tamagui.config";
 import { useFonts } from "expo-font";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import AnimatedSplashScreen from "@/components/AnimatedSplashScreen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSyncQueriesExternal } from "react-query-external-sync";
@@ -101,7 +102,10 @@ export default function RootLayout() {
     "PlayfairDisplay-Regular": require("../assets/fonts/PlayfairDisplay-Regular.ttf"),
     "PlayfairDisplay-Bold": require("../assets/fonts/PlayfairDisplay-Bold.ttf"),
     "PlayfairDisplay-Italic": require("../assets/fonts/PlayfairDisplay-Italic.ttf"),
+    "PlayfairDisplay-SemiBoldItalic": require("../assets/fonts/PlayfairDisplay-SemiBoldItalic.ttf"),
   });
+
+  const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -121,6 +125,9 @@ export default function RootLayout() {
             <SafeAreaProvider style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
               <QueryClientProvider client={queryClient}>
                 <AppContent />
+                {!splashDone && (
+                  <AnimatedSplashScreen onFinish={() => setSplashDone(true)} />
+                )}
               </QueryClientProvider>
             </SafeAreaProvider>
           </ToastProvider>

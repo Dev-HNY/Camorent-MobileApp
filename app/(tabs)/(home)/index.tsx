@@ -1,6 +1,14 @@
 import { YStack, View, Spinner, Text, XStack } from "tamagui";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Dimensions, Pressable, Animated, ScrollView as RNScrollView, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
+import {
+  Animated,
+  Easing,
+  Dimensions,
+  Pressable,
+  ScrollView as RNScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native";
 import { Redirect, router } from "expo-router";
 import { useAuthStore } from "@/store/auth/auth";
 import { CategoriesSection } from "@/components/home/CategoriesSection";
@@ -17,6 +25,8 @@ import { hp, wp, fp } from "@/utils/responsive";
 import { UseGetAllProducts } from "@/hooks/product/useGetAllProducts";
 import { StickyCartButton } from "@/components/ui/StickyCartButton";
 import { ChevronDown, Search, Heart, ShoppingCart, Mic } from "lucide-react-native";
+import { BlurView } from "expo-blur";
+import { Platform, StyleSheet, Text as RNText } from "react-native";
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { CitySelectionModal } from "@/components/city/CitySelectionModal";
 import { useWishlistCount } from "@/hooks/wishlist";
@@ -24,28 +34,225 @@ import { useGetCart } from "@/hooks/cart/useGetCart";
 import { useGetUserPreferences } from "@/hooks/user/useGetUserPreferences";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import ReAnimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  interpolateColor,
+} from "react-native-reanimated";
 
-// Extracted carousel item — each item owns its own animation ref (fixes hooks-in-loop)
-// Hero images are 750×313 — maintain exact aspect ratio so nothing is cropped
+// Static white→transparent overlay
+const GradientFade = () => (
+  <LinearGradient
+    colors={["#ffffff", "rgba(255,255,255,0.82)", "rgba(255,255,255,0.30)", "rgba(255,255,255,0)"]}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 0, y: 1 }}
+    pointerEvents="none"
+    style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+  />
+);
+
+const SEARCH_HINTS = [
+  "Camera & Lights",
+  "Gimbles, Go Pro's",
+  "Movie Grade Lenses",
+  "Other accessories",
+];
+
+const SLOT_H = fp(19);
+
+// Glassmorphic search bar — full width, reduced height, animated placeholder
+function SearchBar() {
+  // Track which slot (A=0, B=1) shows which hint index
+  const slotHint = useRef([0, 1]);        // slotHint[slot] = hint index shown in that slot
+  const activeSlot = useRef(0);           // slot currently visible (resting position)
+  const [, forceRender] = useState(0);    // trigger re-read of slotHint refs after swap
+
+  // Each slot gets its own Animated.Value, starts at resting Y
+  // Slot A rests at y=0, Slot B rests at y=+SLOT_H (off-screen below)
+  const slotY = useRef([
+    new Animated.Value(0),       // Slot A — visible
+    new Animated.Value(SLOT_H),  // Slot B — hidden below
+  ]).current;
+  const slotOpacity = useRef([
+    new Animated.Value(1),       // Slot A — fully visible
+    new Animated.Value(0),       // Slot B — hidden
+  ]).current;
+
+  const animating = useRef(false);
+
+  const tick = useCallback(() => {
+    if (animating.current) return;
+    animating.current = true;
+
+    const curr = activeSlot.current;
+    const next = 1 - curr;
+
+    // Load next hint into the incoming slot (it's off-screen, no visual change)
+    slotHint.current[next] = (slotHint.current[curr] + 1) % SEARCH_HINTS.length;
+    forceRender((n) => n + 1);
+
+    // Animate both slots simultaneously
+    Animated.parallel([
+      // Outgoing slot: slide up and fade out
+      Animated.timing(slotY[curr], {
+        toValue: -SLOT_H,
+        duration: 400,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(slotOpacity[curr], {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }),
+      // Incoming slot: slide in from below and fade in
+      Animated.timing(slotY[next], {
+        toValue: 0,
+        duration: 400,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(slotOpacity[next], {
+        toValue: 1,
+        duration: 400,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (!finished) { animating.current = false; return; }
+      // Instantly reset outgoing slot to below (off-screen) without any visual jump
+      slotY[curr].setValue(SLOT_H);
+      slotOpacity[curr].setValue(0);
+      activeSlot.current = next;
+      animating.current = false;
+    });
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(tick, 2800);
+    return () => clearInterval(interval);
+  }, [tick]);
+
+  return (
+    <View style={sbStyles.shadow}>
+      <View style={sbStyles.inner}>
+        {Platform.OS === "ios" ? (
+          <BlurView intensity={55} tint="light" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, sbStyles.androidBg]} />
+        )}
+        <Search size={17} color="#8E0FFF" strokeWidth={2.2} />
+        {/* Fixed prefix + simultaneous ticker animation */}
+        <View style={sbStyles.placeholderRow}>
+          <RNText style={sbStyles.prefix}>Search for  </RNText>
+          <View style={sbStyles.hintClip}>
+            {/* Slot A */}
+            <Animated.Text
+              style={[sbStyles.hint, sbStyles.hintAbsolute, {
+                transform: [{ translateY: slotY[0] }],
+                opacity: slotOpacity[0],
+              }]}
+            >
+              {SEARCH_HINTS[slotHint.current[0]]}
+            </Animated.Text>
+            {/* Slot B */}
+            <Animated.Text
+              style={[sbStyles.hint, sbStyles.hintAbsolute, {
+                transform: [{ translateY: slotY[1] }],
+                opacity: slotOpacity[1],
+              }]}
+            >
+              {SEARCH_HINTS[slotHint.current[1]]}
+            </Animated.Text>
+          </View>
+        </View>
+        <View style={sbStyles.divider} />
+        <Mic size={17} color="#8E0FFF" strokeWidth={2} />
+      </View>
+    </View>
+  );
+}
+
+const sbStyles = StyleSheet.create({
+  // Outer wrapper: just shadow, transparent, no bg, no overflow clip
+  shadow: {
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    // Android: elevation needs a background to cast shadow — use transparent workaround
+    backgroundColor: "transparent",
+  },
+  // Inner: clips children (incl. BlurView) to rounded rect
+  inner: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: wp(14),
+    paddingVertical: hp(8),
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.60)",
+    gap: wp(9),
+    // No backgroundColor — blur/androidBg absoluteFill handles it
+  },
+  androidBg: {
+    backgroundColor: "rgba(255,255,255,0.50)",
+  },
+  divider: {
+    width: 1,
+    height: hp(16),
+    backgroundColor: "rgba(180,160,220,0.40)",
+  },
+  placeholderRow: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  prefix: {
+    fontSize: fp(13.5),
+    color: "rgba(80,60,110,0.65)",
+    fontWeight: "400",
+  },
+  hintClip: {
+    flex: 1,
+    overflow: "hidden",
+    height: fp(20),
+    justifyContent: "center",
+  },
+  hint: {
+    fontSize: fp(13.5),
+    color: "#8E0FFF",
+    fontWeight: "500",
+  },
+  hintAbsolute: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+  },
+});
+
 const HERO_ASPECT_RATIO = 313 / 750;
 
-const CarouselItem = memo(({ image, index, screenWidth }: {
+const CarouselItem = memo(({ image, screenWidth }: {
   image: number;
-  index: number;
   screenWidth: number;
 }) => {
   const itemHeight = screenWidth * HERO_ASPECT_RATIO;
-
   return (
     <View style={{ width: screenWidth, height: itemHeight }}>
       <Image
         source={image}
-        contentFit="contain"
+        contentFit="fill"
         style={{ width: "100%", height: "100%" }}
       />
     </View>
   );
 });
+CarouselItem.displayName = "CarouselItem";
 
 const CAROUSEL_IMAGES = [
   require("@/assets/new/icons/hero-1.png"),
@@ -54,15 +261,16 @@ const CAROUSEL_IMAGES = [
   require("@/assets/new/icons/hero-4.png"),
 ];
 
-// Per-slide gradient: header fades transparent→solid (covers only the header/search row)
-const SLIDE_GRADIENTS: [string, string][] = [
-  ["rgba(71,13,126,0)", "#470D7E"],
-  ["rgba(114,94,227,0)", "#725EE3"],
-  ["rgba(224,217,255,0)", "#E0D9FF"],
-  ["rgba(48,121,192,0)", "#3079C0"],
+const SLIDES_META = [
+  { gradientBot: "#470D7E", solid: "#470D7E", dot: "#C084FC" },
+  { gradientBot: "#725EE3", solid: "#725EE3", dot: "#A5B4FC" },
+  { gradientBot: "#E0D9FF", solid: "#E0D9FF", dot: "#7C3AED" },
+  { gradientBot: "#3079C0", solid: "#3079C0", dot: "#93C5FD" },
 ];
-// Solid colors for the carousel background block (same hues, no gradient)
-const SLIDE_SOLID_COLORS = ["#470D7E", "#725EE3", "#E0D9FF", "#3079C0"];
+
+const BEZIER = Easing.bezier(0.25, 0.46, 0.45, 0.94);
+const SCROLL_DUR = 520;
+const N = CAROUSEL_IMAGES.length;
 
 export default function Home() {
   const { user, isVerified, isCitySelected } = useAuthStore();
@@ -76,62 +284,125 @@ export default function Home() {
   const city = userPreferencesData?.preferred_city || "Gurugram";
   const cartItemCount = cart?.total_items || 0;
 
-  // Premium Carousel state with swipeable ScrollView
-  const [activeSlide, setActiveSlide] = useState(0);
   const { width: SCREEN_WIDTH } = Dimensions.get("window");
-  // scrollX drives all color transitions directly — no JS hop, perfectly in sync with finger
-  const scrollX = useRef(new Animated.Value(0)).current;
-  const carouselRef = useRef<RNScrollView>(null);
-  const autoScrollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isUserInteracting = useRef(false);
+  const xRange = CAROUSEL_IMAGES.map((_, i) => i * SCREEN_WIDTH);
 
-  // Auto-scroll carousel with pause on user interaction
+  // ── JS Animated.Value — drives both ScrollView position and color shared value ──
+  // scrollPos: frame-by-frame pixel offset, used to:
+  //   1. call carouselRef.scrollTo() each frame (moves the ScrollView)
+  //   2. update colorX shared value (drives Reanimated colors on UI thread)
+  const scrollPos   = useRef(new Animated.Value(0)).current;
+  const carouselRef = useRef<RNScrollView>(null);
+  const autoTimer   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeSlide = useRef(0);
+  const isUserDrag  = useRef(false);
+  const currentAnim = useRef<Animated.CompositeAnimation | null>(null);
+
+  // Reanimated shared value — receives updates from the Animated.Value listener
+  const colorX = useSharedValue(0);
+
+  // Sync JS Animated.Value → Reanimated shared value + ScrollView position
   useEffect(() => {
-    autoScrollTimer.current = setInterval(() => {
-      if (!isUserInteracting.current) {
-        setActiveSlide((prev) => {
-          const next = (prev + 1) % CAROUSEL_IMAGES.length;
-          carouselRef.current?.scrollTo({ x: next * SCREEN_WIDTH, animated: true });
-          return next;
-        });
+    const id = scrollPos.addListener(({ value }) => {
+      // Push pixel offset to Reanimated for color interpolation
+      colorX.value = value;
+      // Also drive the ScrollView to this exact position (no OS snap interference)
+      carouselRef.current?.scrollTo({ x: value, animated: false });
+    });
+    return () => scrollPos.removeListener(id);
+  }, [scrollPos, colorX]);
+
+  // ── Smooth programmatic scroll ────────────────────────────────────────────
+  const smoothScrollTo = useCallback((targetSlide: number) => {
+    const currentSlide = activeSlide.current;
+    const targetX = targetSlide * SCREEN_WIDTH;
+
+    // Stop any in-flight animation
+    currentAnim.current?.stop();
+
+    // Wrap-around (4→1 or 1→4): jump both immediately — no cross-slide color travel
+    const isWrapping =
+      (currentSlide === N - 1 && targetSlide === 0) ||
+      (currentSlide === 0 && targetSlide === N - 1);
+
+    if (isWrapping) {
+      scrollPos.setValue(targetX);
+      // colorX updated via listener, ScrollView jumped via listener
+      activeSlide.current = targetSlide;
+      return;
+    }
+
+    // Normal: animate scrollPos with our cubic-bezier easing
+    // The listener fires every frame → moves ScrollView + updates color in lockstep
+    activeSlide.current = targetSlide;
+    const anim = Animated.timing(scrollPos, {
+      toValue: targetX,
+      duration: SCROLL_DUR,
+      easing: BEZIER,
+      useNativeDriver: false, // must be false — we read .value each frame
+    });
+    currentAnim.current = anim;
+    anim.start();
+  }, [SCREEN_WIDTH, scrollPos]);
+
+  // ── Auto-scroll ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    autoTimer.current = setInterval(() => {
+      if (!isUserDrag.current) {
+        const next = (activeSlide.current + 1) % N;
+        smoothScrollTo(next);
       }
     }, 4000);
-    return () => {
-      if (autoScrollTimer.current) clearInterval(autoScrollTimer.current);
-    };
-  }, [SCREEN_WIDTH]);
+    return () => { if (autoTimer.current) clearInterval(autoTimer.current); };
+  }, [smoothScrollTo]);
 
-  // scrollX → slide index (0-based float) for interpolation
-  const animatedSlideIndex = scrollX.interpolate({
-    inputRange: CAROUSEL_IMAGES.map((_, i) => i * SCREEN_WIDTH),
-    outputRange: CAROUSEL_IMAGES.map((_, i) => i),
-    extrapolate: "clamp",
-  });
-
-  // Driven directly by the ScrollView's scroll position — zero lag
-  const handleCarouselScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    {
-      useNativeDriver: false,
-      listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const x = event.nativeEvent.contentOffset.x;
-        const slideIndex = Math.round(x / SCREEN_WIDTH);
-        if (slideIndex >= 0 && slideIndex < CAROUSEL_IMAGES.length) {
-          setActiveSlide(slideIndex);
-        }
-      },
+  // ── Handle finger scroll — update activeSlide and colorX on settle ────────
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (isUserDrag.current) {
+      const x = e.nativeEvent.contentOffset.x;
+      colorX.value = x;
     }
-  );
+  }, [colorX]);
 
   const handleScrollBeginDrag = useCallback(() => {
-    isUserInteracting.current = true;
+    isUserDrag.current = true;
+    currentAnim.current?.stop();
   }, []);
 
   const handleScrollEndDrag = useCallback(() => {
-    setTimeout(() => {
-      isUserInteracting.current = false;
-    }, 3000);
+    setTimeout(() => { isUserDrag.current = false; }, 400);
   }, []);
+
+  const handleMomentumScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = e.nativeEvent.contentOffset.x;
+    const slide = Math.round(x / SCREEN_WIDTH);
+    activeSlide.current = slide;
+    // Snap scrollPos to final position so next programmatic scroll starts correctly
+    scrollPos.setValue(x);
+    colorX.value = x;
+    isUserDrag.current = false;
+  }, [SCREEN_WIDTH, scrollPos, colorX]);
+
+  // ── Reanimated color styles (UI thread) ──────────────────────────────────
+  const headerBgStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      colorX.value,
+      xRange,
+      SLIDES_META.map((s) => s.gradientBot),
+    ),
+  }));
+
+  const carouselBgStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      colorX.value,
+      xRange,
+      SLIDES_META.map((s) => s.solid),
+    ),
+  }));
+
+  const handleDotPress = useCallback((index: number) => {
+    smoothScrollTo(index);
+  }, [smoothScrollTo]);
 
   const { data: dop, isLoading: isLoadingDop } = UseGetAllProducts({
     selection: "dop",
@@ -143,11 +414,6 @@ export default function Home() {
     limit: 6,
     is_active: true,
   });
-  // const { data: topDeals, isLoading: isLoadingTopDeals } = UseGetAllProducts({
-  //   selection: "top_deals",
-  //   limit: 6,
-  //   is_active: true,
-  // });
 
   const handleCategories = useCallback((category: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -161,18 +427,12 @@ export default function Home() {
 
   const handleBrandPress = useCallback((brandId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({
-      pathname: "./categories",
-      params: { brand: brandId },
-    });
+    router.push({ pathname: "./categories", params: { brand: brandId } });
   }, []);
 
   const handleViewAllBrands = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push({
-      pathname: "./categories",
-      params: { openFilters: "true", filterCategory: "brands" },
-    });
+    router.push({ pathname: "./categories", params: { openFilters: "true", filterCategory: "brands" } });
   }, []);
 
   const handleOpenCityModal = useCallback(() => {
@@ -191,76 +451,27 @@ export default function Home() {
   }, []);
 
   const handleCloseCityModal = useCallback(() => setShowCityModal(false), []);
+  const handleSearchFocus    = useCallback(() => { router.push("/search"); }, []);
 
-  const handleSearchFocus = useCallback(() => {
-    router.push("/search");
-  }, []);
-
-  const handleDotPress = useCallback((index: number) => {
-    setActiveSlide(index);
-    isUserInteracting.current = true;
-    carouselRef.current?.scrollTo({ x: index * SCREEN_WIDTH, animated: true });
-    setTimeout(() => { isUserInteracting.current = false; }, 3000);
-  }, [SCREEN_WIDTH]);
-
-  if (!user) {
-    return <Redirect href={"/(auth)/signup"} />;
-  }
-
-  if (!isVerified) {
-    return <Redirect href={"/(auth)/info"} />;
-  }
-
-  if (!isCitySelected) {
-    return <Redirect href={"/(auth)/city-page"} />;
-  }
+  if (!user) return <Redirect href={"/(auth)/signup"} />;
+  if (!isVerified) return <Redirect href={"/(auth)/info"} />;
+  if (!isCitySelected) return <Redirect href={"/(auth)/city-page"} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <RNScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingBottom: tabHeight + insets.bottom + hp(40),
-        }}
+        contentContainerStyle={{ paddingBottom: tabHeight + insets.bottom + hp(40) }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Header area: transparent→solid gradient (covers nav + search only) ── */}
+        {/* ── Header: white → slide color ── */}
         <View style={{ position: "relative" }}>
-          {/* Base gradient layer: slide 0 */}
-          <LinearGradient
-            colors={SLIDE_GRADIENTS[0]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+          <ReAnimated.View
+            pointerEvents="none"
+            style={[{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }, headerBgStyle]}
           />
-          {/* Remaining slides fade in as carousel scrolls */}
-          {SLIDE_GRADIENTS.slice(1).map((colors, idx) => {
-            const i = idx + 1;
-            return (
-              <Animated.View
-                key={i}
-                pointerEvents="none"
-                style={{
-                  position: "absolute",
-                  top: 0, left: 0, right: 0, bottom: 0,
-                  opacity: animatedSlideIndex.interpolate({
-                    inputRange: [i - 1, i, i + 1],
-                    outputRange: [0, 1, 0],
-                    extrapolate: "clamp",
-                  }),
-                }}
-              >
-                <LinearGradient
-                  colors={colors}
-                  start={{ x: 0.5, y: 0 }}
-                  end={{ x: 0.5, y: 1 }}
-                  style={{ flex: 1 }}
-                />
-              </Animated.View>
-            );
-          })}
+          <GradientFade />
 
-          {/* Nav + Search content */}
           <YStack>
             <YStack height={insets.top} />
             <XStack
@@ -269,7 +480,6 @@ export default function Home() {
               paddingHorizontal={wp(16)}
               paddingVertical={hp(10)}
             >
-              {/* Left: Avatar + Home + City */}
               <Pressable onPress={handleOpenCityModal}>
                 <XStack alignItems="center" gap={wp(10)}>
                   <YStack
@@ -292,7 +502,6 @@ export default function Home() {
                 </XStack>
               </Pressable>
 
-              {/* Right: Wishlist + Cart */}
               <XStack alignItems="center" gap={wp(18)}>
                 <Pressable onPress={handleWishlistPress}>
                   <YStack position="relative">
@@ -331,101 +540,44 @@ export default function Home() {
               </XStack>
             </XStack>
 
-            {/* Search row */}
-            <XStack
-              alignItems="center"
-              gap={wp(8)}
-              paddingHorizontal={wp(16)}
-              paddingBottom={hp(14)}
-            >
+            {/* Search row — glassmorphic, full width */}
+            <XStack paddingHorizontal={wp(16)} paddingBottom={hp(14)}>
               <Pressable onPress={handleSearchFocus} style={{ flex: 1 }}>
-                <XStack
-                  flex={1}
-                  paddingLeft={wp(14)}
-                  paddingVertical={hp(11)}
-                  alignItems="center"
-                  backgroundColor="#FFFFFF"
-                  borderRadius={10}
-                  borderWidth={1}
-                  borderColor="#EBEBEF"
-                >
-                  <Search size={18} color="#8E0FFF" strokeWidth={2.2} />
-                  <XStack flex={1} alignItems="center" height={20} marginLeft={wp(10)}>
-                    <Text fontSize={14} fontWeight="400" color="#9CA3AF">Search "Camera Gear"....</Text>
-                  </XStack>
-                  <YStack width={1} height={20} backgroundColor="#EBEBEF" marginHorizontal={wp(10)} />
-                  <YStack paddingRight={wp(12)}>
-                    <Mic size={18} color="#8E0FFF" strokeWidth={2} />
-                  </YStack>
-                </XStack>
+                <SearchBar />
               </Pressable>
-
-              {/* Promo badge */}
-              <XStack
-                backgroundColor="#FFFFFF"
-                borderRadius={10}
-                borderWidth={1}
-                borderColor="#EBEBEF"
-                paddingHorizontal={wp(10)}
-                height={wp(44)}
-                alignItems="center"
-                gap={wp(8)}
-              >
-                <Image
-                  source={require("@/assets/images/waller.svg")}
-                  style={{ width: wp(26), height: wp(26) }}
-                  contentFit="contain"
-                />
-                <Text fontSize={fp(14)} fontWeight="800" color="#5F00BA">₹ 200</Text>
-              </XStack>
             </XStack>
           </YStack>
         </View>
 
-        {/* ── Carousel area: solid color background (same hue as gradient end) ── */}
+        {/* ── Carousel ── */}
         <View style={{ position: "relative" }}>
-          {/* Base solid: slide 0 */}
-          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: SLIDE_SOLID_COLORS[0] }} />
-          {/* Remaining slides solid layers */}
-          {SLIDE_SOLID_COLORS.slice(1).map((color, idx) => {
-            const i = idx + 1;
-            return (
-              <Animated.View
-                key={i}
-                pointerEvents="none"
-                style={{
-                  position: "absolute",
-                  top: 0, left: 0, right: 0, bottom: 0,
-                  backgroundColor: color,
-                  opacity: animatedSlideIndex.interpolate({
-                    inputRange: [i - 1, i, i + 1],
-                    outputRange: [0, 1, 0],
-                    extrapolate: "clamp",
-                  }),
-                }}
-              />
-            );
-          })}
-          {/* Carousel */}
+          <ReAnimated.View
+            pointerEvents="none"
+            style={[{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }, carouselBgStyle]}
+          />
+          {/*
+            Plain RNScrollView — no pagingEnabled, no snapToInterval fighting us.
+            We control scrolling 100% via scrollTo() called from the Animated.Value listener.
+            scrollEventThrottle=16 keeps colorX in sync while the user drags.
+          */}
           <RNScrollView
             ref={carouselRef}
             horizontal
-            pagingEnabled
             showsHorizontalScrollIndicator={false}
-            onScroll={handleCarouselScroll}
+            scrollEventThrottle={16}
+            onScroll={handleScroll}
             onScrollBeginDrag={handleScrollBeginDrag}
             onScrollEndDrag={handleScrollEndDrag}
-            scrollEventThrottle={16}
+            onMomentumScrollEnd={handleMomentumScrollEnd}
             decelerationRate="fast"
             snapToInterval={SCREEN_WIDTH}
             snapToAlignment="start"
-            contentContainerStyle={{ paddingHorizontal: 0 }}
+            disableIntervalMomentum
           >
             {CAROUSEL_IMAGES.map((image, index) => (
               <CarouselItem
                 key={index}
                 image={image}
-                index={index}
                 screenWidth={SCREEN_WIDTH}
               />
             ))}
@@ -433,34 +585,31 @@ export default function Home() {
         </View>
 
         <YStack
-          backgroundColor={"white"}
+          backgroundColor="white"
           gap={hp(52)}
           paddingTop={hp(20)}
           paddingBottom={hp(22)}
         >
-          {/* Carousel dots on white background */}
+          {/* Dots */}
           <XStack justifyContent="center" alignItems="center" gap={6} marginTop={hp(-16)}>
-            {CAROUSEL_IMAGES.map((_, index) => {
-              const isActive = activeSlide === index;
-              return (
-                <Pressable key={index} onPress={() => handleDotPress(index)}>
-                  <Animated.View
-                    style={{
-                      height: 4,
-                      borderRadius: 2,
-                      backgroundColor: isActive ? "#8E0FFF" : "#D1D5DB",
-                      width: isActive ? 24 : 8,
-                    }}
-                  />
-                </Pressable>
-              );
-            })}
+            {CAROUSEL_IMAGES.map((_, index) => (
+              <AnimatedDot
+                key={index}
+                index={index}
+                colorX={colorX}
+                xRange={xRange}
+                screenWidth={SCREEN_WIDTH}
+                onPress={handleDotPress}
+              />
+            ))}
           </XStack>
 
-          {/* 1. Crafted for Creators — category grid */}
           <CategoriesSection onCategoryPress={handleCategories} />
 
-          {/* 2. Deals of the day */}
+          {/* <FeaturedPicksSlider /> */}
+
+          {/* <ImageGrid /> */}
+
           {isLoadingTopPicks ? (
             <Spinner color="#8E0FFF" />
           ) : (
@@ -472,19 +621,19 @@ export default function Home() {
             />
           )}
 
-          {/* 4. Our clients + testimonials */}
+          {/* <FanCarouselSection /> */}
+
           <ClientTestimonialsSection />
 
-          {/* 5. Search by Brands (3-col grid + projects delivered) */}
           <BrandsSection
             onBrandPress={handleBrandPress}
             onViewAllPress={handleViewAllBrands}
           />
 
-          {/* 6. Offers — purple 25%-off banner + offer cards */}
+          {/* <ProjectsDeliveredSection /> */}
+
           <OffersSection onViewAllPress={() => router.push("./offers")} />
 
-          {/* 7. DOP's First Choice */}
           {isLoadingDop ? (
             <Spinner color="#8E0FFF" />
           ) : (
@@ -496,10 +645,8 @@ export default function Home() {
             />
           )}
 
-          {/* 9. Rent Now cards */}
           <RentNowCards />
 
-          {/* 10. How Do I Roll */}
           <HowDoIRollSection />
 
           <Footer />
@@ -507,7 +654,6 @@ export default function Home() {
       </RNScrollView>
       <StickyCartButton />
 
-      {/* City Selection Modal */}
       <CitySelectionModal
         isOpen={showCityModal}
         onClose={handleCloseCityModal}
@@ -516,3 +662,36 @@ export default function Home() {
     </View>
   );
 }
+
+// ─── AnimatedDot ──────────────────────────────────────────────────────────────
+
+interface AnimatedDotProps {
+  index: number;
+  colorX: ReturnType<typeof useSharedValue<number>>;
+  xRange: number[];
+  screenWidth: number;
+  onPress: (index: number) => void;
+}
+
+const AnimatedDot = memo(({ index, colorX, xRange, screenWidth, onPress }: AnimatedDotProps) => {
+  const dotStyle = useAnimatedStyle(() => {
+    const progress = Math.max(0, Math.min(1,
+      1 - Math.abs(colorX.value - index * screenWidth) / screenWidth
+    ));
+    const width   = 6 + 18 * progress;
+    const opacity = 0.45 + 0.55 * progress;
+    const color   = interpolateColor(
+      colorX.value,
+      xRange,
+      SLIDES_META.map((s, i) => (i === index ? s.dot : "#D1D5DB")),
+    );
+    return { width, opacity, backgroundColor: color };
+  });
+
+  return (
+    <Pressable onPress={() => onPress(index)} hitSlop={8}>
+      <ReAnimated.View style={[{ height: 4, borderRadius: 2 }, dotStyle]} />
+    </Pressable>
+  );
+});
+AnimatedDot.displayName = "AnimatedDot";

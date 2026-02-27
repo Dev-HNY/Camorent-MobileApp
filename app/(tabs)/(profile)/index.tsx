@@ -90,37 +90,37 @@ export default function Index() {
 
   const menuItems: MenuItem[] = [
     {
-      icon: require("@/assets/profile/email.png"),
+      icon: require("@/assets/profile/email.svg"),
       label: currentUser?.email || "girtika@gmail.com",
       onPress: () => {},
       showChevron: true,
     },
     {
-      icon: require("@/assets/profile/phone.png"),
+      icon: require("@/assets/profile/phone.svg"),
       label: currentUser?.phone_number || "+91 9758577153",
       onPress: () => {},
       showChevron: true,
     },
     {
-      icon: require("@/assets/profile/payment.png"),
+      icon: require("@/assets/profile/payment.svg"),
       label: "Payments",
       onPress: () => {},
       showChevron: true,
     },
     {
-      icon: require("@/assets/profile/help.png"),
+      icon: require("@/assets/profile/help.svg"),
       label: "Help center",
       onPress: () => router.push("/help-center"),
       showChevron: true,
     },
     {
-      icon: require("@/assets/profile/setting.png"),
+      icon: require("@/assets/profile/setting.svg"),
       label: "Setting",
       onPress: () => router.push("/settings"),
       showChevron: true,
     },
     {
-      icon: require("@/assets/profile/wishlist.png"),
+      icon: require("@/assets/profile/wishlist.svg"),
       label: "Wishlist",
       onPress: () => router.push("/wishlist"),
       showChevron: true,
@@ -138,18 +138,18 @@ export default function Index() {
     : "Director of photography\nCreative studio LLC";
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F8F8" }} edges={["top"]}>
-      {/* Purple Gradient Background - Full Height with Fade */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }} edges={["top"]}>
+      {/* App-purple gradient — fades from deep brand purple to system bg */}
       <LinearGradient
-        colors={["#C8A2E0", "#D4B5F0", "#E8D5F5", "rgba(232, 213, 245, 0.6)", "rgba(232, 213, 245, 0.3)", "rgba(232, 213, 245, 0.1)", "rgba(232, 213, 245, 0)"]}
-        locations={[0, 0.15, 0.3, 0.5, 0.7, 0.85, 1]}
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: 0,
-        }}
+        colors={[
+          "#4A0D8F",
+          "#5C1AAB",
+          "rgba(94,26,171,0.55)",
+          "rgba(94,26,171,0.20)",
+          "rgba(242,242,247,0)",
+        ]}
+        locations={[0, 0.18, 0.38, 0.58, 1]}
+        style={{ position: "absolute", left: 0, right: 0, top: 0, height: "55%" }}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
       />
@@ -182,14 +182,14 @@ export default function Index() {
                 width: wp(36),
                 height: hp(36),
                 borderRadius: wp(18),
-                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                backgroundColor: "rgba(255,255,255,0.18)",
                 justifyContent: "center",
                 alignItems: "center",
               }}
             >
-              <ChevronLeft size={hp(20)} color="#000000" strokeWidth={2} />
+              <ChevronLeft size={hp(20)} color="#FFFFFF" strokeWidth={2} />
             </Pressable>
-            <Text fontSize={fp(17)} fontWeight="600" color="#000000">
+            <Text fontSize={fp(17)} fontWeight="600" color="#FFFFFF" letterSpacing={-0.3}>
               Profile
             </Text>
           </XStack>
@@ -211,15 +211,17 @@ export default function Index() {
                 }}
               >
                 <YStack
-                  backgroundColor="#FFFFFF"
-                  borderRadius={wp(16)}
+                  backgroundColor="rgba(255,255,255,0.96)"
+                  borderRadius={wp(18)}
                   padding={wp(16)}
-                  shadowColor="#000000"
-                  shadowOffset={{ width: 0, height: 2 }}
-                  shadowOpacity={0.08}
-                  shadowRadius={8}
-                  elevation={3}
+                  shadowColor="#320163"
+                  shadowOffset={{ width: 0, height: 4 }}
+                  shadowOpacity={0.18}
+                  shadowRadius={16}
+                  elevation={5}
                   marginBottom={hp(24)}
+                  borderWidth={1}
+                  borderColor="rgba(142,15,255,0.08)"
                 >
                 <XStack
                   alignItems="center"
@@ -316,12 +318,12 @@ export default function Index() {
             {/* Menu Items Card */}
             <YStack
               backgroundColor="#FFFFFF"
-              borderRadius={wp(12)}
+              borderRadius={wp(14)}
               overflow="hidden"
-              shadowColor="#000000"
-              shadowOffset={{ width: 0, height: 1 }}
-              shadowOpacity={0.05}
-              shadowRadius={4}
+              shadowColor="#320163"
+              shadowOffset={{ width: 0, height: 2 }}
+              shadowOpacity={0.06}
+              shadowRadius={8}
               elevation={2}
             >
               {menuItems.map((item, index) => (

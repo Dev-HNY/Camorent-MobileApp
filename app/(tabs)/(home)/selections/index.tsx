@@ -1,25 +1,29 @@
-import { BackButton } from "@/components/ui/BackButton";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { YStack, XStack, ScrollView, Spinner, Text } from "tamagui";
-import { Dimensions, Pressable, StyleSheet, FlatList, View } from "react-native";
-import { Heading2 } from "@/components/ui/Typography";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { YStack, XStack, Text } from "tamagui";
+import {
+  Dimensions,
+  Pressable,
+  StyleSheet,
+  FlatList,
+  View,
+  ActivityIndicator,
+  ScrollView,
+  Animated,
+  Platform,
+} from "react-native";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { router } from "expo-router";
 import { UseGetAllProducts } from "@/hooks/product/useGetAllProducts";
 import { hp, wp, fp } from "@/utils/responsive";
-import { useCallback, useMemo, useState, useEffect } from "react";
-import Animated, {
-  FadeIn,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import { useCallback, useMemo, useState, useRef } from "react";
+import ReAnimated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { Grid3x3, Rows3 } from "lucide-react-native";
+import { Grid3x3, Rows3, ChevronLeft } from "lucide-react-native";
 import { Image } from "expo-image";
 import { SKU } from "@/types/products/product";
 import { formatPrice } from "@/utils/format";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { BlurView } from "expo-blur";
 
 type ViewMode = "grid" | "list";
 
@@ -27,64 +31,35 @@ const FILTERS = ["All", "Cameras", "Lenses", "Lights", "Audio"];
 const { width: screenWidth } = Dimensions.get("window");
 const CARD_WIDTH = (screenWidth - wp(48)) / 2;
 
-// Static styles to avoid inline object creation per render
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
-  toggleBtn: {
-    padding: wp(8),
-    borderRadius: wp(8),
-    backgroundColor: "#F3F4F6",
-  },
-  listItem: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: wp(16),
-    padding: wp(12),
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  gridContainer: {
-    paddingHorizontal: wp(20),
-    paddingTop: hp(16),
-    paddingBottom: hp(40),
-  },
-  listContainer: {
-    paddingHorizontal: wp(20),
-    paddingTop: hp(16),
-    paddingBottom: hp(40),
-    gap: hp(12),
-  },
-});
-
-// Memoized filter chip to avoid re-renders
-const FilterChip = ({ filter, isSelected, onPress }: { filter: string; isSelected: boolean; onPress: () => void }) => (
+// ── Filter chip ────────────────────────────────────────────────────────────────
+const FilterChip = ({
+  filter,
+  isSelected,
+  onPress,
+}: {
+  filter: string;
+  isSelected: boolean;
+  onPress: () => void;
+}) => (
   <Pressable
     onPress={onPress}
-    style={{
-      paddingHorizontal: wp(16),
-      paddingVertical: hp(7),
-      borderRadius: wp(20),
-      backgroundColor: isSelected ? "#8E0FFF" : "#F3F4F6",
-      borderWidth: isSelected ? 0 : 1,
-      borderColor: isSelected ? "transparent" : "#E5E7EB",
-    }}
+    style={[styles.chip, isSelected && styles.chipSelected]}
   >
     <Text
       fontSize={fp(13)}
       fontWeight={isSelected ? "600" : "500"}
       color={isSelected ? "#FFFFFF" : "#6B7280"}
+      letterSpacing={-0.1}
     >
       {filter}
     </Text>
   </Pressable>
 );
 
-export default function NewArrivals() {
+export default function Selections() {
+  const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+
   const { data: productsResponse, isLoading } = UseGetAllProducts({
     is_active: true,
     limit: 100,
@@ -93,13 +68,14 @@ export default function NewArrivals() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedFilter, setSelectedFilter] = useState("All");
 
-  // Entrance animation — runs once on mount
-  const contentOpacity = useSharedValue(0);
-  const contentStyle = useAnimatedStyle(() => ({ opacity: contentOpacity.value }));
+  // Use RN Animated for scroll-driven sticky header (compatible with FlatList)
+  const scrollY = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    contentOpacity.value = withTiming(1, { duration: 250 });
-  }, []);
+  const stickyOpacity = scrollY.interpolate({
+    inputRange: [0, 40],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
 
   const toggleViewMode = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -116,141 +92,370 @@ export default function NewArrivals() {
     router.push(`/product/${skuId}`);
   }, []);
 
-  // Memoize filtered products
+  const handleBack = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.back();
+  }, []);
+
   const products = useMemo(() => {
     const all = productsResponse?.data || [];
     if (selectedFilter === "All") return all;
     const lower = selectedFilter.toLowerCase();
-    // Filter by category_id which contains category name (e.g., "camera", "lens", "light", "audio")
     return all.filter((p) => p.category_id?.toLowerCase().includes(lower));
   }, [productsResponse?.data, selectedFilter]);
 
-  // FlatList render functions — stable references
+  const count = products.length;
+
   const keyExtractor = useCallback((item: SKU) => item.sku_id, []);
 
-  const renderGridItem = useCallback(({ item }: { item: SKU }) => (
-    <YStack width={CARD_WIDTH}>
-      <ProductCard
-        product={item}
-        maxWidth={CARD_WIDTH}
-        onProductPress={() => handleProductPress(item.sku_id)}
-      />
-    </YStack>
-  ), [handleProductPress]);
+  const renderGridItem = useCallback(
+    ({ item, index }: { item: SKU; index: number }) => (
+      <ReAnimated.View
+        entering={FadeIn.duration(280).delay(Math.min(index * 40, 240))}
+        style={{ width: CARD_WIDTH }}
+      >
+        <ProductCard
+          product={item}
+          maxWidth={CARD_WIDTH}
+          onProductPress={() => handleProductPress(item.sku_id)}
+        />
+      </ReAnimated.View>
+    ),
+    [handleProductPress]
+  );
 
-  const renderListItem = useCallback(({ item }: { item: SKU }) => (
-    <Pressable onPress={() => handleProductPress(item.sku_id)} style={styles.listItem}>
-      <XStack gap={wp(12)} alignItems="center">
-        <View style={{ width: wp(80), height: hp(80), borderRadius: wp(10), backgroundColor: "#E8E8E8", justifyContent: "center", alignItems: "center" }}>
-          <Image
-            source={{ uri: item.primary_image_url }}
-            contentFit="contain"
-            cachePolicy="memory-disk"
-            style={{ width: wp(64), height: hp(64) }}
-          />
-        </View>
-        <YStack flex={1} gap={hp(4)}>
-          <Text fontSize={fp(14)} fontWeight="600" color="#121217" numberOfLines={2}>
-            {item.name}
-          </Text>
-          <Text fontSize={fp(12)} color="#6B7280" numberOfLines={1}>
-            {item.brand}
-          </Text>
-          <XStack alignItems="center" gap={wp(4)} marginTop={hp(2)}>
-            <Text fontSize={fp(15)} fontWeight="700" color="#121217">
-              {formatPrice(Number(item.price_per_day))}
-            </Text>
-            <Text fontSize={fp(12)} color="#9CA3AF">/day</Text>
+  const renderListItem = useCallback(
+    ({ item, index }: { item: SKU; index: number }) => (
+      <ReAnimated.View
+        entering={FadeIn.duration(280).delay(Math.min(index * 40, 240))}
+      >
+        <Pressable
+          onPress={() => handleProductPress(item.sku_id)}
+          style={styles.listItem}
+        >
+          <XStack gap={wp(12)} alignItems="center">
+            <View style={styles.listThumb}>
+              <Image
+                source={{ uri: item.primary_image_url }}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+                style={{ width: wp(64), height: hp(64) }}
+              />
+            </View>
+            <YStack flex={1} gap={hp(4)}>
+              <Text
+                fontSize={fp(14)}
+                fontWeight="600"
+                color="#1C1C1E"
+                numberOfLines={2}
+                letterSpacing={-0.2}
+              >
+                {item.name}
+              </Text>
+              <Text fontSize={fp(12)} color="#8E8E93" numberOfLines={1}>
+                {item.brand}
+              </Text>
+              <XStack alignItems="baseline" gap={wp(3)} marginTop={hp(2)}>
+                <Text fontSize={fp(15)} fontWeight="700" color="#1C1C1E">
+                  {formatPrice(Number(item.price_per_day))}
+                </Text>
+                <Text fontSize={fp(11)} color="#8E8E93">
+                  /day
+                </Text>
+              </XStack>
+            </YStack>
           </XStack>
-        </YStack>
-      </XStack>
-    </Pressable>
-  ), [handleProductPress]);
+        </Pressable>
+      </ReAnimated.View>
+    ),
+    [handleProductPress]
+  );
 
-  const gridSeparator = useCallback(() => <YStack height={hp(12)} />, []);
-  const listSeparator = useCallback(() => <YStack height={hp(10)} />, []);
+  const gridSeparator = useCallback(
+    () => <View style={{ height: hp(12) }} />,
+    []
+  );
+  const listSeparator = useCallback(
+    () => <View style={{ height: hp(10) }} />,
+    []
+  );
+
+  // Scrollable filter row — lives in ListHeaderComponent
+  const ListHeader = (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ gap: wp(8), paddingVertical: hp(12) }}
+    >
+      {FILTERS.map((filter) => (
+        <FilterChip
+          key={filter}
+          filter={filter}
+          isSelected={selectedFilter === filter}
+          onPress={() => handleFilterPress(filter)}
+        />
+      ))}
+    </ScrollView>
+  );
+
+  const onScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: true }
+  );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <YStack flex={1}>
-        {/* Header */}
-        <YStack
-          paddingHorizontal={wp(20)}
-          paddingTop={hp(8)}
-          paddingBottom={hp(12)}
-          backgroundColor="#FFFFFF"
-          borderBottomWidth={0.5}
-          borderBottomColor="rgba(0,0,0,0.06)"
-        >
-          <XStack alignItems="center" justifyContent="space-between" marginBottom={hp(12)}>
-            <XStack alignItems="center" flex={1}>
-              <BackButton />
-              <Heading2 color="#121217">Similar Products</Heading2>
-            </XStack>
-            <Pressable onPress={toggleViewMode} style={styles.toggleBtn}>
-              {viewMode === "grid"
-                ? <Rows3 size={hp(20)} color="#121217" />
-                : <Grid3x3 size={hp(20)} color="#121217" />
-              }
-            </Pressable>
-          </XStack>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: wp(8) }}
-          >
-            {FILTERS.map((filter) => (
-              <FilterChip
-                key={filter}
-                filter={filter}
-                isSelected={selectedFilter === filter}
-                onPress={() => handleFilterPress(filter)}
-              />
-            ))}
-          </ScrollView>
-        </YStack>
-
-        {isLoading ? (
-          <YStack flex={1} justifyContent="center" alignItems="center">
-            <Animated.View entering={FadeIn.duration(200)}>
-              <Spinner size="large" color="#121217" />
-            </Animated.View>
-          </YStack>
+    <View style={styles.root}>
+      {/* ── Fixed header: always visible ── */}
+      <View style={[styles.fixedHeader, { paddingTop: insets.top }]}>
+        {Platform.OS === "ios" ? (
+          <BlurView
+            intensity={60}
+            tint="light"
+            style={StyleSheet.absoluteFill}
+          />
         ) : (
-          <Animated.View style={[{ flex: 1 }, contentStyle]}>
-            {viewMode === "grid" ? (
-              <FlatList
-                data={products}
-                keyExtractor={keyExtractor}
-                numColumns={2}
-                renderItem={renderGridItem}
-                ItemSeparatorComponent={gridSeparator}
-                columnWrapperStyle={{ gap: wp(8), paddingHorizontal: wp(20) }}
-                contentContainerStyle={{ paddingTop: hp(16), paddingBottom: tabBarHeight + hp(24) }}
-                showsVerticalScrollIndicator={false}
-                removeClippedSubviews
-                initialNumToRender={6}
-                maxToRenderPerBatch={8}
-                windowSize={5}
-              />
-            ) : (
-              <FlatList
-                data={products}
-                keyExtractor={keyExtractor}
-                renderItem={renderListItem}
-                ItemSeparatorComponent={listSeparator}
-                contentContainerStyle={[styles.listContainer, { paddingBottom: tabBarHeight + hp(24) }]}
-                showsVerticalScrollIndicator={false}
-                removeClippedSubviews
-                initialNumToRender={8}
-                maxToRenderPerBatch={10}
-                windowSize={5}
-              />
-            )}
-          </Animated.View>
+          <View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: "rgba(242,242,247,0.97)" },
+            ]}
+          />
         )}
-      </YStack>
-    </SafeAreaView>
+
+        {/* Thin divider fades in on scroll */}
+        <Animated.View
+          style={[styles.headerDivider, { opacity: stickyOpacity }]}
+        />
+
+        <XStack
+          alignItems="center"
+          paddingHorizontal={wp(16)}
+          paddingTop={hp(8)}
+          paddingBottom={hp(10)}
+          gap={wp(12)}
+        >
+          {/* Back button */}
+          <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={8}>
+            <ChevronLeft size={20} color="#1C1C1E" strokeWidth={2.5} />
+          </Pressable>
+
+          {/* Title + count */}
+          <YStack flex={1}>
+            <Text
+              fontSize={fp(20)}
+              fontWeight="700"
+              color="#1C1C1E"
+              letterSpacing={-0.5}
+              numberOfLines={1}
+            >
+              Browse Gear
+            </Text>
+            {count > 0 && !isLoading && (
+              <Text
+                fontSize={fp(12)}
+                color="#8E8E93"
+                fontWeight="400"
+                marginTop={hp(1)}
+              >
+                {count} item{count !== 1 ? "s" : ""}
+              </Text>
+            )}
+          </YStack>
+
+          {/* View mode toggle */}
+          <Pressable
+            onPress={toggleViewMode}
+            style={styles.toggleBtn}
+            hitSlop={6}
+          >
+            {viewMode === "grid" ? (
+              <Rows3 size={19} color="#1C1C1E" />
+            ) : (
+              <Grid3x3 size={19} color="#1C1C1E" />
+            )}
+          </Pressable>
+        </XStack>
+      </View>
+
+      {isLoading ? (
+        <YStack
+          flex={1}
+          justifyContent="center"
+          alignItems="center"
+        >
+          <ActivityIndicator size="large" color="#8E0FFF" />
+        </YStack>
+      ) : viewMode === "grid" ? (
+        <FlatList<SKU>
+          data={products}
+          keyExtractor={keyExtractor}
+          numColumns={2}
+          renderItem={renderGridItem}
+          ItemSeparatorComponent={gridSeparator}
+          ListHeaderComponent={ListHeader}
+          columnWrapperStyle={{ gap: wp(8) }}
+          contentContainerStyle={{
+            paddingBottom: tabBarHeight + hp(24),
+            paddingHorizontal: wp(16),
+          }}
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          removeClippedSubviews
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          ListEmptyComponent={<EmptyState />}
+        />
+      ) : (
+        <FlatList<SKU>
+          data={products}
+          keyExtractor={keyExtractor}
+          renderItem={renderListItem}
+          ItemSeparatorComponent={listSeparator}
+          ListHeaderComponent={ListHeader}
+          contentContainerStyle={{
+            paddingBottom: tabBarHeight + hp(24),
+            paddingHorizontal: wp(16),
+          }}
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          removeClippedSubviews
+          initialNumToRender={8}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          ListEmptyComponent={<EmptyState />}
+        />
+      )}
+    </View>
   );
 }
+
+function EmptyState() {
+  return (
+    <ReAnimated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
+      <View style={styles.emptyIcon}>
+        <Text fontSize={fp(30)}>📷</Text>
+      </View>
+      <Text
+        fontSize={fp(17)}
+        fontWeight="600"
+        color="#1C1C1E"
+        textAlign="center"
+        letterSpacing={-0.3}
+      >
+        Nothing here yet
+      </Text>
+      <Text
+        fontSize={fp(14)}
+        color="#8E8E93"
+        textAlign="center"
+        marginTop={hp(6)}
+        lineHeight={fp(20)}
+      >
+        No gear found for this filter.{"\n"}Try a different category.
+      </Text>
+    </ReAnimated.View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: "#F2F2F7",
+  },
+  // Fixed top header — always visible, blurred
+  fixedHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    overflow: "hidden",
+  },
+  headerDivider: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#E5E5EA",
+  },
+  backBtn: {
+    width: wp(36),
+    height: wp(36),
+    borderRadius: wp(18),
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  toggleBtn: {
+    width: wp(36),
+    height: wp(36),
+    borderRadius: wp(10),
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  chip: {
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(7),
+    borderRadius: wp(20),
+    backgroundColor: "#FFFFFF",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#E5E5EA",
+  },
+  chipSelected: {
+    backgroundColor: "#8E0FFF",
+    borderColor: "transparent",
+  },
+  listItem: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: wp(14),
+    padding: wp(12),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  listThumb: {
+    width: wp(80),
+    height: hp(80),
+    borderRadius: wp(10),
+    backgroundColor: "#F2F2F7",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyWrap: {
+    alignItems: "center",
+    paddingTop: hp(60),
+    paddingHorizontal: wp(32),
+    gap: hp(8),
+  },
+  emptyIcon: {
+    width: wp(72),
+    height: wp(72),
+    borderRadius: wp(36),
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: hp(12),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+});

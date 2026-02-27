@@ -85,17 +85,23 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F8F8" }} edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }} edges={["top"]}>
       {/* Purple Gradient Background - Full Height with Fade */}
       <LinearGradient
-        colors={["#C8A2E0", "#D4B5F0", "#E8D5F5", "rgba(232, 213, 245, 0.6)", "rgba(232, 213, 245, 0.3)", "rgba(232, 213, 245, 0.1)", "rgba(232, 213, 245, 0)"]}
-        locations={[0, 0.15, 0.3, 0.5, 0.7, 0.85, 1]}
+        colors={[
+          "#4A0D8F",
+          "#5C1AAB",
+          "rgba(94,26,171,0.55)",
+          "rgba(94,26,171,0.20)",
+          "rgba(242,242,247,0)",
+        ]}
+        locations={[0, 0.18, 0.38, 0.58, 1]}
         style={{
           position: "absolute",
           left: 0,
           right: 0,
           top: 0,
-          bottom: 0,
+          height: "50%",
         }}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
@@ -119,15 +125,15 @@ export default function EditProfileScreen() {
             width: wp(36),
             height: hp(36),
             borderRadius: wp(18),
-            backgroundColor: "rgba(255, 255, 255, 0.3)",
+            backgroundColor: "rgba(255,255,255,0.18)",
             justifyContent: "center",
             alignItems: "center",
           }}
         >
-          <ChevronLeft size={hp(20)} color="#000000" strokeWidth={2} />
+          <ChevronLeft size={hp(20)} color="#FFFFFF" strokeWidth={2} />
         </Pressable>
 
-        <Text fontSize={fp(17)} fontWeight="600" color="#000000">
+        <Text fontSize={fp(17)} fontWeight="600" color="#FFFFFF" letterSpacing={-0.3}>
           Edit Profile
         </Text>
 
@@ -141,7 +147,7 @@ export default function EditProfileScreen() {
             opacity: !isDirty || updateProfile.isPending ? 0.5 : 1,
           }}
         >
-          <Text fontSize={fp(16)} fontWeight="600" color="#8E0FFF">
+          <Text fontSize={fp(16)} fontWeight="600" color="#FFFFFF">
             {updateProfile.isPending ? "Saving..." : "Save"}
           </Text>
         </Pressable>

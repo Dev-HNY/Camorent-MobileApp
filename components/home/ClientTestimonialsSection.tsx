@@ -92,12 +92,11 @@ const TESTIMONIALS = [
   },
 ];
 
-// Logo card dimensions (smaller)
-const LOGO_W = wp(76);
-const LOGO_H = hp(40);
-const LOGO_GAP = wp(8);
-const ROW1_LOOP_W = (LOGO_W + LOGO_GAP) * 5;
-const ROW2_LOOP_W = (LOGO_W + LOGO_GAP) * 5;
+// Logo card dimensions — round circles
+const LOGO_SIZE = wp(82);
+const LOGO_GAP = wp(14);
+const ROW1_LOOP_W = (LOGO_SIZE + LOGO_GAP) * 5;
+const ROW2_LOOP_W = (LOGO_SIZE + LOGO_GAP) * 5;
 
 // ─── StarIcon ───────────────────────────────────────────────────────────────
 function StarIcon() {
@@ -202,52 +201,94 @@ function MarqueeRow({
   items,
   loopWidth,
   speed = 30,
-  startOffset = 0,
+  reverse = false,
 }: {
   items: { id: string; src: any }[];
   loopWidth: number;
   speed?: number;
-  startOffset?: number;
+  reverse?: boolean;
 }) {
-  const translateX = useRef(new Animated.Value(startOffset)).current;
+  // reverse=false → scrolls left (from 0 → -loopWidth)
+  // reverse=true  → scrolls right (from -loopWidth → 0)
+  const initialX = reverse ? -loopWidth : 0;
+  const translateX = useRef(new Animated.Value(initialX)).current;
+  const animRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     const duration = (loopWidth / speed) * 1000;
-    const anim = Animated.loop(
-      Animated.timing(translateX, {
-        toValue: startOffset - loopWidth,
+
+    const runLoop = () => {
+      translateX.setValue(reverse ? -loopWidth : 0);
+      animRef.current = Animated.timing(translateX, {
+        toValue: reverse ? 0 : -loopWidth,
         duration,
         easing: Easing.linear,
         useNativeDriver: true,
-      })
-    );
-    anim.start();
-    return () => anim.stop();
+      });
+      animRef.current.start(({ finished }) => {
+        if (finished) runLoop();
+      });
+    };
+
+    runLoop();
+    return () => { animRef.current?.stop(); };
   }, []);
 
   return (
     <Animated.View style={{ flexDirection: "row", transform: [{ translateX }] }}>
       {items.map(({ id, src }) => (
-        <YStack
+        <View
           key={id}
-          width={LOGO_W}
-          height={LOGO_H}
-          borderRadius={wp(8)}
-          backgroundColor="#FAFBFF"
-          borderWidth={1}
-          borderColor="#ebebef"
-          alignItems="center"
-          justifyContent="center"
-          marginRight={LOGO_GAP}
-          padding={wp(10)}
+          style={{
+            width: LOGO_SIZE,
+            height: LOGO_SIZE,
+            borderRadius: LOGO_SIZE / 2,
+            marginRight: LOGO_GAP,
+          }}
         >
-          <Image
-            source={src}
-            contentFit="contain"
-            style={{ width: "100%", height: "100%" }}
-            cachePolicy="memory-disk"
+          {/* Base circle: flat #E3E6EC */}
+          <View
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: LOGO_SIZE / 2,
+              backgroundColor: "#E3E6EC",
+            }}
           />
-        </YStack>
+          {/* Inset layer 1: white glow top-left (feOffset dx=-4, dy=-6 → white, opacity 0.75) */}
+          <LinearGradient
+            colors={["rgba(255,255,255,0.72)", "rgba(255,255,255,0.10)", "rgba(255,255,255,0)"]}
+            locations={[0, 0.45, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: LOGO_SIZE / 2,
+            }}
+          />
+          {/* Inset layer 2: blue-grey shadow bottom-right (feOffset dx=6, dy=11 → #D1D9E6, opacity 0.67) */}
+          <LinearGradient
+            colors={["rgba(209,217,230,0)", "rgba(209,217,230,0.25)", "rgba(209,217,230,0.67)"]}
+            locations={[0, 0.5, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: LOGO_SIZE / 2,
+            }}
+          />
+          {/* Logo centered */}
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <Image
+              source={src}
+              contentFit="contain"
+              style={{ width: LOGO_SIZE * 0.56, height: LOGO_SIZE * 0.56 }}
+              cachePolicy="memory-disk"
+            />
+          </View>
+        </View>
       ))}
     </Animated.View>
   );
@@ -343,8 +384,8 @@ export function ClientTestimonialsSection() {
       {/* 2. Infinite auto-scroll brand rows — fade left edge in, fade right edge out */}
       <View style={{ overflow: "hidden" }}>
         <YStack gap={hp(8)}>
-          <MarqueeRow items={BRAND_ROW1} loopWidth={ROW1_LOOP_W} speed={30} startOffset={0} />
-          <MarqueeRow items={BRAND_ROW2} loopWidth={ROW2_LOOP_W} speed={25} startOffset={-(LOGO_W + LOGO_GAP) * 0.5} />
+          <MarqueeRow items={BRAND_ROW1} loopWidth={ROW1_LOOP_W} speed={30} />
+          <MarqueeRow items={BRAND_ROW2} loopWidth={ROW2_LOOP_W} speed={25} reverse />
         </YStack>
         {/* Left: white → transparent (logos fade in from left edge to center) */}
         <LinearGradient

@@ -116,26 +116,6 @@ export function BrandsSection({ onBrandPress, onViewAllPress }: BrandsSectionPro
           style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: hp(24), pointerEvents: "none" }}
         />
       </View>
-
-      {/* Projects Delivered warm pill */}
-      <View
-        style={{
-          backgroundColor: "#FFF9EB",
-          borderRadius: wp(20),
-          paddingVertical: hp(12),
-          paddingHorizontal: wp(20),
-          alignItems: "center",
-        }}
-      >
-        <Text fontSize={fp(14)} fontWeight="600" color="#121217" textAlign="center">
-          Over{" "}
-          <Text fontSize={fp(16)} fontWeight="800" color="#121217">500</Text>
-          {" "}projects delivered{" "}
-          <Text fontSize={fp(14)} fontWeight="600" color="#8a6100">
-            Successfully
-          </Text>
-        </Text>
-      </View>
     </YStack>
   );
 }
