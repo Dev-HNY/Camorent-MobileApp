@@ -46,3 +46,6 @@ app-example
 # But keep important keystore files ignored
 *.keystore
 android/app/*.keystore
+
+# Large zip archives
+*.zip
