@@ -1,11 +1,11 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { YStack, XStack, Text } from "tamagui";
 import {
   Dimensions,
   Pressable,
   StyleSheet,
   FlatList,
   View,
+  Text,
   ActivityIndicator,
   ScrollView,
   Animated,
@@ -18,12 +18,15 @@ import { hp, wp, fp } from "@/utils/responsive";
 import { useCallback, useMemo, useState, useRef } from "react";
 import ReAnimated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { Grid3x3, Rows3, ChevronLeft } from "lucide-react-native";
+import { Grid3x3, Rows3, ChevronLeft, Plus, Minus } from "lucide-react-native";
 import { Image } from "expo-image";
 import { SKU } from "@/types/products/product";
 import { formatPrice } from "@/utils/format";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
+import { useGetCart } from "@/hooks/cart/useGetCart";
+import { useAddToCart } from "@/hooks/cart/useAddToCart";
+import { useModifyQuantity, Operation } from "@/hooks/cart/useModifyQuantity";
+import { useGetCurrentUser } from "@/hooks/auth";
 
 type ViewMode = "grid" | "list";
 
@@ -46,10 +49,10 @@ const FilterChip = ({
     style={[styles.chip, isSelected && styles.chipSelected]}
   >
     <Text
-      fontSize={fp(13)}
-      fontWeight={isSelected ? "600" : "500"}
-      color={isSelected ? "#FFFFFF" : "#6B7280"}
-      letterSpacing={-0.1}
+      style={[
+        styles.chipText,
+        isSelected ? styles.chipTextSelected : styles.chipTextDefault,
+      ]}
     >
       {filter}
     </Text>
@@ -58,7 +61,12 @@ const FilterChip = ({
 
 export default function Selections() {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = hp(80); // static fallback — not inside a tab navigator
+
+  const { data: user } = useGetCurrentUser();
+  const { data: cart } = useGetCart();
+  const addToCartMutation = useAddToCart();
+  const modifyQuantityMutation = useModifyQuantity();
 
   const { data: productsResponse, isLoading } = UseGetAllProducts({
     is_active: true,
@@ -125,50 +133,90 @@ export default function Selections() {
   );
 
   const renderListItem = useCallback(
-    ({ item, index }: { item: SKU; index: number }) => (
-      <ReAnimated.View
-        entering={FadeIn.duration(280).delay(Math.min(index * 40, 240))}
-      >
-        <Pressable
-          onPress={() => handleProductPress(item.sku_id)}
-          style={styles.listItem}
+    ({ item, index }: { item: SKU; index: number }) => {
+      const cartItem = cart?.sku_items.find((c) => c.sku_id === item.sku_id);
+      const isInCart = !!cartItem;
+      const quantity = cartItem?.quantity || 0;
+
+      return (
+        <ReAnimated.View
+          entering={FadeIn.duration(280).delay(Math.min(index * 40, 240))}
         >
-          <XStack gap={wp(12)} alignItems="center">
-            <View style={styles.listThumb}>
-              <Image
-                source={{ uri: item.primary_image_url }}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-                style={{ width: wp(64), height: hp(64) }}
-              />
+          <Pressable
+            onPress={() => handleProductPress(item.sku_id)}
+            style={styles.listItem}
+          >
+            <View style={styles.listRow}>
+              <View style={styles.listThumb}>
+                <Image
+                  source={{ uri: item.primary_image_url }}
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
+                  style={{ width: wp(80), height: hp(80) }}
+                />
+              </View>
+              <View style={styles.listInfo}>
+                <Text style={styles.listName} numberOfLines={2}>
+                  {item.name}
+                </Text>
+                <Text style={styles.listBrand} numberOfLines={1}>
+                  {item.brand}
+                </Text>
+                <View style={styles.priceRow}>
+                  <Text style={styles.listPrice}>
+                    {formatPrice(Number(item.price_per_day))}
+                  </Text>
+                  <Text style={styles.listPriceSuffix}>/day</Text>
+                </View>
+                <View style={styles.cartRow}>
+                  {!isInCart ? (
+                    <Pressable
+                      style={styles.addToCartBtn}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        if (!user?.user_id) return;
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        addToCartMutation.mutate({ item_id: item.sku_id, item_quantity: 1, itemType: "sku" });
+                      }}
+                    >
+                      <Plus size={hp(14)} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.addToCartText}>Add</Text>
+                    </Pressable>
+                  ) : (
+                    <View style={styles.qtyControl}>
+                      <Pressable
+                        style={styles.qtyBtn}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          if (!user?.user_id) return;
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          modifyQuantityMutation.mutate({ sku_id: item.sku_id, operation: Operation.REMOVE });
+                        }}
+                      >
+                        <Minus size={hp(13)} color="#121217" strokeWidth={2.5} />
+                      </Pressable>
+                      <Text style={styles.qtyText}>{quantity}</Text>
+                      <Pressable
+                        style={[styles.qtyBtn, styles.qtyBtnPlus]}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          if (!user?.user_id) return;
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          modifyQuantityMutation.mutate({ sku_id: item.sku_id, operation: Operation.ADD });
+                        }}
+                      >
+                        <Plus size={hp(13)} color="#FFFFFF" strokeWidth={2.5} />
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+              </View>
             </View>
-            <YStack flex={1} gap={hp(4)}>
-              <Text
-                fontSize={fp(14)}
-                fontWeight="600"
-                color="#1C1C1E"
-                numberOfLines={2}
-                letterSpacing={-0.2}
-              >
-                {item.name}
-              </Text>
-              <Text fontSize={fp(12)} color="#8E8E93" numberOfLines={1}>
-                {item.brand}
-              </Text>
-              <XStack alignItems="baseline" gap={wp(3)} marginTop={hp(2)}>
-                <Text fontSize={fp(15)} fontWeight="700" color="#1C1C1E">
-                  {formatPrice(Number(item.price_per_day))}
-                </Text>
-                <Text fontSize={fp(11)} color="#8E8E93">
-                  /day
-                </Text>
-              </XStack>
-            </YStack>
-          </XStack>
-        </Pressable>
-      </ReAnimated.View>
-    ),
-    [handleProductPress]
+          </Pressable>
+        </ReAnimated.View>
+      );
+    },
+    [handleProductPress, cart?.sku_items, user?.user_id, addToCartMutation, modifyQuantityMutation]
   );
 
   const gridSeparator = useCallback(
@@ -181,26 +229,29 @@ export default function Selections() {
   );
 
   // Scrollable filter row — lives in ListHeaderComponent
-  const ListHeader = (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: wp(8), paddingVertical: hp(12) }}
-    >
-      {FILTERS.map((filter) => (
-        <FilterChip
-          key={filter}
-          filter={filter}
-          isSelected={selectedFilter === filter}
-          onPress={() => handleFilterPress(filter)}
-        />
-      ))}
-    </ScrollView>
+  const ListHeader = useCallback(
+    () => (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: wp(8), paddingVertical: hp(12) }}
+      >
+        {FILTERS.map((filter) => (
+          <FilterChip
+            key={filter}
+            filter={filter}
+            isSelected={selectedFilter === filter}
+            onPress={() => handleFilterPress(filter)}
+          />
+        ))}
+      </ScrollView>
+    ),
+    [selectedFilter, handleFilterPress]
   );
 
   const onScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-    { useNativeDriver: true }
+    { useNativeDriver: false }
   );
 
   return (
@@ -227,40 +278,23 @@ export default function Selections() {
           style={[styles.headerDivider, { opacity: stickyOpacity }]}
         />
 
-        <XStack
-          alignItems="center"
-          paddingHorizontal={wp(16)}
-          paddingTop={hp(8)}
-          paddingBottom={hp(10)}
-          gap={wp(12)}
-        >
+        <View style={styles.headerRow}>
           {/* Back button */}
           <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={8}>
             <ChevronLeft size={20} color="#1C1C1E" strokeWidth={2.5} />
           </Pressable>
 
           {/* Title + count */}
-          <YStack flex={1}>
-            <Text
-              fontSize={fp(20)}
-              fontWeight="700"
-              color="#1C1C1E"
-              letterSpacing={-0.5}
-              numberOfLines={1}
-            >
+          <View style={styles.titleWrap}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
               Browse Gear
             </Text>
             {count > 0 && !isLoading && (
-              <Text
-                fontSize={fp(12)}
-                color="#8E8E93"
-                fontWeight="400"
-                marginTop={hp(1)}
-              >
+              <Text style={styles.headerCount}>
                 {count} item{count !== 1 ? "s" : ""}
               </Text>
             )}
-          </YStack>
+          </View>
 
           {/* View mode toggle */}
           <Pressable
@@ -274,47 +308,25 @@ export default function Selections() {
               <Grid3x3 size={19} color="#1C1C1E" />
             )}
           </Pressable>
-        </XStack>
+        </View>
       </View>
 
       {isLoading ? (
-        <YStack
-          flex={1}
-          justifyContent="center"
-          alignItems="center"
-        >
+        <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color="#8E0FFF" />
-        </YStack>
-      ) : viewMode === "grid" ? (
-        <FlatList<SKU>
-          data={products}
-          keyExtractor={keyExtractor}
-          numColumns={2}
-          renderItem={renderGridItem}
-          ItemSeparatorComponent={gridSeparator}
-          ListHeaderComponent={ListHeader}
-          columnWrapperStyle={{ gap: wp(8) }}
-          contentContainerStyle={{
-            paddingBottom: tabBarHeight + hp(24),
-            paddingHorizontal: wp(16),
-          }}
-          showsVerticalScrollIndicator={false}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          removeClippedSubviews
-          initialNumToRender={6}
-          maxToRenderPerBatch={8}
-          windowSize={5}
-          ListEmptyComponent={<EmptyState />}
-        />
+        </View>
       ) : (
         <FlatList<SKU>
+          key={viewMode}
           data={products}
           keyExtractor={keyExtractor}
-          renderItem={renderListItem}
-          ItemSeparatorComponent={listSeparator}
+          numColumns={viewMode === "grid" ? 2 : 1}
+          renderItem={viewMode === "grid" ? renderGridItem : renderListItem}
+          ItemSeparatorComponent={viewMode === "grid" ? gridSeparator : listSeparator}
           ListHeaderComponent={ListHeader}
+          columnWrapperStyle={viewMode === "grid" ? { gap: wp(8) } : undefined}
           contentContainerStyle={{
+            paddingTop: insets.top + hp(64),
             paddingBottom: tabBarHeight + hp(24),
             paddingHorizontal: wp(16),
           }}
@@ -322,8 +334,8 @@ export default function Selections() {
           onScroll={onScroll}
           scrollEventThrottle={16}
           removeClippedSubviews
-          initialNumToRender={8}
-          maxToRenderPerBatch={10}
+          initialNumToRender={viewMode === "grid" ? 6 : 8}
+          maxToRenderPerBatch={viewMode === "grid" ? 8 : 10}
           windowSize={5}
           ListEmptyComponent={<EmptyState />}
         />
@@ -336,24 +348,10 @@ function EmptyState() {
   return (
     <ReAnimated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
       <View style={styles.emptyIcon}>
-        <Text fontSize={fp(30)}>📷</Text>
+        <Text style={styles.emptyEmoji}>📷</Text>
       </View>
-      <Text
-        fontSize={fp(17)}
-        fontWeight="600"
-        color="#1C1C1E"
-        textAlign="center"
-        letterSpacing={-0.3}
-      >
-        Nothing here yet
-      </Text>
-      <Text
-        fontSize={fp(14)}
-        color="#8E8E93"
-        textAlign="center"
-        marginTop={hp(6)}
-        lineHeight={fp(20)}
-      >
+      <Text style={styles.emptyTitle}>Nothing here yet</Text>
+      <Text style={styles.emptySubtitle}>
         No gear found for this filter.{"\n"}Try a different category.
       </Text>
     </ReAnimated.View>
@@ -381,6 +379,34 @@ const styles = StyleSheet.create({
     right: 0,
     height: StyleSheet.hairlineWidth,
     backgroundColor: "#E5E5EA",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: wp(16),
+    paddingTop: hp(8),
+    paddingBottom: hp(10),
+    gap: wp(12),
+  },
+  titleWrap: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: fp(20),
+    fontWeight: "700",
+    color: "#1C1C1E",
+    letterSpacing: -0.5,
+  },
+  headerCount: {
+    fontSize: fp(12),
+    color: "#8E8E93",
+    fontWeight: "400",
+    marginTop: hp(1),
+  },
+  loadingWrap: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   backBtn: {
     width: wp(36),
@@ -420,6 +446,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#8E0FFF",
     borderColor: "transparent",
   },
+  chipText: {
+    fontSize: fp(13),
+    letterSpacing: -0.1,
+  },
+  chipTextDefault: {
+    fontWeight: "500",
+    color: "#6B7280",
+  },
+  chipTextSelected: {
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  // List view
   listItem: {
     backgroundColor: "#FFFFFF",
     borderRadius: wp(14),
@@ -430,6 +469,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
+  listRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: wp(12),
+  },
   listThumb: {
     width: wp(80),
     height: hp(80),
@@ -438,6 +482,82 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  listInfo: {
+    flex: 1,
+    gap: hp(4),
+  },
+  listName: {
+    fontSize: fp(14),
+    fontWeight: "600",
+    color: "#1C1C1E",
+    letterSpacing: -0.2,
+  },
+  listBrand: {
+    fontSize: fp(12),
+    color: "#8E8E93",
+  },
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: wp(3),
+    marginTop: hp(2),
+  },
+  listPrice: {
+    fontSize: fp(15),
+    fontWeight: "700",
+    color: "#1C1C1E",
+  },
+  listPriceSuffix: {
+    fontSize: fp(11),
+    color: "#8E8E93",
+  },
+  cartRow: {
+    marginTop: hp(8),
+  },
+  addToCartBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: wp(5),
+    backgroundColor: "#8E0FFF",
+    paddingVertical: hp(7),
+    paddingHorizontal: wp(14),
+    borderRadius: wp(8),
+    alignSelf: "flex-start",
+  },
+  addToCartText: {
+    fontSize: fp(13),
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  qtyControl: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: wp(10),
+    backgroundColor: "#F3F4F6",
+    borderRadius: wp(8),
+    paddingHorizontal: wp(8),
+    paddingVertical: hp(5),
+    alignSelf: "flex-start",
+  },
+  qtyBtn: {
+    width: wp(26),
+    height: hp(26),
+    borderRadius: wp(6),
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  qtyBtnPlus: {
+    backgroundColor: "#8E0FFF",
+  },
+  qtyText: {
+    fontSize: fp(14),
+    fontWeight: "600",
+    color: "#1C1C1E",
+    minWidth: wp(20),
+    textAlign: "center",
+  },
+  // Empty state
   emptyWrap: {
     alignItems: "center",
     paddingTop: hp(60),
@@ -457,5 +577,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 2,
+  },
+  emptyEmoji: {
+    fontSize: fp(30),
+  },
+  emptyTitle: {
+    fontSize: fp(17),
+    fontWeight: "600",
+    color: "#1C1C1E",
+    textAlign: "center",
+    letterSpacing: -0.3,
+  },
+  emptySubtitle: {
+    fontSize: fp(14),
+    color: "#8E8E93",
+    textAlign: "center",
+    marginTop: hp(6),
+    lineHeight: fp(20),
   },
 });

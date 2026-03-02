@@ -26,6 +26,7 @@ import { useCreateTransaction } from "@/hooks/payment/useCreateTransaction";
 import { useCLearCart } from "@/hooks/cart/useClearCart";
 import { useQueryClient } from "@tanstack/react-query";
 import { AdminApprovalDialog } from "@/components/checkout/AdminApprovalDialog";
+import { useBookingTimerStore } from "@/store/bookingTimer/bookingTimer";
 import { PaymentDetails } from "@/components/checkout/PaymentDetails";
 import { BillingSummary } from "@/components/checkout/BillingSummary";
 import { PromocodeSection } from "@/components/checkout/PromocodeSection";
@@ -49,6 +50,7 @@ export default function PaymentPage() {
   } = useCartStore();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const { stopTimer, approveTimer } = useBookingTimerStore();
   const insets = useSafeAreaInsets();
   const [showShootSettings, setShowShootSettings] = useState<boolean>(false);
   const [showDateTimePicker, setShowDateTimePicker] = useState<boolean>(false);
@@ -69,8 +71,9 @@ export default function PaymentPage() {
   const lastHandledStatusRef = useRef<string | null>(null);
   const isFirstLoadRef = useRef<boolean>(true);
   const { bookingId, setBookingId } = useCartStore();
+  // Poll continuously while booking exists and has not yet been approved/rejected
   const { data: bookingDetails, isLoading: isLoadingBooking } =
-    useGetBookingById(bookingId as string, showAdminApprovalDialog);
+    useGetBookingById(bookingId as string, !!bookingId);
   const { data: invoiceData, isLoading: isLoadingInvoice } =
     useGetBookingInvoice({
       bookingId: bookingId as string,
@@ -150,6 +153,7 @@ export default function PaymentPage() {
       setShowAdminApprovalDialog(false);
       lastHandledStatusRef.current = approval;
     } else if (lastHandledStatusRef.current !== approval) {
+      stopTimer();
       setShowAdminApprovalDialog(false);
       lastHandledStatusRef.current = approval;
       Alert.alert(
@@ -170,6 +174,7 @@ export default function PaymentPage() {
   }, [bookingDetails?.admin_approval]);
 
   const handleApprovalReceived = () => {
+    approveTimer(); // shows congrats widget overlay before routing
     setShowAdminApprovalDialog(false);
     // Clear the server-side cart when admin approves - the booking is now locked in
     clearCartMutation.mutate();
@@ -340,6 +345,7 @@ export default function PaymentPage() {
                   addressData={addressData}
                   productData={productData}
                   crewData={crewData}
+                  hideEditShootDate
                   deliveryDate={
                     bookingDetails
                       ? formatBookingDate(bookingDetails.rental_start_date)
@@ -438,6 +444,7 @@ export default function PaymentPage() {
         isOpen={showAdminApprovalDialog}
         onApprovalReceived={handleApprovalReceived}
         isApproved={bookingDetails?.admin_approval === "True"}
+        bookingId={bookingId}
       />
     </SafeAreaView>
   );

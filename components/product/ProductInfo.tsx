@@ -51,7 +51,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const width = Dimensions.get("window").width;
 
   const { isInWishlist, toggleWishlist } = useWishlistStatus(
-    product?.id ?? "",
+    product?.sku_id ?? "",
     product?.name ?? ""
   );
 

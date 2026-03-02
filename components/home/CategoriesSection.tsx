@@ -19,10 +19,12 @@ const categoryIcons: { [key: string]: any } = {
   "lights": require("@/assets/new/icons/home/lights.svg"),
   "lighting": require("@/assets/new/icons/home/lights.svg"),
   "audio": require("@/assets/new/icons/home/audio.svg"),
+  "gimbal": require("@/assets/new/icons/home/gimbal.svg"),
+  "drones": require("@/assets/new/icons/home/drone.svg"),
   "accessories": require("@/assets/new/icons/home/accesories.svg"),
-  "support & rigs": require("@/assets/new/icons/home/support-rigs.svg"),
-  "support": require("@/assets/new/icons/home/support-rigs.svg"),
-  "rigs": require("@/assets/new/icons/home/support-rigs.svg"),
+  "support & rigs": require("@/assets/new/icons/home/support.svg"),
+  "support": require("@/assets/new/icons/home/support.svg"),
+  "rigs": require("@/assets/new/icons/home/support.svg"),
 };
 
 // Memoized category card component for better performance
@@ -32,8 +34,8 @@ const CategoryCard = memo(({ category, iconSource, onPress }: {
   onPress: () => void;
 }) => (
   <Card
-    width="31%"
-    height={hp(110)}
+    width="23%"
+    height={hp(90)}
     borderRadius={wp(12)}
     overflow="hidden"
     onPress={onPress}
@@ -69,12 +71,12 @@ const CategoryCard = memo(({ category, iconSource, onPress }: {
         alignItems="center"
       >
         <Text
-          fontSize={fp(10)}
+          fontSize={fp(9)}
           fontWeight="500"
           color="#606060"
           numberOfLines={2}
           textAlign="center"
-          lineHeight={fp(12)}
+          lineHeight={fp(11)}
         >
           {category.name}
         </Text>
@@ -91,7 +93,17 @@ export function CategoriesSection({ onCategoryPress }: CategoriesSectionProps) {
   // All hooks must be called before any conditional returns
   const displayCategories = useMemo(() => categories?.data || [], [categories?.data]);
 
-  const categoriesToShow = useMemo(() => displayCategories.slice(0, 6), [displayCategories]);
+  const categoriesToShow = useMemo(() => {
+    const LAST_TWO = ["support", "accessories"];
+    const sorted = [...displayCategories].sort((a, b) => {
+      const aLast = LAST_TWO.some((k) => a.name.toLowerCase().includes(k));
+      const bLast = LAST_TWO.some((k) => b.name.toLowerCase().includes(k));
+      if (aLast && !bLast) return 1;
+      if (!aLast && bLast) return -1;
+      return 0;
+    });
+    return sorted.slice(0, 8);
+  }, [displayCategories]);
 
   const getCategoryIcon = useCallback((categoryName: string, imageUrl: string | null) => {
     const normalizedName = categoryName.toLowerCase();
@@ -156,7 +168,7 @@ export function CategoriesSection({ onCategoryPress }: CategoriesSectionProps) {
       </XStack>
 
       {/* See all categories button */}
-      <XStack justifyContent="center" paddingTop={hp(8)}>
+      {/* <XStack justifyContent="center" paddingTop={hp(8)}>
         <LinearGradient
           colors={[
             "rgba(255, 255, 255, 0.9)",
@@ -188,7 +200,7 @@ export function CategoriesSection({ onCategoryPress }: CategoriesSectionProps) {
             </XStack>
           </YStack>
         </LinearGradient>
-      </XStack>
+      </XStack> */}
     </YStack>
   );
 }

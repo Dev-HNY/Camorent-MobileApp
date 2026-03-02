@@ -258,14 +258,12 @@ const CAROUSEL_IMAGES = [
   require("@/assets/new/icons/hero-1.png"),
   require("@/assets/new/icons/hero-2.png"),
   require("@/assets/new/icons/hero-3.png"),
-  require("@/assets/new/icons/hero-4.png"),
 ];
 
 const SLIDES_META = [
   { gradientBot: "#470D7E", solid: "#470D7E", dot: "#C084FC" },
   { gradientBot: "#725EE3", solid: "#725EE3", dot: "#A5B4FC" },
   { gradientBot: "#E0D9FF", solid: "#E0D9FF", dot: "#7C3AED" },
-  { gradientBot: "#3079C0", solid: "#3079C0", dot: "#93C5FD" },
 ];
 
 const BEZIER = Easing.bezier(0.25, 0.46, 0.45, 0.94);

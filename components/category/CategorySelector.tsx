@@ -31,6 +31,8 @@ const categoryIcons: { [key: string]: any } = {
   "lights": require("@/assets/new/icons/home/lights.svg"),
   "lighting": require("@/assets/new/icons/home/lights.svg"),
   "audio": require("@/assets/new/icons/home/audio.svg"),
+  "gimbal": require("@/assets/new/icons/home/gimbal.svg"),
+  "drones": require("@/assets/new/icons/home/drone.svg"),
   "accessories": require("@/assets/new/icons/home/accesories.svg"),
   "support & rigs": require("@/assets/new/icons/home/support-rigs.svg"),
   "support": require("@/assets/new/icons/home/support-rigs.svg"),
@@ -104,8 +106,8 @@ export function CategorySelector({
             return (
               <Card
                 key={category.id}
-                width={wp(80)}
-                height={hp(90)}
+                width={wp(60)}
+                height={hp(70)}
                 borderRadius={wp(12)}
                 overflow="hidden"
                 onPress={() => onCategorySelect(category.id)}
@@ -138,12 +140,12 @@ export function CategorySelector({
                     bottom={0}
                     left={0}
                     right={0}
-                    paddingVertical={hp(5)}
+                    paddingVertical={hp(10)}
                     paddingHorizontal={wp(4)}
                     alignItems="center"
                     backgroundColor={isSelected ? "rgba(142,15,255,0.12)" : "transparent"}
                   >
-                    <Text
+                    {/* <Text
                       fontSize={fp(10)}
                       fontWeight="500"
                       color={isSelected ? "#8E0FFF" : "#606060"}
@@ -152,7 +154,7 @@ export function CategorySelector({
                       lineHeight={fp(12)}
                     >
                       {category.name}
-                    </Text>
+                    </Text> */}
                   </YStack>
                 </YStack>
               </Card>

@@ -9,12 +9,14 @@ interface ShootDateTimeCardProps {
   dates: string;
   startTime: string;
   onEdit: () => void;
+  hideEdit?: boolean;
 }
 
 export const ShootDateTimeCard = ({
   dates,
   startTime,
   onEdit,
+  hideEdit = false,
 }: ShootDateTimeCardProps) => {
   return (
     <LinearGradient
@@ -51,14 +53,16 @@ export const ShootDateTimeCard = ({
               Shoot date & time
             </Text>
           </XStack>
-          <Pressable onPress={onEdit} hitSlop={8}>
-            <XStack alignItems="center" gap={wp(4)}>
-              <Edit2 size={13} color="#8E0FFF" strokeWidth={2} />
-              <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">
-                Edit
-              </Text>
-            </XStack>
-          </Pressable>
+          {!hideEdit && (
+            <Pressable onPress={onEdit} hitSlop={8}>
+              <XStack alignItems="center" gap={wp(4)}>
+                <Edit2 size={13} color="#8E0FFF" strokeWidth={2} />
+                <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">
+                  Edit
+                </Text>
+              </XStack>
+            </Pressable>
+          )}
         </XStack>
 
         {/* Divider */}

@@ -9,6 +9,8 @@ export const useGetWishlist = () => {
       const res = await apiClient.get<GetWishlistResponse>("/users/wishlist");
       return res.data;
     },
-    staleTime: 30000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 };

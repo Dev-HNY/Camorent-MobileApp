@@ -92,9 +92,9 @@ const TESTIMONIALS = [
   },
 ];
 
-// Logo card dimensions — round circles
-const LOGO_SIZE = wp(82);
-const LOGO_GAP = wp(14);
+// Logo card dimensions — circular engraved tiles
+const LOGO_SIZE   = wp(88);
+const LOGO_GAP    = wp(14);
 const ROW1_LOOP_W = (LOGO_SIZE + LOGO_GAP) * 5;
 const ROW2_LOOP_W = (LOGO_SIZE + LOGO_GAP) * 5;
 
@@ -234,6 +234,8 @@ function MarqueeRow({
     return () => { animRef.current?.stop(); };
   }, []);
 
+  const R = LOGO_SIZE / 2;
+
   return (
     <Animated.View style={{ flexDirection: "row", transform: [{ translateX }] }}>
       {items.map(({ id, src }) => (
@@ -242,49 +244,89 @@ function MarqueeRow({
           style={{
             width: LOGO_SIZE,
             height: LOGO_SIZE,
-            borderRadius: LOGO_SIZE / 2,
+            borderRadius: R,
             marginRight: LOGO_GAP,
+            backgroundColor: "#DDE1E9",
+            // Outer shadow: bright white top-left (lifts the circle)
+            shadowColor: "#ffffff",
+            shadowOffset: { width: -4, height: -4 },
+            shadowOpacity: 0.9,
+            shadowRadius: 6,
+            elevation: 0,
           }}
         >
-          {/* Base circle: flat #E3E6EC */}
+          {/* ── Dark outer shadow bottom-right via absolute sibling ── */}
           <View
             style={{
               position: "absolute",
               inset: 0,
-              borderRadius: LOGO_SIZE / 2,
-              backgroundColor: "#E3E6EC",
+              borderRadius: R,
+              shadowColor: "#0D2750",
+              shadowOffset: { width: 5, height: 5 },
+              shadowOpacity: 0.22,
+              shadowRadius: 10,
             }}
           />
-          {/* Inset layer 1: white glow top-left (feOffset dx=-4, dy=-6 → white, opacity 0.75) */}
-          <LinearGradient
-            colors={["rgba(255,255,255,0.72)", "rgba(255,255,255,0.10)", "rgba(255,255,255,0)"]}
-            locations={[0, 0.45, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+
+          {/* ── Overflow clip for inner layers ── */}
+          <View
             style={{
               position: "absolute",
               inset: 0,
-              borderRadius: LOGO_SIZE / 2,
+              borderRadius: R,
+              overflow: "hidden",
             }}
-          />
-          {/* Inset layer 2: blue-grey shadow bottom-right (feOffset dx=6, dy=11 → #D1D9E6, opacity 0.67) */}
-          <LinearGradient
-            colors={["rgba(209,217,230,0)", "rgba(209,217,230,0.25)", "rgba(209,217,230,0.67)"]}
-            locations={[0, 0.5, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              position: "absolute",
-              inset: 0,
-              borderRadius: LOGO_SIZE / 2,
-            }}
-          />
-          {/* Logo centered */}
+          >
+            {/*
+              Inner shadow 1 (top edge): white strip fading downward
+              Simulates: blur 43, Y:-31, #FFFFFF, opacity 64%
+            */}
+            <LinearGradient
+              colors={["rgba(255,255,255,0.72)", "rgba(255,255,255,0)"]}
+              locations={[0, 1]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 0.55 }}
+              style={{ position: "absolute", inset: 0 }}
+            />
+            {/*
+              Inner shadow 1b (left edge): white strip fading rightward
+            */}
+            <LinearGradient
+              colors={["rgba(255,255,255,0.50)", "rgba(255,255,255,0)"]}
+              locations={[0, 1]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 0.55, y: 0.5 }}
+              style={{ position: "absolute", inset: 0 }}
+            />
+            {/*
+              Inner shadow 2 (bottom edge): dark strip fading upward
+              Simulates: blur 48, Y:+26, #0D2750, opacity 16%
+            */}
+            <LinearGradient
+              colors={["rgba(13,39,80,0)", "rgba(13,39,80,0.22)"]}
+              locations={[0, 1]}
+              start={{ x: 0.5, y: 0.45 }}
+              end={{ x: 0.5, y: 1 }}
+              style={{ position: "absolute", inset: 0 }}
+            />
+            {/*
+              Inner shadow 2b (right edge): dark strip fading leftward
+            */}
+            <LinearGradient
+              colors={["rgba(13,39,80,0)", "rgba(13,39,80,0.16)"]}
+              locations={[0, 1]}
+              start={{ x: 0.45, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={{ position: "absolute", inset: 0 }}
+            />
+          </View>
+
+          {/* ── Logo centered ── */}
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
             <Image
               source={src}
               contentFit="contain"
-              style={{ width: LOGO_SIZE * 0.56, height: LOGO_SIZE * 0.56 }}
+              style={{ width: LOGO_SIZE * 0.55, height: LOGO_SIZE * 0.55 }}
               cachePolicy="memory-disk"
             />
           </View>
@@ -381,28 +423,31 @@ export function ClientTestimonialsSection() {
         </Text>
       </YStack>
 
-      {/* 2. Infinite auto-scroll brand rows — fade left edge in, fade right edge out */}
-      <View style={{ overflow: "hidden" }}>
-        <YStack gap={hp(8)}>
-          <MarqueeRow items={BRAND_ROW1} loopWidth={ROW1_LOOP_W} speed={30} />
-          <MarqueeRow items={BRAND_ROW2} loopWidth={ROW2_LOOP_W} speed={25} reverse />
-        </YStack>
-        {/* Left: white → transparent (logos fade in from left edge to center) */}
-        <LinearGradient
-          colors={["#ffffff", "rgba(255,255,255,0.6)", "rgba(255,255,255,0)"]}
-          locations={[0, 0.4, 1]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: wp(72), pointerEvents: "none" }}
-        />
-        {/* Right: transparent → white (logos fade out toward right edge) */}
-        <LinearGradient
-          colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.7)", "#ffffff"]}
-          locations={[0, 0.55, 1]}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: wp(96), pointerEvents: "none" }}
-        />
+      {/* 2. Infinite auto-scroll brand rows — fade left/right edges */}
+      <View style={{ paddingVertical: hp(6) }}>
+        {/* Clip only horizontally — use a nested View so vertical shadows aren't cut */}
+        <View style={{ overflow: "hidden" }}>
+          <YStack gap={hp(12)}>
+            <MarqueeRow items={BRAND_ROW1} loopWidth={ROW1_LOOP_W} speed={30} />
+            <MarqueeRow items={BRAND_ROW2} loopWidth={ROW2_LOOP_W} speed={25} reverse />
+          </YStack>
+          {/* Left fade */}
+          <LinearGradient
+            colors={["#ffffff", "rgba(255,255,255,0.6)", "rgba(255,255,255,0)"]}
+            locations={[0, 0.4, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: wp(72), pointerEvents: "none" }}
+          />
+          {/* Right fade */}
+          <LinearGradient
+            colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.7)", "#ffffff"]}
+            locations={[0, 0.55, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: wp(96), pointerEvents: "none" }}
+          />
+        </View>
       </View>
 
       {/* 3. Banner carousel (brands/banners/1–4.svg) */}

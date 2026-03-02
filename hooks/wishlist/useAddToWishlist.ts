@@ -27,10 +27,17 @@ export const useAddToWishlist = () => {
         "wishlist",
       ]);
 
+      // Guard: skip optimistic update if item already in cache (prevents duplicate UI)
+      const alreadyExists = previousWishlist?.items.some(
+        (item) => item.sku_id === request.sku_id
+      );
+      if (alreadyExists) return { previousWishlist };
+
       // Optimistically add the item (with minimal data)
+      const tempId = `temp-${request.sku_id}-${Date.now()}`;
       const optimisticItem: WishlistItem = {
-        id: `temp-${request.sku_id}-${Date.now()}`,
-        wishlist_id: `temp-${request.sku_id}-${Date.now()}`,
+        id: tempId,
+        wishlist_id: tempId,
         sku_name: request.sku_name,
         sku_category: "",
         user_id: "",

@@ -116,7 +116,7 @@ export const CrewDetailsSection = ({
         )}
 
         {/* Add more button */}
-        <XStack
+        {/* <XStack
           borderWidth={1}
           borderColor="#8E0FFF"
           borderRadius={wp(10)}
@@ -136,7 +136,7 @@ export const CrewDetailsSection = ({
           >
             Add more items
           </Text>
-        </XStack>
+        </XStack> */}
       </Stack>
     </YStack>
   );

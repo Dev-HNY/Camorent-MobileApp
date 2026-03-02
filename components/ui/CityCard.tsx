@@ -1,7 +1,13 @@
 import React, { useRef, useEffect } from "react";
-import { YStack, Text } from "tamagui";
-import { ImageBackground, StyleSheet, ImageSourcePropType, Animated, Pressable } from "react-native";
-import { wp, hp, fp } from "@/utils/responsive";
+import {
+  StyleSheet,
+  Animated,
+  Pressable,
+  View,
+  ImageSourcePropType,
+} from "react-native";
+import { Image } from "expo-image";
+import { wp, hp } from "@/utils/responsive";
 import * as Haptics from "expo-haptics";
 import { Check } from "lucide-react-native";
 
@@ -13,14 +19,14 @@ interface CityCardProps {
   disabled?: boolean;
 }
 
-export function CityCard({ name, image, isSelected, onPress, disabled }: CityCardProps) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const checkAnim = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
+export function CityCard({ image, isSelected, onPress, disabled }: CityCardProps) {
+  const scaleAnim  = useRef(new Animated.Value(1)).current;
+  const selectAnim = useRef(new Animated.Value(isSelected ? 1 : 0)).current;
 
   useEffect(() => {
-    Animated.spring(checkAnim, {
+    Animated.spring(selectAnim, {
       toValue: isSelected ? 1 : 0,
-      friction: 6,
+      friction: 7,
       tension: 50,
       useNativeDriver: true,
     }).start();
@@ -28,167 +34,90 @@ export function CityCard({ name, image, isSelected, onPress, disabled }: CityCar
 
   const handlePressIn = () => {
     if (disabled) return;
-    Animated.spring(scaleAnim, {
-      toValue: 0.95,
-      friction: 8,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
+    Animated.spring(scaleAnim, { toValue: 0.96, friction: 8, tension: 40, useNativeDriver: true }).start();
   };
-
   const handlePressOut = () => {
     if (disabled) return;
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      friction: 8,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
+    Animated.spring(scaleAnim, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }).start();
   };
-
   const handlePress = () => {
     if (disabled) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onPress();
   };
 
-  const checkScale = checkAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-
   return (
-    <Animated.View
-      style={{
-        transform: [{ scale: scaleAnim }],
-        width: "48%",
-      }}
-    >
+    <Animated.View style={{ transform: [{ scale: scaleAnim }], width: "48%" }}>
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={handlePress}
         disabled={disabled}
       >
-        <Animated.View
-          style={[
-            styles.cardContainer,
-            isSelected && styles.cardSelected,
-            { opacity: disabled ? 0.6 : 1 },
-          ]}
-        >
-          <ImageBackground source={image} style={styles.imageBackground} resizeMode="cover">
-            {/* Coming Soon Overlay for disabled cities */}
-            {disabled && (
-              <YStack
-                position="absolute"
-                top={0}
-                left={0}
-                right={0}
-                bottom={0}
-                backgroundColor="rgba(0, 0, 0, 0.5)"
-                justifyContent="center"
-                alignItems="center"
-                zIndex={5}
-              >
-                <YStack
-                  backgroundColor="#8E0FFF"
-                  paddingHorizontal={wp(16)}
-                  paddingVertical={hp(8)}
-                  borderRadius={wp(20)}
-                >
-                  <Text
-                    fontSize={fp(13)}
-                    fontWeight="700"
-                    color="#FFFFFF"
-                    textAlign="center"
-                  >
-                    Coming Soon
-                  </Text>
-                </YStack>
-              </YStack>
-            )}
+        <View style={[styles.card, isSelected ? styles.cardSelected : styles.cardDefault, disabled && styles.cardDisabled]}>
 
-            {/* Selection Indicator */}
-            {isSelected && !disabled && (
-              <Animated.View
-                style={[
-                  styles.checkContainer,
-                  {
-                    opacity: checkAnim,
-                    transform: [{ scale: checkScale }],
-                  },
-                ]}
-              >
-                <YStack
-                  backgroundColor="#8E0FFF"
-                  borderRadius={wp(12)}
-                  padding={wp(4)}
-                >
-                  <Check size={hp(16)} color="#FFFFFF" strokeWidth={3} />
-                </YStack>
-              </Animated.View>
-            )}
+          {/* City illustration — image already contains city name text */}
+          <Image
+            source={image}
+            contentFit="fill"
+            cachePolicy="memory-disk"
+            style={styles.cityImage}
+          />
 
-            <YStack flex={1} justifyContent="flex-end">
-              <YStack
-                backgroundColor="rgba(0, 0, 0, 0.75)"
-                paddingVertical={hp(12)}
-                borderBottomLeftRadius={wp(12)}
-                borderBottomRightRadius={wp(12)}
-              >
-                <Text
-                  fontSize={fp(15)}
-                  fontWeight="700"
-                  color={isSelected ? "#8E0FFF" : "#FFFFFF"}
-                  textAlign="center"
-                  numberOfLines={1}
-                  style={{
-                    textShadowColor: "rgba(0, 0, 0, 0.8)",
-                    textShadowOffset: { width: 0, height: 1 },
-                    textShadowRadius: 3,
-                  }}
-                >
-                  {name}
-                </Text>
-              </YStack>
-            </YStack>
-          </ImageBackground>
-        </Animated.View>
+          {/* Check badge when selected */}
+          {isSelected && !disabled && (
+            <Animated.View
+              style={[
+                styles.checkBadge,
+                { opacity: selectAnim, transform: [{ scale: selectAnim }] },
+              ]}
+            >
+              <Check size={wp(12)} color="#FFFFFF" strokeWidth={3} />
+            </Animated.View>
+          )}
+        </View>
       </Pressable>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  cardContainer: {
+  card: {
     width: "100%",
-    height: hp(140),
-    borderRadius: wp(12),
+    borderRadius: wp(16),
+    borderWidth: 2,
     overflow: "hidden",
-    backgroundColor: "transparent",
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 4,
+    aspectRatio: 1,
+  },
+  cardDefault: {
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
   },
   cardSelected: {
-    shadowColor: "#8E0FFF",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.55,
-    shadowRadius: 10,
-    elevation: 8,
+    borderColor: "#AB58F4",
+    shadowColor: "#AB58F4",
+    shadowOpacity: 0.35,
   },
-  imageBackground: {
-    flex: 1,
+  cardDisabled: {
+    opacity: 0.45,
+  },
+  cityImage: {
     width: "100%",
     height: "100%",
   },
-  blurOverlay: {
-    borderBottomLeftRadius: wp(12),
-    borderBottomRightRadius: wp(12),
-    overflow: "hidden",
-  },
-  checkContainer: {
+  checkBadge: {
     position: "absolute",
-    top: hp(8),
-    right: wp(8),
-    zIndex: 10,
+    top: hp(9),
+    right: wp(9),
+    width: wp(22),
+    height: wp(22),
+    borderRadius: wp(11),
+    backgroundColor: "#AB58F4",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

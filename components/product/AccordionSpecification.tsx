@@ -3,7 +3,7 @@ import {
   AccordionSectionMini,
   AccordionItem,
 } from "../ui/AccordionSectionMini";
-import { YStack, Text, XStack } from "tamagui";
+import { View, Text } from "react-native";
 import React from "react";
 import { capitalizeFirst } from "@/utils/format";
 
@@ -17,40 +17,39 @@ export default function AccordionSpecification({
   specifications,
 }: AccordionSpecificationProps) {
   const descriptionContent = (
-    <YStack gap={wp(8)}>
+    <View style={{ gap: wp(8) }}>
       {description.split(",").map((item, index) => (
-        <XStack key={index} gap={wp(4)} alignItems="flex-start">
-          <Text color="#6B7280" fontSize={fp(14)}>•</Text>
-          <Text color="#6B7280" fontSize={fp(14)} lineHeight={fp(20)} flex={1}>
+        <View key={index} style={{ flexDirection: "row", gap: wp(4), alignItems: "flex-start" }}>
+          <Text style={{ color: "#6B7280", fontSize: fp(14) }}>{"•"}</Text>
+          <Text style={{ color: "#6B7280", fontSize: fp(14), lineHeight: fp(20), flex: 1 }}>
             {capitalizeFirst(item.trim())}
           </Text>
-        </XStack>
+        </View>
       ))}
-    </YStack>
+    </View>
   );
 
   const specificationContent = (
-    <YStack gap={wp(12)}>
+    <View style={{ gap: wp(12) }}>
       {Object.entries(specifications).map(([key, value]) => {
         const values = value.map((v) => v.trim()).filter(Boolean);
-
         return (
-          <YStack key={key} gap={wp(6)}>
-            <Text fontWeight="600" fontSize={fp(14)} color="#121217">
+          <View key={key} style={{ gap: wp(6) }}>
+            <Text style={{ fontWeight: "600", fontSize: fp(14), color: "#121217" }}>
               {key}:
             </Text>
             {values.map((item, index) => (
-              <XStack key={index} gap={wp(4)} alignItems="flex-start">
-                <Text color="#6B7280" fontSize={fp(14)}>•</Text>
-                <Text color="#6B7280" fontSize={fp(14)} lineHeight={fp(20)} flex={1}>
+              <View key={index} style={{ flexDirection: "row", gap: wp(4), alignItems: "flex-start" }}>
+                <Text style={{ color: "#6B7280", fontSize: fp(14) }}>{"•"}</Text>
+                <Text style={{ color: "#6B7280", fontSize: fp(14), lineHeight: fp(20), flex: 1 }}>
                   {capitalizeFirst(item.trim())}
                 </Text>
-              </XStack>
+              </View>
             ))}
-          </YStack>
+          </View>
         );
       })}
-    </YStack>
+    </View>
   );
 
   const specificationItems: AccordionItem[] = [

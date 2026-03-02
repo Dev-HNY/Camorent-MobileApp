@@ -9,7 +9,15 @@ export const useGetBookingById = (booking_id: string, enablePolling: boolean = f
       const res = await apiClient.get(`/bookings/${booking_id}`);
       return res.data;
     },
+    enabled: !!booking_id,
     refetchOnWindowFocus: true,
-    refetchInterval: enablePolling ? 5000 : false, // Poll every 5 seconds when enabled
+    // Stop polling once a terminal state (approved or rejected) is reached
+    refetchInterval: (query) => {
+      if (!enablePolling) return false;
+      const approval = (query.state.data as BookingDetails | undefined)?.admin_approval;
+      if (approval === "True" || (approval && approval !== "pending" && approval !== "")) return false;
+      return 2000;
+    },
+    staleTime: 0,
   });
 };

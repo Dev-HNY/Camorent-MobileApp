@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { YStack, XStack, Text } from "tamagui";
 import { hp, wp, fp } from "@/utils/responsive";
-import { AppState, AppStateStatus, Modal, StyleSheet } from "react-native";
+import {
+  AppState,
+  AppStateStatus,
+  Modal,
+  Pressable,
+  StyleSheet,
+  View,
+  Text,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import Animated, {
@@ -14,21 +21,27 @@ import Animated, {
   FadeIn,
   FadeInUp,
 } from "react-native-reanimated";
+import { router } from "expo-router";
+import * as Haptics from "expo-haptics";
+import { useBookingTimerStore } from "@/store/bookingTimer/bookingTimer";
 
 interface AdminApprovalDialogProps {
   isOpen: boolean;
   onApprovalReceived: () => void;
   isApproved: boolean;
+  bookingId?: string | null;
 }
 
 export function AdminApprovalDialog({
   isOpen,
   onApprovalReceived,
   isApproved,
+  bookingId,
 }: AdminApprovalDialogProps) {
   const COUNTDOWN_DURATION = 5 * 60;
   const [remainingTime, setRemainingTime] = useState(COUNTDOWN_DURATION);
   const startTimeRef = useRef<number | null>(null);
+  const { startTimer } = useBookingTimerStore();
 
   const ringScale = useSharedValue(1);
   const ringOpacity = useSharedValue(0.45);
@@ -68,6 +81,7 @@ export function AdminApprovalDialog({
 
     if (startTimeRef.current === null) {
       startTimeRef.current = Date.now();
+      startTimer(bookingId ?? "pending");
     }
 
     const updateRemainingTime = () => {
@@ -115,122 +129,196 @@ export function AdminApprovalDialog({
           style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(255,255,255,0.55)" }]}
         />
 
-        <YStack flex={1} justifyContent="flex-end" paddingBottom={hp(40)}>
+        <View style={styles.sheet}>
           <Animated.View entering={FadeInUp.duration(420).springify().damping(18)}>
-            <YStack
-              marginHorizontal={wp(20)}
-              borderRadius={wp(28)}
-              backgroundColor="#FFFFFF"
-              overflow="hidden"
-              style={{
-                shadowColor: "#8E0FFF",
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.12,
-                shadowRadius: 32,
-                elevation: 16,
-              }}
-            >
+            <View style={styles.card}>
               {/* Purple accent bar */}
               <LinearGradient
                 colors={["#8E0FFF", "#B44FFF"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={{ height: hp(4) }}
+                style={styles.accentBar}
               />
 
-              <YStack padding={wp(28)} gap={hp(24)} alignItems="center">
+              <View style={styles.cardContent}>
                 {/* Pulsing icon */}
-                <YStack alignItems="center" justifyContent="center" height={hp(80)}>
-                  <Animated.View
-                    style={[
-                      pulseStyle,
-                      {
-                        position: "absolute",
-                        width: wp(72),
-                        height: wp(72),
-                        borderRadius: wp(36),
-                        backgroundColor: "#8E0FFF",
-                      },
-                    ]}
-                  />
+                <View style={styles.iconWrap}>
+                  <Animated.View style={[pulseStyle, styles.pulseRing]} />
                   <LinearGradient
                     colors={["#8E0FFF", "#B44FFF"]}
-                    style={{
-                      width: wp(56),
-                      height: wp(56),
-                      borderRadius: wp(28),
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                    style={styles.iconCircle}
                   >
-                    <Text fontSize={fp(24)}>⏳</Text>
+                    <Text style={styles.iconEmoji}>⏳</Text>
                   </LinearGradient>
-                </YStack>
+                </View>
 
                 {/* Heading + body */}
-                <YStack gap={hp(8)} alignItems="center">
-                  <Text
-                    fontSize={fp(18)}
-                    fontWeight="700"
-                    color="#121217"
-                    textAlign="center"
-                    letterSpacing={-0.3}
-                  >
-                    Reviewing Your Booking
-                  </Text>
-                  <Text
-                    fontSize={fp(14)}
-                    color="#6C6C89"
-                    textAlign="center"
-                    lineHeight={hp(20)}
-                  >
+                <View style={styles.textGroup}>
+                  <Text style={styles.heading}>Reviewing Your Booking</Text>
+                  <Text style={styles.body}>
                     Our team is checking equipment availability. This usually takes just a few minutes.
                   </Text>
-                </YStack>
+                </View>
 
                 {/* Timer */}
-                <YStack
-                  backgroundColor="#F5EDFF"
-                  borderRadius={wp(16)}
-                  paddingHorizontal={wp(20)}
-                  paddingVertical={hp(14)}
-                  alignItems="center"
-                  gap={hp(4)}
-                  width="100%"
-                >
-                  <Text
-                    fontSize={fp(34)}
-                    fontWeight="700"
-                    color="#8E0FFF"
-                    letterSpacing={-1}
-                  >
-                    {formatTime(remainingTime)}
-                  </Text>
-                  <Text fontSize={fp(12)} color="#9B7BC8" fontWeight="500">
-                    estimated wait time
-                  </Text>
-                </YStack>
+                <View style={styles.timerBox}>
+                  <Text style={styles.timerText}>{formatTime(remainingTime)}</Text>
+                  <Text style={styles.timerLabel}>estimated wait time</Text>
+                </View>
 
                 {/* Tip */}
-                <XStack
-                  gap={wp(10)}
-                  alignItems="center"
-                  backgroundColor="#F9F9FB"
-                  borderRadius={wp(12)}
-                  paddingHorizontal={wp(16)}
-                  paddingVertical={hp(12)}
-                  width="100%"
-                >
-                  <Text fontSize={fp(14)}>💡</Text>
-                  <Text fontSize={fp(12)} color="#6C6C89" flex={1} lineHeight={hp(18)}>
-                    You can minimise the app — we'll notify you once approved.
+                <View style={styles.tipRow}>
+                  <Text style={styles.tipEmoji}>💡</Text>
+                  <Text style={styles.tipText}>
+                    You can explore the app — we'll notify you once approved.
                   </Text>
-                </XStack>
-              </YStack>
-            </YStack>
+                </View>
+
+                {/* Explore More CTA */}
+                <Pressable
+                  style={styles.exploreCta}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.replace("/(tabs)/(home)");
+                  }}
+                >
+                  <View style={styles.exploreBtn}>
+                    <Text style={styles.exploreBtnText}>Explore More</Text>
+                    <Text style={styles.exploreArrow}>→</Text>
+                  </View>
+                </Pressable>
+              </View>
+            </View>
           </Animated.View>
-        </YStack>
+        </View>
       </BlurView>
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  sheet: {
+    flex: 1,
+    justifyContent: "flex-end",
+    paddingBottom: hp(40),
+  },
+  card: {
+    marginHorizontal: wp(20),
+    borderRadius: wp(28),
+    backgroundColor: "#FFFFFF",
+    overflow: "hidden",
+    shadowColor: "#8E0FFF",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 32,
+    elevation: 16,
+  },
+  accentBar: {
+    height: hp(4),
+  },
+  cardContent: {
+    padding: wp(28),
+    gap: hp(24),
+    alignItems: "center",
+  },
+  iconWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: hp(80),
+  },
+  pulseRing: {
+    position: "absolute",
+    width: wp(72),
+    height: wp(72),
+    borderRadius: wp(36),
+    backgroundColor: "#8E0FFF",
+  },
+  iconCircle: {
+    width: wp(56),
+    height: wp(56),
+    borderRadius: wp(28),
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconEmoji: {
+    fontSize: fp(24),
+  },
+  textGroup: {
+    gap: hp(8),
+    alignItems: "center",
+    width: "100%",
+  },
+  heading: {
+    fontSize: fp(18),
+    fontWeight: "700",
+    color: "#121217",
+    textAlign: "center",
+    letterSpacing: -0.3,
+  },
+  body: {
+    fontSize: fp(14),
+    color: "#6C6C89",
+    textAlign: "center",
+    lineHeight: hp(20),
+  },
+  timerBox: {
+    backgroundColor: "#F5EDFF",
+    borderRadius: wp(16),
+    paddingHorizontal: wp(20),
+    paddingVertical: hp(14),
+    alignItems: "center",
+    gap: hp(4),
+    width: "100%",
+  },
+  timerText: {
+    fontSize: fp(34),
+    fontWeight: "700",
+    color: "#8E0FFF",
+    letterSpacing: -1,
+  },
+  timerLabel: {
+    fontSize: fp(12),
+    color: "#9B7BC8",
+    fontWeight: "500",
+  },
+  tipRow: {
+    flexDirection: "row",
+    gap: wp(10),
+    alignItems: "center",
+    backgroundColor: "#F9F9FB",
+    borderRadius: wp(12),
+    paddingHorizontal: wp(16),
+    paddingVertical: hp(12),
+    width: "100%",
+  },
+  tipEmoji: {
+    fontSize: fp(14),
+  },
+  tipText: {
+    fontSize: fp(12),
+    color: "#6C6C89",
+    flex: 1,
+    lineHeight: hp(18),
+  },
+  exploreCta: {
+    width: "100%",
+  },
+  exploreBtn: {
+    backgroundColor: "#F5EDFF",
+    borderRadius: wp(14),
+    paddingVertical: hp(14),
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: wp(8),
+  },
+  exploreBtnText: {
+    fontSize: fp(15),
+    fontWeight: "600",
+    color: "#8E0FFF",
+  },
+  exploreArrow: {
+    fontSize: fp(15),
+    color: "#8E0FFF",
+  },
+});

@@ -111,38 +111,12 @@ export default function HelpCenterScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: tabHeight + hp(60) }}
         >
-          {/* Purple banner with illustration */}
-          <XStack
-            backgroundColor="#8E0FFF"
-            height={hp(120)}
-            marginTop={hp(16)}
-            marginHorizontal={wp(16)}
-            borderRadius={wp(16)}
-            position="relative"
-            justifyContent="flex-end"
-            overflow="hidden"
-          >
-            <Image
-              source={require("@/assets/images/profile/help-center-1.png")}
-              style={{
-                position: "absolute",
-                top: hp(-15),
-                left: wp(-5),
-                width: wp(170),
-                height: hp(120),
-              }}
-              contentFit="cover"
-            />
-            <Image
-              source={require("@/assets/images/profile/help-center-2.png")}
-              style={{
-                width: wp(110),
-                height: hp(110),
-                alignSelf: "flex-end",
-              }}
-              contentFit="cover"
-            />
-          </XStack>
+          {/* Help banner illustration — full width, no radius, no padding */}
+          <Image
+            source={require("@/assets/new/icons/help.svg")}
+            style={{ width: "100%", height: hp(180) }}
+            contentFit="cover"
+          />
 
           {/* Section Title */}
           <YStack paddingHorizontal={wp(16)} paddingTop={hp(24)} paddingBottom={hp(12)}>

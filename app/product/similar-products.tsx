@@ -1,12 +1,17 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { YStack, XStack, Text } from "tamagui";
 import { useLocalSearchParams, router } from "expo-router";
 import { UseGetAllProducts } from "@/hooks/product/useGetAllProducts";
 import { FlashList } from "@shopify/flash-list";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { fp, hp, wp } from "@/utils/responsive";
 import { ChevronLeft } from "lucide-react-native";
-import { Pressable, StyleSheet, View, ActivityIndicator } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  View,
+  Text,
+  ActivityIndicator,
+} from "react-native";
 import * as Haptics from "expo-haptics";
 import Animated, {
   FadeIn,
@@ -17,6 +22,7 @@ import Animated, {
   Extrapolation,
 } from "react-native-reanimated";
 import { SKU } from "@/types/products/product";
+import { useCallback } from "react";
 
 export default function SimilarProducts() {
   const insets = useSafeAreaInsets();
@@ -33,7 +39,6 @@ export default function SimilarProducts() {
     scrollY.value = event.contentOffset.y;
   });
 
-  // Sticky header fades in after 40px of scroll
   const stickyHeaderStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [20, 60], [0, 1], Extrapolation.CLAMP),
     transform: [
@@ -60,49 +65,76 @@ export default function SimilarProducts() {
 
   const rawTitle =
     (subcategory_id as string) || (category_id as string) || "Similar Gear";
-  // Prettify: replace hyphens/underscores with spaces, title-case
   const title = rawTitle
     .replace(/[-_]/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
   const count = products?.data?.length ?? 0;
 
+  const ListHeader = useCallback(
+    () => (
+      <Animated.View entering={FadeIn.duration(300).delay(100)}>
+        <View style={styles.listHeaderRow}>
+          <Text style={styles.listHeaderTitle} numberOfLines={1}>
+            {title}
+          </Text>
+          {count > 0 && (
+            <Text style={styles.listHeaderCount}>
+              {count} item{count !== 1 ? "s" : ""}
+            </Text>
+          )}
+        </View>
+      </Animated.View>
+    ),
+    [title, count]
+  );
+
+  const ListEmpty = useCallback(
+    () => (
+      <Animated.View entering={FadeIn.duration(400)} style={styles.emptyWrap}>
+        <View style={styles.emptyIcon}>
+          <Text style={styles.emptyEmoji}>📷</Text>
+        </View>
+        <Text style={styles.emptyTitle}>Nothing here yet</Text>
+        <Text style={styles.emptySubtitle}>
+          No similar gear found.{"\n"}Try browsing other categories.
+        </Text>
+        <Pressable onPress={() => router.back()} style={styles.emptyBtn}>
+          <Text style={styles.emptyBtnText}>Go back</Text>
+        </Pressable>
+      </Animated.View>
+    ),
+    []
+  );
+
   return (
     <View style={styles.root}>
-      {/* ── Sticky floating header (appears on scroll) ── */}
+      {/* Sticky floating header */}
       <Animated.View
         style={[styles.stickyHeader, { paddingTop: insets.top }, stickyHeaderStyle]}
         pointerEvents="none"
       >
         <View style={styles.stickyInner}>
-          <Text
-            fontSize={fp(16)}
-            fontWeight="600"
-            color="#1C1C1E"
-            letterSpacing={-0.3}
-            numberOfLines={1}
-          >
+          <Text style={styles.stickyTitle} numberOfLines={1}>
             {title}
           </Text>
         </View>
       </Animated.View>
 
-      {/* ── Back button — always on top ── */}
-      <View style={[styles.backRow, { top: insets.top + hp(8) }]} pointerEvents="box-none">
+      {/* Back button */}
+      <View
+        style={[styles.backRow, { top: insets.top + hp(8) }]}
+        pointerEvents="box-none"
+      >
         <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={8}>
           <ChevronLeft size={20} color="#1C1C1E" strokeWidth={2.5} />
         </Pressable>
       </View>
 
       {isLoading ? (
-        <YStack
-          flex={1}
-          justifyContent="center"
-          alignItems="center"
-          paddingTop={insets.top + hp(56)}
-        >
+        <View style={[styles.loadingWrap, { paddingTop: insets.top + hp(56) }]}>
           <ActivityIndicator size="large" color="#8E0FFF" />
-        </YStack>
+        </View>
       ) : (
         <FlashList<SKU>
           data={(products?.data ?? []) as SKU[]}
@@ -116,30 +148,7 @@ export default function SimilarProducts() {
             paddingBottom: insets.bottom + hp(32),
             paddingHorizontal: wp(16),
           }}
-          ListHeaderComponent={
-            <Animated.View entering={FadeIn.duration(300).delay(100)}>
-              <XStack
-                alignItems="center"
-                justifyContent="space-between"
-                paddingBottom={hp(14)}
-                paddingTop={hp(4)}
-              >
-                <Text
-                  fontSize={fp(22)}
-                  fontWeight="700"
-                  color="#1C1C1E"
-                  letterSpacing={-0.5}
-                >
-                  {title}
-                </Text>
-                {count > 0 && (
-                  <Text fontSize={fp(13)} color="#8E8E93" fontWeight="400">
-                    {count} item{count !== 1 ? "s" : ""}
-                  </Text>
-                )}
-              </XStack>
-            </Animated.View>
-          }
+          ListHeaderComponent={ListHeader}
           ItemSeparatorComponent={() => <View style={{ height: hp(12) }} />}
           renderItem={({ item: product, index }: { item: SKU; index: number }) => (
             <Animated.View
@@ -157,39 +166,7 @@ export default function SimilarProducts() {
               />
             </Animated.View>
           )}
-          ListEmptyComponent={
-            <Animated.View
-              entering={FadeIn.duration(400)}
-              style={styles.emptyWrap}
-            >
-              <View style={styles.emptyIcon}>
-                <Text fontSize={fp(32)}>📷</Text>
-              </View>
-              <Text
-                fontSize={fp(17)}
-                fontWeight="600"
-                color="#1C1C1E"
-                textAlign="center"
-                letterSpacing={-0.3}
-              >
-                Nothing here yet
-              </Text>
-              <Text
-                fontSize={fp(14)}
-                color="#8E8E93"
-                textAlign="center"
-                marginTop={hp(6)}
-                lineHeight={fp(20)}
-              >
-                No similar gear found.{"\n"}Try browsing other categories.
-              </Text>
-              <Pressable onPress={() => router.back()} style={styles.emptyBtn}>
-                <Text fontSize={fp(15)} fontWeight="600" color="#8E0FFF">
-                  Go back
-                </Text>
-              </Pressable>
-            </Animated.View>
-          }
+          ListEmptyComponent={ListEmpty}
         />
       )}
     </View>
@@ -201,7 +178,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F2F2F7",
   },
-  // Sticky header that fades in on scroll
   stickyHeader: {
     position: "absolute",
     top: 0,
@@ -218,7 +194,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: wp(60),
   },
-  // Back button — always floating on top left
+  stickyTitle: {
+    fontSize: fp(16),
+    fontWeight: "600",
+    color: "#1C1C1E",
+    letterSpacing: -0.3,
+  },
   backRow: {
     position: "absolute",
     left: wp(16),
@@ -236,6 +217,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.10,
     shadowRadius: 6,
     elevation: 3,
+  },
+  loadingWrap: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  listHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: hp(14),
+    paddingTop: hp(4),
+  },
+  listHeaderTitle: {
+    fontSize: fp(22),
+    fontWeight: "700",
+    color: "#1C1C1E",
+    letterSpacing: -0.5,
+  },
+  listHeaderCount: {
+    fontSize: fp(13),
+    color: "#8E8E93",
+    fontWeight: "400",
   },
   cardWrapper: {
     flex: 1,
@@ -260,6 +264,23 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  emptyEmoji: {
+    fontSize: fp(32),
+  },
+  emptyTitle: {
+    fontSize: fp(17),
+    fontWeight: "600",
+    color: "#1C1C1E",
+    textAlign: "center",
+    letterSpacing: -0.3,
+  },
+  emptySubtitle: {
+    fontSize: fp(14),
+    color: "#8E8E93",
+    textAlign: "center",
+    marginTop: hp(6),
+    lineHeight: fp(20),
+  },
   emptyBtn: {
     marginTop: hp(20),
     paddingHorizontal: wp(28),
@@ -271,5 +292,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 2,
+  },
+  emptyBtnText: {
+    fontSize: fp(15),
+    fontWeight: "600",
+    color: "#8E0FFF",
   },
 });

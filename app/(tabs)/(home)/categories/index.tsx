@@ -466,7 +466,6 @@ export default function Categories() {
         {/* Header */}
         <Animated.View style={headerStyle}>
           <YStack
-            paddingHorizontal={wp(16)}
             paddingTop={hp(4)}
             paddingBottom={hp(6)}
             backgroundColor="rgba(255, 255, 255, 0.95)"
@@ -486,7 +485,7 @@ export default function Categories() {
             </YStack>
 
             {/* Filter & Sort Bar */}
-            <XStack gap={wp(8)} marginTop={hp(8)}>
+            <XStack gap={wp(8)} marginTop={hp(8)} paddingHorizontal={wp(16)}>
               <Animated.View style={[{ flex: 1 }, filterBadgeStyle]}>
                 <Pressable
                   onPress={openFilterSheet}
@@ -531,7 +530,7 @@ export default function Categories() {
 
             {/* Active Filter Chips */}
             {activeFilterCount > 0 && (
-              <YStack marginTop={hp(12)}>
+              <YStack marginTop={hp(12)} paddingHorizontal={wp(16)}>
                 <FilterChipsContainer
                   activeFilters={activeFilterChips}
                   onRemoveFilter={handleRemoveFilter}
@@ -541,7 +540,7 @@ export default function Categories() {
             )}
 
             {/* Product Count */}
-            <Text fontSize={fp(12)} color="#6B7280" marginTop={hp(8)}>
+            <Text fontSize={fp(12)} color="#6B7280" marginTop={hp(8)} paddingHorizontal={wp(16)}>
               {filteredAndSortedProducts.length} product{filteredAndSortedProducts.length !== 1 ? "s" : ""}
             </Text>
           </YStack>
@@ -558,63 +557,37 @@ export default function Categories() {
           </YStack>
         ) : (
           <Animated.View style={[{ flex: 1 }, contentStyle]}>
-            {viewMode === "grid" ? (
-              <FlatList
-                data={displayedProducts}
-                keyExtractor={keyExtractor}
-                numColumns={2}
-                renderItem={renderGridItem}
-                ItemSeparatorComponent={gridSeparator}
-                ListFooterComponent={listFooter}
-                ListEmptyComponent={emptyComponent}
-                columnWrapperStyle={{ gap: wp(8), paddingHorizontal: wp(16) }}
-                contentContainerStyle={{ paddingTop: hp(16), paddingBottom: tabHeight + hp(100) }}
-                showsVerticalScrollIndicator={false}
-                onEndReached={handleEndReached}
-                onEndReachedThreshold={0.3}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    tintColor="#121217"
-                    colors={["#121217"]}
-                  />
-                }
-                removeClippedSubviews
-                initialNumToRender={6}
-                maxToRenderPerBatch={8}
-                windowSize={5}
-              />
-            ) : (
-              <FlatList
-                data={displayedProducts}
-                keyExtractor={keyExtractor}
-                renderItem={renderListItem}
-                ItemSeparatorComponent={listSeparator}
-                ListFooterComponent={listFooter}
-                ListEmptyComponent={emptyComponent}
-                contentContainerStyle={{
-                  paddingHorizontal: wp(16),
-                  paddingTop: hp(16),
-                  paddingBottom: tabHeight + hp(100),
-                }}
-                showsVerticalScrollIndicator={false}
-                onEndReached={handleEndReached}
-                onEndReachedThreshold={0.3}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    tintColor="#121217"
-                    colors={["#121217"]}
-                  />
-                }
-                removeClippedSubviews
-                initialNumToRender={8}
-                maxToRenderPerBatch={10}
-                windowSize={5}
-              />
-            )}
+            <FlatList
+              key={viewMode}
+              data={displayedProducts}
+              keyExtractor={keyExtractor}
+              numColumns={viewMode === "grid" ? 2 : 1}
+              renderItem={viewMode === "grid" ? renderGridItem : renderListItem}
+              ItemSeparatorComponent={viewMode === "grid" ? gridSeparator : listSeparator}
+              ListFooterComponent={listFooter}
+              ListEmptyComponent={emptyComponent}
+              columnWrapperStyle={viewMode === "grid" ? { gap: wp(8), paddingHorizontal: wp(16) } : undefined}
+              contentContainerStyle={{
+                paddingTop: hp(16),
+                paddingBottom: tabHeight + hp(100),
+                ...(viewMode === "list" ? { paddingHorizontal: wp(16) } : {}),
+              }}
+              showsVerticalScrollIndicator={false}
+              onEndReached={handleEndReached}
+              onEndReachedThreshold={0.3}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#121217"
+                  colors={["#121217"]}
+                />
+              }
+              removeClippedSubviews
+              initialNumToRender={viewMode === "grid" ? 6 : 8}
+              maxToRenderPerBatch={viewMode === "grid" ? 8 : 10}
+              windowSize={5}
+            />
           </Animated.View>
         )}
 

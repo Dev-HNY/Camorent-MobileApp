@@ -47,6 +47,7 @@ interface PaymentDetailsProps {
   }>;
   deliveryDate: string;
   camocarePrice?: number;
+  hideEditShootDate?: boolean;
   onEditShootSettings: () => void;
   onEditAddress: () => void;
   onAddMoreProducts: () => void;
@@ -62,6 +63,7 @@ export function PaymentDetails({
   crewData,
   deliveryDate,
   camocarePrice = 64,
+  hideEditShootDate = false,
   onEditShootSettings,
   onEditAddress,
   onAddMoreProducts,
@@ -112,6 +114,7 @@ export function PaymentDetails({
         dates={shootDates}
         startTime={shootStartTime}
         onEdit={onEditShootSettings}
+        hideEdit={hideEditShootDate}
       />
 
       {/* Address details */}

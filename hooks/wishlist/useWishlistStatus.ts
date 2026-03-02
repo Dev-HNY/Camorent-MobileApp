@@ -14,6 +14,8 @@ export const useWishlistStatus = (skuId: string, sku_name: string) => {
   }, [wishlist, skuId]);
 
   const toggleWishlist = () => {
+    // Prevent duplicate calls while a mutation is already in flight
+    if (addMutation.isPending || removeMutation.isPending) return;
     if (isInWishlist) {
       removeMutation.mutate(skuId);
     } else {

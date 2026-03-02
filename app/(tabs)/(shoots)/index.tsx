@@ -11,7 +11,8 @@ import { router } from "expo-router";
 import { ShootStatus } from "@/types/shoots/shoots";
 import { ShootCard } from "@/components/shoots/ShootCard";
 import { BodyText } from "@/components/ui/Typography";
-import { Camera, Package, Calendar, ChevronLeft } from "lucide-react-native";
+import { ChevronLeft } from "lucide-react-native";
+import { Image as ExpoImage } from "expo-image";
 import { hp, wp, fp } from "@/utils/responsive";
 import { ShootsToast } from "@/components/ui/ShootsToast";
 import { useToastState } from "@tamagui/toast";
@@ -298,53 +299,51 @@ export default function Shoots() {
           </YStack>
         ) : currentCount === 0 ? (
           <YStack flex={1} justifyContent="center" alignItems="center" paddingBottom={hp(60)}>
-            <LinearGradient
-              colors={[
-                "rgba(142, 15, 255, 0.1)",
-                "rgba(142, 15, 255, 0.02)",
-                "rgba(255, 255, 255, 1)",
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{
-                width: wp(120),
-                height: wp(120),
-                borderRadius: wp(60),
-                justifyContent: "center",
-                alignItems: "center",
-                marginBottom: hp(24),
-              }}
+            <ExpoImage
+              source={require("@/assets/new/icons/myshoots.svg")}
+              style={{ width: wp(260), height: wp(260) }}
+              contentFit="contain"
+            />
+            <Text
+              fontSize={fp(22)}
+              fontWeight="700"
+              color="#1C1C1E"
+              textAlign="center"
+              marginTop={hp(8)}
+              marginBottom={hp(10)}
+              paddingHorizontal={wp(24)}
             >
-              {activeTab === "past" ? (
-                <Package size={wp(56)} color="#8E0FFF" strokeWidth={1.5} />
-              ) : activeTab === "ongoing" ? (
-                <Camera size={wp(56)} color="#10B981" strokeWidth={1.5} />
-              ) : (
-                <Calendar size={wp(56)} color="#F59E0B" strokeWidth={1.5} />
-              )}
-            </LinearGradient>
-            <Text fontSize={fp(20)} fontWeight="700" color="#1C1C1E" textAlign="center" marginBottom={hp(8)}>
-              No {activeTab} shoots
-            </Text>
-            <Text fontSize={fp(14)} color="#6B7280" textAlign="center" lineHeight={fp(20)} paddingHorizontal={wp(32)}>
               {activeTab === "past"
-                ? "Your completed rentals will appear here"
+                ? "Uh oh! You don't have any past shoots."
                 : activeTab === "ongoing"
-                  ? "Active rentals will show up here"
-                  : "Your upcoming bookings will be listed here"}
+                  ? "No ongoing shoots right now."
+                  : "You don't have any upcoming shoots."}
+            </Text>
+            <Text
+              fontSize={fp(14)}
+              color="#6B7280"
+              textAlign="center"
+              lineHeight={fp(22)}
+              paddingHorizontal={wp(32)}
+              marginBottom={hp(28)}
+            >
+              {activeTab === "past"
+                ? "Let's celebrate your shoot success together."
+                : activeTab === "ongoing"
+                  ? "Active rentals will show up here."
+                  : "Your upcoming bookings will be listed here."}
             </Text>
             <Pressable
               onPress={handleBrowseProducts}
               style={{
-                marginTop: hp(24),
-                paddingHorizontal: wp(24),
-                paddingVertical: hp(12),
+                paddingHorizontal: wp(40),
+                paddingVertical: hp(14),
                 backgroundColor: "#8E0FFF",
-                borderRadius: wp(12),
+                borderRadius: wp(14),
               }}
             >
               <Text fontSize={fp(15)} fontWeight="600" color="#FFFFFF">
-                Browse Products
+                Rent Now
               </Text>
             </Pressable>
           </YStack>

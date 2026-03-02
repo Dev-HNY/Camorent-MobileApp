@@ -19,10 +19,14 @@ import { storage } from "@/lib/mmkv";
 import Constants from "expo-constants";
 import { useTokenValidator } from "@/hooks/auth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { BookingTimerWidget } from "@/components/ui/BookingTimerWidget";
+import { useBookingTimerStore } from "@/store/bookingTimer/bookingTimer";
+import { useGetBookingById } from "@/hooks/shoots/useGetBookingById";
 
-// Suppress known Tamagui/RN New Architecture false-positive warnings
+// Suppress known RN New Architecture / Tamagui false-positive warnings
 LogBox.ignoreLogs([
   "Text strings must be rendered within a <Text> component",
+  "Can't find Tamagui configuration",
 ]);
 
 // Enhanced Query Client with better error handling and caching
@@ -41,6 +45,27 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Polls booking status in background while timer is active (even when payment page is unmounted)
+function BookingStatusPoller() {
+  const { isActive, isApproved, bookingId, approveTimer, stopTimer } = useBookingTimerStore();
+  const shouldPoll = isActive && !isApproved && !!bookingId;
+
+  const { data: bookingDetails } = useGetBookingById(bookingId ?? "", shouldPoll);
+
+  useEffect(() => {
+    if (!bookingDetails || !isActive) return;
+    const approval = bookingDetails.admin_approval;
+    if (approval === "True") {
+      approveTimer();
+    } else if (approval && approval !== "pending" && approval !== "" && approval !== "True") {
+      // Rejected — stop timer silently (payment page Alert handles it if mounted)
+      stopTimer();
+    }
+  }, [bookingDetails?.admin_approval, isActive]);
+
+  return null;
+}
 
 function AppContent() {
   const insets = useSafeAreaInsets();
@@ -63,6 +88,7 @@ function AppContent() {
 
   return (
     <>
+      <BookingStatusPoller />
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -89,6 +115,7 @@ function AppContent() {
         left={0}
         right={0}
       />
+      <BookingTimerWidget />
     </>
   );
 }
@@ -118,21 +145,21 @@ export default function RootLayout() {
   }
 
   return (
-    <ErrorBoundary>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-        <TamaguiProvider config={config}>
-          <ToastProvider swipeDirection="up" native>
-            <SafeAreaProvider style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <TamaguiProvider config={config}>
+        <ToastProvider swipeDirection="up" native>
+          <SafeAreaProvider style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+            <ErrorBoundary>
               <QueryClientProvider client={queryClient}>
                 <AppContent />
                 {!splashDone && (
                   <AnimatedSplashScreen onFinish={() => setSplashDone(true)} />
                 )}
               </QueryClientProvider>
-            </SafeAreaProvider>
-          </ToastProvider>
-        </TamaguiProvider>
-      </GestureHandlerRootView>
-    </ErrorBoundary>
+            </ErrorBoundary>
+          </SafeAreaProvider>
+        </ToastProvider>
+      </TamaguiProvider>
+    </GestureHandlerRootView>
   );
 }
