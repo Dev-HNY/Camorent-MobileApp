@@ -1,6 +1,9 @@
 import { YStack, XStack, Card, Text, Spinner } from "tamagui";
 import { useState } from "react";
+import { Pressable } from "react-native";
 import { BodySmall, BodyText, Heading2 } from "../ui/Typography";
+import { ChevronRight } from "lucide-react-native";
+import { fp, wp } from "@/utils/responsive";
 import { fp, hp, wp } from "@/utils/responsive";
 import { formatDate } from "@/utils/date";
 import { renderStars } from "@/utils/renderStars";
@@ -55,9 +58,13 @@ export function ProductReviewsPreview({
         <XStack justifyContent="space-between">
           <BodyText>Based on {ratingStats?.review_count} Reviews</BodyText>
           {ratingStats?.review_count > 0 && (
-            <XStack onPress={onViewAllPress}>
-              <BodyText fontWeight={"500"}>View All</BodyText>
-            </XStack>
+            <Pressable
+              onPress={onViewAllPress}
+              style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: wp(2), opacity: pressed ? 0.7 : 1 })}
+            >
+              <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">View All</Text>
+              <ChevronRight size={fp(14)} color="#8E0FFF" strokeWidth={2.5} />
+            </Pressable>
           )}
         </XStack>
       </YStack>

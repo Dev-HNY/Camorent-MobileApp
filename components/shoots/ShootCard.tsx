@@ -1,7 +1,7 @@
-import React, { useMemo } from "react";
-import { YStack, XStack, Text } from "tamagui";
+import React, { useMemo, useState } from "react";
+import { YStack, XStack, Text, Spinner } from "tamagui";
 import { Image } from "expo-image";
-import { Pressable, Share, StyleSheet } from "react-native";
+import { Pressable, Share, StyleSheet, ActivityIndicator } from "react-native";
 import { MyShootsBooking } from "@/utils/categorise-bookings";
 import { Calendar, Check, ChevronRight, Mail, FileText, Share2 } from "lucide-react-native";
 import { router } from "expo-router";
@@ -51,6 +51,7 @@ export const ShootCard = React.memo(function ShootCard({
   tab = "past",
   onCancelOrder,
 }: ShootCardProps) {
+  const [isPayLoading, setIsPayLoading] = useState(false);
 
   const productImages = useMemo(
     () =>
@@ -90,16 +91,20 @@ export const ShootCard = React.memo(function ShootCard({
     tab === "ongoing" ? "Report issue" : "Cancel order";
 
   const handleInvoicePress = async () => {
+    if (isPayLoading) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsPayLoading(true);
     try {
       const response = await apiClient.get(`/bookings/${shoot.booking_id}/invoice/download`);
       if (response.data?.pdf_url) {
-        Linking.openURL(response.data.pdf_url);
+        await Linking.openURL(response.data.pdf_url);
       } else {
         onOrderDetailsClick?.();
       }
     } catch {
       onOrderDetailsClick?.();
+    } finally {
+      setIsPayLoading(false);
     }
   };
 
@@ -148,9 +153,13 @@ export const ShootCard = React.memo(function ShootCard({
             <Pressable
               hitSlop={10}
               onPress={handleInvoicePress}
-              style={({ pressed }) => [styles.payNowPill, { opacity: pressed ? 0.75 : 1 }]}
+              disabled={isPayLoading}
+              style={({ pressed }) => [styles.payNowPill, { opacity: pressed || isPayLoading ? 0.75 : 1, flexDirection: "row", alignItems: "center", gap: wp(4) }]}
             >
-              <Text fontSize={fp(10)} fontWeight="700" color="#8E0FFF">PAY NOW</Text>
+              {isPayLoading
+                ? <ActivityIndicator size={10} color="#8E0FFF" />
+                : <Text fontSize={fp(10)} fontWeight="700" color="#8E0FFF">PAY NOW</Text>
+              }
             </Pressable>
           ) : (
             <XStack style={styles.paidPill}>
@@ -185,11 +194,13 @@ export const ShootCard = React.memo(function ShootCard({
           )}
         </XStack>
 
-        <Pressable onPress={handleInvoicePress} hitSlop={10}>
-          <YStack style={styles.invoiceChip}>
-            {needsPayment
-              ? <WalletIcon size={18} color="#8E0FFF" />
-              : <FileText size={18} color="#8E0FFF" strokeWidth={1.8} />
+        <Pressable onPress={handleInvoicePress} hitSlop={10} disabled={isPayLoading}>
+          <YStack style={[styles.invoiceChip, isPayLoading && { opacity: 0.7 }]}>
+            {isPayLoading
+              ? <ActivityIndicator size={16} color="#8E0FFF" />
+              : needsPayment
+                ? <WalletIcon size={18} color="#8E0FFF" />
+                : <FileText size={18} color="#8E0FFF" strokeWidth={1.8} />
             }
             <Text fontSize={fp(10)} fontWeight="600" color="#8E0FFF">
               {needsPayment ? "Pay now" : "Invoice"}

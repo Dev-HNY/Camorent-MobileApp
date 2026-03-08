@@ -5,6 +5,7 @@ import { wp, fp, hp } from "@/utils/responsive";
 import { useGetBrands } from "@/hooks/CDP/useGetBrands";
 import { Pressable, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { ChevronRight } from "lucide-react-native";
 
 interface BrandsSectionProps {
   onBrandPress?: (brand: string) => void;
@@ -56,14 +57,13 @@ export function BrandsSection({ onBrandPress, onViewAllPress }: BrandsSectionPro
       {/* Header */}
       <XStack justifyContent="space-between" alignItems="center">
         <Text fontSize={fp(16)} fontWeight="600" color="#121217">Search by Brands</Text>
-        <Text
-          fontSize={fp(12)}
-          color="#3f3f50"
+        <Pressable
           onPress={onViewAllPress}
-          pressStyle={{ opacity: 0.7 }}
+          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: wp(2), opacity: pressed ? 0.7 : 1 })}
         >
-          View All
-        </Text>
+          <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">View All</Text>
+          <ChevronRight size={fp(14)} color="#8E0FFF" strokeWidth={2.5} />
+        </Pressable>
       </XStack>
 
       {/* Grid with gradient fade on left/right edges (borders appear to dissolve) */}

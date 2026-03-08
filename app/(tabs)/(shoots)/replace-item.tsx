@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { YStack, XStack, Text, ScrollView } from "tamagui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Pressable, TextInput, KeyboardAvoidingView, Platform } from "react-native";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, ChevronRight } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { router } from "expo-router";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -219,9 +219,12 @@ export default function ReplaceItemScreen() {
             <YStack gap={hp(12)}>
               <XStack justifyContent="space-between" alignItems="center">
                 <Heading2>Alternate gear suggestion</Heading2>
-                <XStack>
-                  <Text>View All</Text>
-                </XStack>
+                <Pressable
+                  style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: wp(2), opacity: pressed ? 0.7 : 1 })}
+                >
+                  <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">View All</Text>
+                  <ChevronRight size={fp(14)} color="#8E0FFF" strokeWidth={2.5} />
+                </Pressable>
               </XStack>
               <ScrollView
                 horizontal

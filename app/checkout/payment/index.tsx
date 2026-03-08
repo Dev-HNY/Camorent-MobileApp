@@ -417,6 +417,7 @@ export default function PaymentPage() {
               isOrganization={isOrganization}
               onContinue={handlePayNow}
               amount={bookingDetails?.total_amount}
+              isLoading={paymentMutation.isPending}
             />
           </Animated.View>
         )}

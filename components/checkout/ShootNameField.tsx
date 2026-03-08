@@ -1,7 +1,7 @@
 import React from "react";
-import { YStack, Text } from "tamagui";
+import { View, Text } from "react-native";
 import { Input } from "@/components/ui/Input";
-import { hp, wp } from "@/utils/responsive";
+import { hp, wp, fp } from "@/utils/responsive";
 
 interface ShootNameFieldProps {
   value: string;
@@ -19,8 +19,8 @@ export function ShootNameField({
   placeholder = "Enter Shoot name",
 }: ShootNameFieldProps) {
   return (
-    <YStack gap={hp(4)}>
-      <Text fontSize={wp(14)} fontWeight="400" color="#121217">
+    <View style={{ gap: hp(4) }}>
+      <Text style={{ fontSize: fp(14), fontWeight: "400", color: "#121217" }}>
         Shoot Name *
       </Text>
       <Input
@@ -32,10 +32,8 @@ export function ShootNameField({
         error={!!error}
       />
       {error && (
-        <Text fontSize={12} color="#EF4444">
-          {error}
-        </Text>
+        <Text style={{ fontSize: fp(12), color: "#EF4444" }}>{error}</Text>
       )}
-    </YStack>
+    </View>
   );
 }

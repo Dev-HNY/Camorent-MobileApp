@@ -168,17 +168,15 @@ export function CitySelectionContent({
             <XStack flexWrap="wrap" gap={wp(12)} justifyContent="space-between">
               {CITIES.map((city) => {
                 const isDisabled = city.id !== "delhi";
+                const isSelected =
+                  selectedCity === city.name ||
+                  (mode === "change" && !selectedCity && currentCity === city.name);
                 return (
                   <CityCard
                     key={city.id}
                     name={city.name}
                     image={city.image}
-                    isSelected={
-                      selectedCity === city.name ||
-                      (mode === "change" &&
-                        !selectedCity &&
-                        currentCity === city.name)
-                    }
+                    isSelected={isSelected}
                     onPress={() => handleCitySelect(city.name, isDisabled)}
                     disabled={isDisabled}
                   />
