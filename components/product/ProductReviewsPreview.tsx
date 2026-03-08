@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Pressable } from "react-native";
 import { BodySmall, BodyText, Heading2 } from "../ui/Typography";
 import { ChevronRight } from "lucide-react-native";
-import { fp, wp } from "@/utils/responsive";
 import { fp, hp, wp } from "@/utils/responsive";
 import { formatDate } from "@/utils/date";
 import { renderStars } from "@/utils/renderStars";
