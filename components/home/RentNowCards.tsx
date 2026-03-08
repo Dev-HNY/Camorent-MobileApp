@@ -3,6 +3,7 @@ import { fp, hp, wp } from "@/utils/responsive";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { Pressable, ScrollView } from "react-native";
+import { router } from "expo-router";
 
 interface RentCard {
   title: string;
@@ -112,6 +113,9 @@ export function RentNowCards() {
 
               {/* Button */}
               <Pressable
+                onPress={() => {
+                  if (index === 0) router.push("/(tabs)/(home)/categories");
+                }}
                 style={{
                   backgroundColor: index === 1 ? "rgba(255, 255, 255, 0.2)" : "white",
                   borderWidth: 1.5,

@@ -10,6 +10,7 @@ import { Image } from "expo-image";
 import { wp, hp, fp } from "@/utils/responsive";
 import * as Haptics from "expo-haptics";
 import { KeyboardAvoidingView } from "react-native";
+import { Image as ExpoImage } from "expo-image";
 
 const TRENDING_SEARCHES = [
   "Sony FX3",
@@ -227,30 +228,25 @@ export default function SearchScreen() {
           {showResults && searchResults.length === 0 && (
             <YStack
               alignItems="center"
-              paddingTop={hp(60)}
+              paddingTop={hp(40)}
               paddingHorizontal={wp(32)}
-              gap={hp(10)}
+              gap={hp(4)}
             >
-              <XStack
-                width={hp(64)}
-                height={hp(64)}
-                borderRadius={hp(32)}
-                backgroundColor="#F2F2F7"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Search size={hp(28)} color="#C7C7CC" strokeWidth={1.8} />
-              </XStack>
-              <Text fontSize={fp(17)} fontWeight="600" color="#1C1C1E">
-                No results found
-              </Text>
+              <ExpoImage
+                source={require("@/assets/new/icons/no-product.svg")}
+                contentFit="contain"
+                style={{ width: wp(200), height: wp(200) }}
+                cachePolicy="memory-disk"
+              />
               <Text
-                fontSize={fp(14)}
-                color="#8E8E93"
+                fontSize={fp(18)}
+                fontWeight="700"
+                color="#1C1C1E"
                 textAlign="center"
-                lineHeight={fp(20)}
+                letterSpacing={-0.3}
               >
-                Try a different search — brand names, lens types, or lighting gear
+                <Text fontSize={fp(18)} fontWeight="700" color="#8E0FFF">Oops!</Text>
+                {" "}we couldn't find product{"\n"}for your search.
               </Text>
             </YStack>
           )}

@@ -93,19 +93,13 @@ export default function Index() {
       icon: require("@/assets/profile/email.svg"),
       label: currentUser?.email || "girtika@gmail.com",
       onPress: () => {},
-      showChevron: true,
+      showChevron: false,
     },
     {
       icon: require("@/assets/profile/phone.svg"),
       label: currentUser?.phone_number || "+91 9758577153",
       onPress: () => {},
-      showChevron: true,
-    },
-    {
-      icon: require("@/assets/profile/payment.svg"),
-      label: "Payments",
-      onPress: () => {},
-      showChevron: true,
+      showChevron: false,
     },
     {
       icon: require("@/assets/profile/help.svg"),
@@ -330,9 +324,11 @@ export default function Index() {
                 <YStack key={index}>
                   <Pressable
                     onPress={() => {
+                      if (!item.showChevron) return;
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       item.onPress();
                     }}
+                    disabled={!item.showChevron}
                   >
                     <XStack
                       alignItems="center"

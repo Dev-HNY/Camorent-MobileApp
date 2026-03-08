@@ -9,6 +9,7 @@ import {
   View,
   Text,
 } from "react-native";
+import { X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import Animated, {
@@ -28,6 +29,7 @@ import { useBookingTimerStore } from "@/store/bookingTimer/bookingTimer";
 interface AdminApprovalDialogProps {
   isOpen: boolean;
   onApprovalReceived: () => void;
+  onClose: () => void;
   isApproved: boolean;
   bookingId?: string | null;
 }
@@ -35,6 +37,7 @@ interface AdminApprovalDialogProps {
 export function AdminApprovalDialog({
   isOpen,
   onApprovalReceived,
+  onClose,
   isApproved,
   bookingId,
 }: AdminApprovalDialogProps) {
@@ -140,6 +143,18 @@ export function AdminApprovalDialog({
                 style={styles.accentBar}
               />
 
+              {/* Close button */}
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onClose();
+                }}
+                hitSlop={8}
+                style={styles.closeBtn}
+              >
+                <X size={wp(18)} color="#9CA3AF" strokeWidth={2.5} />
+              </Pressable>
+
               <View style={styles.cardContent}>
                 {/* Pulsing icon */}
                 <View style={styles.iconWrap}>
@@ -179,6 +194,7 @@ export function AdminApprovalDialog({
                   style={styles.exploreCta}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onClose();
                     router.replace("/(tabs)/(home)");
                   }}
                 >
@@ -299,6 +315,13 @@ const styles = StyleSheet.create({
     color: "#6C6C89",
     flex: 1,
     lineHeight: hp(18),
+  },
+  closeBtn: {
+    position: "absolute",
+    top: hp(12),
+    right: wp(16),
+    zIndex: 10,
+    padding: wp(4),
   },
   exploreCta: {
     width: "100%",

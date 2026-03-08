@@ -5,6 +5,8 @@ import { wp, hp, fp } from "@/utils/responsive";
 import { BodySmall, Heading2 } from "../ui/Typography";
 import { Product } from "@/types/products/product";
 import { UseGetAllProducts } from "@/hooks/product/useGetAllProducts";
+import { Pressable } from "react-native";
+import { ChevronRight } from "lucide-react-native";
 
 interface CompleteYourSetupProps {
   onViewAll?: () => void;
@@ -25,11 +27,13 @@ export function CompleteYourSetup({
     <YStack gap={hp(12)}>
       <XStack justifyContent="space-between" alignItems="center">
         <Heading2>Complete your setup</Heading2>
-        <XStack onPress={onViewAll}>
-          <BodySmall fontWeight="500" color="#121217">
-            View all
-          </BodySmall>
-        </XStack>
+        <Pressable
+          onPress={onViewAll}
+          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: wp(2), opacity: pressed ? 0.7 : 1 })}
+        >
+          <Text fontSize={fp(13)} fontWeight="600" color="#6B7280">View All</Text>
+          <ChevronRight size={fp(14)} color="#6B7280" strokeWidth={2.5} />
+        </Pressable>
       </XStack>
       {isLoading ? (
         <Spinner color="#8E0FFF" />

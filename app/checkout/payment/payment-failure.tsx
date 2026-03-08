@@ -1,97 +1,98 @@
-import React from "react";
-import { YStack, Text, Button, Card, XStack } from "tamagui";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import React, { useEffect } from "react";
+import { YStack, Text } from "tamagui";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { fp, hp, wp } from "@/utils/responsive";
-import { BottomSheetButton } from "@/components/ui/BottomSheetButton";
-import { ArrowRight } from "lucide-react-native";
-import { FailureIcon } from "@/components/payment/FailureIcon";
-import { Heading2 } from "@/components/ui/Typography";
+import { hp, wp, fp } from "@/utils/responsive";
+import { BackHandler, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInUp } from "react-native-reanimated";
+import { Image as ExpoImage } from "expo-image";
 
 export default function PaymentFailureScreen() {
   const insets = useSafeAreaInsets();
 
-  const handleRentNowPayLater = () => {
-    // Handle BNPL option
-    router.back(); // Go back to payment options or process BNPL
-  };
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => true
+    );
+    return () => backHandler.remove();
+  }, []);
 
-  const handleTryAgainLater = () => {
-    router.push("/checkout/payment");
+  const handleContinue = () => {
+    router.dismiss();
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <LinearGradient
-        colors={[
-          'rgba(245, 61, 107, 0.03)',
-          'rgba(255, 255, 255, 1)',
-          'rgba(245, 61, 107, 0.02)',
-        ]}
-        style={{ flex: 1 }}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+      {/* Main content — vertically centered */}
+      <YStack
+        flex={1}
+        alignItems="center"
+        justifyContent="center"
+        paddingHorizontal={wp(32)}
       >
-        <YStack
-          flex={1}
-          alignItems="center"
-          justifyContent="center"
-          padding="$4"
-          paddingBottom={insets.bottom + 40}
-          gap="$6"
+        {/* Illustration */}
+        <Animated.View entering={FadeInUp.delay(80).duration(500).springify().damping(18).stiffness(200)}>
+          <ExpoImage
+            source={require("@/assets/new/icons/payment-failed.svg")}
+            contentFit="contain"
+            style={{ width: wp(260), height: wp(260) }}
+            cachePolicy="memory-disk"
+          />
+        </Animated.View>
+
+        {/* Text */}
+        <Animated.View
+          entering={FadeInUp.delay(200).duration(400).springify().damping(20).stiffness(240)}
+          style={{ alignItems: "center", gap: hp(10), marginTop: hp(8) }}
         >
-          {/* Failure Icon with zoom animation */}
-          <Animated.View entering={ZoomIn.duration(500).springify().damping(12)}>
-            <YStack alignItems="center" gap="$4">
-              <FailureIcon />
-            </YStack>
-          </Animated.View>
-
-          {/* Heading with fade-in animation */}
-          <Animated.View
-            entering={FadeInDown.delay(200).duration(400).springify().damping(15)}
+          <Text
+            fontSize={fp(26)}
+            fontWeight="800"
+            color="#1C1C1E"
+            textAlign="center"
+            letterSpacing={-0.5}
           >
-            <YStack alignItems="center" gap="$3">
-              <Heading2 color={"#F53D6B"}>Payment failed !</Heading2>
-            </YStack>
-          </Animated.View>
-
-          {/* Action buttons with staggered animations */}
-          <Animated.View
-            entering={FadeInDown.delay(400).duration(500).springify().damping(15)}
-            style={{ width: '100%', maxWidth: 320, marginTop: hp(32) }}
+            Payment Failed
+          </Text>
+          <Text
+            fontSize={fp(14)}
+            fontWeight="400"
+            color="#6B7280"
+            textAlign="center"
+            lineHeight={hp(22)}
           >
-            <YStack gap="$3" width="100%">
-              <BottomSheetButton
-                size="md"
-                onPress={() => {
-                  router.dismiss();
-                }}
-              >
-                <Text fontSize="$4" fontWeight="500" color="white">
-                  Try Again
-                </Text>
-                <ArrowRight color={"white"} />
-              </BottomSheetButton>
-              <BottomSheetButton
-                size="sm"
-                variant="outline"
-                onPress={() => {
-                  router.push("/(tabs)/(home)");
-                }}
-              >
-                <Text fontSize="$4" fontWeight="500">
-                  Go To Home
-                </Text>
-                <ArrowRight color={"#121217"} />
-              </BottomSheetButton>
-            </YStack>
-          </Animated.View>
-        </YStack>
-      </LinearGradient>
+            Something went wrong with your payment.{"\n"}Please try again.
+          </Text>
+        </Animated.View>
+      </YStack>
+
+      {/* Continue button pinned to bottom */}
+      <Animated.View
+        entering={FadeInUp.delay(340).duration(400).springify().damping(20).stiffness(240)}
+        style={{
+          paddingHorizontal: wp(20),
+          paddingBottom: insets.bottom > 0 ? insets.bottom + hp(12) : hp(24),
+          paddingTop: hp(12),
+        }}
+      >
+        <Pressable
+          onPress={handleContinue}
+          style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1, borderRadius: wp(16), overflow: "hidden" })}
+        >
+          <LinearGradient
+            colors={["#7B2FFF", "#9B51E0"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ paddingVertical: hp(18), alignItems: "center", borderRadius: wp(16) }}
+          >
+            <Text fontSize={fp(17)} fontWeight="700" color="#FFFFFF" letterSpacing={-0.2}>
+              Try Again
+            </Text>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
     </SafeAreaView>
   );
 }

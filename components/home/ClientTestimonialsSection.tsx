@@ -391,15 +391,15 @@ function BannerCarousel() {
         ))}
       </ScrollView>
 
-      {/* Dot indicators */}
-      <XStack justifyContent="center" alignItems="center" gap={wp(6)}>
+      {/* Dot indicators — matches hero carousel style */}
+      <XStack justifyContent="center" alignItems="center" gap={6}>
         {BANNERS.map((_, i) => (
           <YStack
             key={i}
             width={i === activeIndex ? wp(24) : wp(6)}
-            height={hp(6)}
-            borderRadius={wp(3)}
-            backgroundColor={i === activeIndex ? "#8E0FFF" : "#D1D1DB"}
+            height={4}
+            borderRadius={2}
+            backgroundColor={i === activeIndex ? "#8E0FFF" : "#D1D5DB"}
             animation="quick"
           />
         ))}

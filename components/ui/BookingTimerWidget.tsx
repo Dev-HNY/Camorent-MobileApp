@@ -30,7 +30,7 @@ function formatTime(seconds: number) {
 
 // ── Congrats modal shown when booking is approved ──────────────────────────
 function CongratsModal({ onDismiss }: { onDismiss: () => void }) {
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -43,7 +43,7 @@ function CongratsModal({ onDismiss }: { onDismiss: () => void }) {
   const handleGoToPay = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onDismiss();
-    router.push("/checkout/payment");
+    // User is already on the payment page — dismiss so Pay Now button becomes active
   };
 
   return (
@@ -55,36 +55,41 @@ function CongratsModal({ onDismiss }: { onDismiss: () => void }) {
         <View style={styles.modalSheet}>
           <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
             <View style={styles.congratsCard}>
-              {/* Green accent bar */}
+              {/* Purple accent bar */}
               <LinearGradient
-                colors={["#22C55E", "#16A34A"]}
+                colors={["#8E0FFF", "#B44FFF"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.accentBar}
               />
 
               <View style={styles.congratsContent}>
-                {/* Check icon */}
+                {/* Check icon — purple brand */}
                 <View style={styles.checkIconWrap}>
-                  <Text style={styles.checkEmoji}>✅</Text>
+                  <LinearGradient
+                    colors={["#8E0FFF", "#B44FFF"]}
+                    style={styles.checkIconGradient}
+                  >
+                    <Text style={styles.checkEmoji}>✓</Text>
+                  </LinearGradient>
                 </View>
 
                 <View style={styles.congratsTextGroup}>
-                  <Text style={styles.congratsTitle}>Booking Approved! 🎉</Text>
+                  <Text style={styles.congratsTitle}>Booking Approved!</Text>
                   <Text style={styles.congratsBody}>
                     Great news! Your booking has been approved by our team. Proceed to pay and confirm your shoot.
                   </Text>
                 </View>
 
-                {/* Pay Now CTA */}
+                {/* Pay Now CTA — purple */}
                 <Pressable style={styles.payNowBtn} onPress={handleGoToPay}>
                   <LinearGradient
-                    colors={["#22C55E", "#16A34A"]}
+                    colors={["#8E0FFF", "#B44FFF"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={styles.payNowGradient}
                   >
-                    <Text style={styles.payNowText}>Pay Now →</Text>
+                    <Text style={styles.payNowText}>Continue</Text>
                   </LinearGradient>
                 </Pressable>
 
@@ -323,7 +328,7 @@ const styles = StyleSheet.create({
     borderRadius: wp(28),
     backgroundColor: "#FFFFFF",
     overflow: "hidden",
-    shadowColor: "#22C55E",
+    shadowColor: "#8E0FFF",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 32,
@@ -343,10 +348,19 @@ const styles = StyleSheet.create({
     borderRadius: wp(32),
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F0FDF4",
+    overflow: "hidden",
+  },
+  checkIconGradient: {
+    width: wp(64),
+    height: wp(64),
+    borderRadius: wp(32),
+    alignItems: "center",
+    justifyContent: "center",
   },
   checkEmoji: {
     fontSize: fp(28),
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   congratsTextGroup: {
     gap: hp(8),

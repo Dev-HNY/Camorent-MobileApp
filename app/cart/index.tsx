@@ -301,7 +301,7 @@ export default function Cart() {
                     size="lg"
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      router.replace("/(tabs)/(home)");
+                      router.replace("/(tabs)/(home)/categories");
                     }}
                   >
                     Browse Products

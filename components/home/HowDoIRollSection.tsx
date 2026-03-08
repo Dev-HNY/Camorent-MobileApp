@@ -3,7 +3,6 @@ import { Heading2 } from "../ui/Typography";
 import { fp, hp, wp } from "@/utils/responsive";
 import { ScrollView } from "react-native";
 import { Image } from "expo-image";
-import { useState } from "react";
 
 interface HowToStep {
   number: string;
@@ -35,15 +34,6 @@ const HOW_TO_STEPS: HowToStep[] = [
 ];
 
 export function HowDoIRollSection() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const handleScroll = (event: any) => {
-    const scrollPosition = event.nativeEvent.contentOffset.x;
-    const cardWidth = wp(126) + wp(12);
-    const index = Math.round(scrollPosition / cardWidth);
-    setActiveIndex(index);
-  };
-
   return (
     <YStack gap={hp(16)}>
       <XStack paddingHorizontal={wp(16)}>
@@ -60,8 +50,6 @@ export function HowDoIRollSection() {
         }}
         snapToInterval={wp(126) + wp(12)}
         decelerationRate="fast"
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
       >
         <XStack gap={wp(12)}>
           {HOW_TO_STEPS.map((step, index) => {
@@ -135,19 +123,6 @@ export function HowDoIRollSection() {
         </XStack>
       </ScrollView>
 
-      {/* Scroll Indicator Dots */}
-      <XStack justifyContent="center" alignItems="center" gap={wp(8)}>
-        {HOW_TO_STEPS.map((step, index) => (
-          <YStack
-            key={`dot-${step.number}`}
-            width={index === activeIndex ? wp(32) : wp(8)}
-            height={hp(8)}
-            borderRadius={wp(4)}
-            backgroundColor={index === activeIndex ? "#3E3EFD" : "#D1D1DB"}
-            animation="quick"
-          />
-        ))}
-      </XStack>
     </YStack>
   );
 }

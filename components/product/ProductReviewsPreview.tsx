@@ -62,8 +62,8 @@ export function ProductReviewsPreview({
               onPress={onViewAllPress}
               style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: wp(2), opacity: pressed ? 0.7 : 1 })}
             >
-              <Text fontSize={fp(13)} fontWeight="600" color="#8E0FFF">View All</Text>
-              <ChevronRight size={fp(14)} color="#8E0FFF" strokeWidth={2.5} />
+              <Text fontSize={fp(13)} fontWeight="600" color="#6B7280">View All</Text>
+              <ChevronRight size={fp(14)} color="#6B7280" strokeWidth={2.5} />
             </Pressable>
           )}
         </XStack>

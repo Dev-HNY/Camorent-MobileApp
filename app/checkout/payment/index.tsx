@@ -67,6 +67,7 @@ export default function PaymentPage() {
   const [showAdminApprovalDialog, setShowAdminApprovalDialog] =
     useState<boolean>(true);
   const [isPromoApplied, setIsPromoApplied] = useState(false);
+  const [isPayingNow, setIsPayingNow] = useState(false);
 
   const lastHandledStatusRef = useRef<string | null>(null);
   const isFirstLoadRef = useRef<boolean>(true);
@@ -182,6 +183,7 @@ export default function PaymentPage() {
   };
 
   const handlePayNow = async () => {
+    setIsPayingNow(true);
     paymentMutation.mutate(
       {
         paymentPayload: {
@@ -196,10 +198,11 @@ export default function PaymentPage() {
             await Linking.openURL(data.payment_link);
             clearCartMutation.mutate();
             queryClient.invalidateQueries({ queryKey: ["cart"] });
-          } else {
           }
+          setIsPayingNow(false);
         },
-        onError: (error) => {
+        onError: () => {
+          setIsPayingNow(false);
         },
       }
     );
@@ -417,7 +420,7 @@ export default function PaymentPage() {
               isOrganization={isOrganization}
               onContinue={handlePayNow}
               amount={bookingDetails?.total_amount}
-              isLoading={paymentMutation.isPending}
+              isLoading={isPayingNow || paymentMutation.isPending}
             />
           </Animated.View>
         )}
@@ -444,6 +447,7 @@ export default function PaymentPage() {
       <AdminApprovalDialog
         isOpen={showAdminApprovalDialog}
         onApprovalReceived={handleApprovalReceived}
+        onClose={() => setShowAdminApprovalDialog(false)}
         isApproved={bookingDetails?.admin_approval === "True"}
         bookingId={bookingId}
       />

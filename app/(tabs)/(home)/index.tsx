@@ -493,7 +493,6 @@ export default function Home() {
                     </Text>
                   </YStack>
                   <XStack alignItems="center" gap={wp(4)}>
-                    <Text fontSize={fp(13)} fontWeight="400" color="#6B7280">Home</Text>
                     <Text fontSize={fp(14)} fontWeight="700" color="#1C1C1E">{city}</Text>
                     <ChevronDown size={14} color="#6B7280" strokeWidth={2.5} />
                   </XStack>

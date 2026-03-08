@@ -1,14 +1,12 @@
 import React, { useEffect } from "react";
-import { YStack, XStack, Text } from "tamagui";
+import { YStack, Text } from "tamagui";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
-import { SuccessIcon } from "@/components/payment/SuccessIcon";
-import { BottomSheetButton } from "@/components/ui/BottomSheetButton";
 import { hp, wp, fp } from "@/utils/responsive";
-import { BodySmall, BodyText } from "@/components/ui/Typography";
-import { BackHandler } from "react-native";
+import { BackHandler, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInUp } from "react-native-reanimated";
+import { Image as ExpoImage } from "expo-image";
 
 export default function PaymentSuccessScreen() {
   const insets = useSafeAreaInsets();
@@ -22,94 +20,80 @@ export default function PaymentSuccessScreen() {
     return () => backHandler.remove();
   }, []);
 
-  const handleGoToShoots = () => {
+  const handleContinue = () => {
     router.replace("/(tabs)/(shoots)");
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F9F7FF" }}>
-      <LinearGradient
-        colors={["#EDE0FF", "#F9F7FF", "#FFFFFF"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{ flex: 1 }}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+      {/* Main content — vertically centered */}
+      <YStack
+        flex={1}
+        alignItems="center"
+        justifyContent="center"
+        paddingHorizontal={wp(32)}
       >
-        <YStack
-          flex={1}
-          alignItems="center"
-          justifyContent="center"
-          paddingHorizontal={wp(24)}
-          paddingBottom={insets.bottom + hp(60)}
-          gap={hp(32)}
+        {/* Illustration */}
+        <Animated.View entering={FadeInUp.delay(80).duration(500).springify().damping(18).stiffness(200)}>
+          <ExpoImage
+            source={require("@/assets/new/icons/payment-succes.svg")}
+            contentFit="contain"
+            style={{ width: wp(260), height: wp(260) }}
+            cachePolicy="memory-disk"
+          />
+        </Animated.View>
+
+        {/* Text */}
+        <Animated.View
+          entering={FadeInUp.delay(200).duration(400).springify().damping(20).stiffness(240)}
+          style={{ alignItems: "center", gap: hp(10), marginTop: hp(8) }}
         >
-          {/* Success icon */}
-          <Animated.View entering={ZoomIn.duration(500).springify().damping(12)}>
-            <SuccessIcon />
-          </Animated.View>
-
-          {/* Text content */}
-          <Animated.View
-            entering={FadeInDown.delay(200).duration(400).springify().damping(15)}
-            style={{ width: "100%", alignItems: "center" }}
+          <Text
+            fontSize={fp(26)}
+            fontWeight="800"
+            color="#1C1C1E"
+            textAlign="center"
+            letterSpacing={-0.5}
           >
-            <YStack alignItems="center" gap={hp(10)}>
-              <Text
-                fontSize={fp(24)}
-                fontWeight="700"
-                color="#121217"
-                textAlign="center"
-              >
-                Payment Successful!
-              </Text>
-              <BodyText textAlign="center" color="#6C6C89">
-                Your booking is confirmed.{"\n"}We're getting your gear ready.
-              </BodyText>
-
-              {/* Booking / Payment ID card */}
-              {(booking_id || payment_id) && (
-                <YStack
-                  marginTop={hp(8)}
-                  paddingVertical={hp(12)}
-                  paddingHorizontal={wp(16)}
-                  backgroundColor="white"
-                  borderRadius={wp(12)}
-                  borderWidth={1}
-                  borderColor="#E8E0FF"
-                  width="100%"
-                  gap={hp(8)}
-                >
-                  {booking_id && (
-                    <XStack justifyContent="space-between" alignItems="center">
-                      <BodySmall color="#6C6C89">Booking ID</BodySmall>
-                      <BodySmall color="#121217" fontWeight="600">
-                        {String(booking_id)}
-                      </BodySmall>
-                    </XStack>
-                  )}
-                  {payment_id && (
-                    <XStack justifyContent="space-between" alignItems="center">
-                      <BodySmall color="#6C6C89">Payment ID</BodySmall>
-                      <BodySmall color="#121217" fontWeight="600">
-                        {String(payment_id)}
-                      </BodySmall>
-                    </XStack>
-                  )}
-                </YStack>
-              )}
-            </YStack>
-          </Animated.View>
-
-          {/* CTA */}
-          <Animated.View
-            entering={FadeInDown.delay(400).duration(500).springify().damping(15)}
-            style={{ width: "100%" }}
+            Payment Successful
+          </Text>
+          <Text
+            fontSize={fp(14)}
+            fontWeight="400"
+            color="#6B7280"
+            textAlign="center"
+            lineHeight={hp(22)}
           >
-            <BottomSheetButton size="lg" onPress={handleGoToShoots}>
-              View My Shoots
-            </BottomSheetButton>
-          </Animated.View>
-        </YStack>
-      </LinearGradient>
+            Thank you for patronizing us today.{"\n"}We value you!
+          </Text>
+        </Animated.View>
+      </YStack>
+
+      {/* Continue button pinned to bottom */}
+      <Animated.View
+        entering={FadeInUp.delay(340).duration(400).springify().damping(20).stiffness(240)}
+        style={{
+          paddingHorizontal: wp(20),
+          paddingBottom: insets.bottom > 0 ? insets.bottom + hp(12) : hp(24),
+          paddingTop: hp(12),
+        }}
+      >
+        <Pressable
+          onPress={handleContinue}
+          style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1, borderRadius: wp(16), overflow: "hidden" })}
+        >
+          <LinearGradient
+            colors={["#7B2FFF", "#9B51E0"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ paddingVertical: hp(18), alignItems: "center", borderRadius: wp(16) }}
+          >
+            <Text fontSize={fp(17)} fontWeight="700" color="#FFFFFF" letterSpacing={-0.2}>
+              Continue
+            </Text>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
     </SafeAreaView>
   );
 }

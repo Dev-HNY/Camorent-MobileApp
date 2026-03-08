@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { YStack, XStack, Text, ScrollView } from "tamagui";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable, TextInput, StyleSheet, KeyboardAvoidingView, Platform, View } from "react-native";
-import { ChevronLeft, Sparkles } from "lucide-react-native";
+import { ChevronLeft } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { RatingCategory } from "@/types/shoots/shoots";
 import { router, useLocalSearchParams } from "expo-router";
@@ -13,8 +13,9 @@ import { usePostBookingReview } from "@/hooks/reviews/usePostBookingReview";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-svg";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn, FadeInUp } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
+import { Image as ExpoImage } from "expo-image";
 
 const RATING_CATEGORIES: RatingCategory[] = [
   { title: "Rate our service", rating: 0, maxRating: 5 },
@@ -59,6 +60,7 @@ export default function RatingScreen() {
   const tabHeight = useBottomTabBarHeight();
   const [categories, setCategories] = useState<RatingCategory[]>(RATING_CATEGORIES);
   const [additionalComments, setAdditionalComments] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const postreviewMutation = usePostBookingReview();
   const toast = useToastController();
@@ -88,11 +90,7 @@ export default function RatingScreen() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["bookings", booking_id] });
-          toast.show("Thank you!", {
-            message: "Your feedback means a lot to us.",
-            duration: 3000,
-          });
-          router.back();
+          setShowSuccess(true);
         },
         onError: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -107,6 +105,74 @@ export default function RatingScreen() {
 
   // Bottom bar height: tab bar + safe area + padding
   const bottomBarHeight = tabHeight + insets.bottom + hp(28) + hp(15) * 2 + hp(16);
+
+  if (showSuccess) {
+    return (
+      <SafeAreaView style={[styles.root, { backgroundColor: "#FFFFFF" }]}>
+        <Animated.View
+          entering={FadeIn.duration(400)}
+          style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: wp(32) }}
+        >
+          {/* Illustration */}
+          <Animated.View entering={FadeInUp.delay(100).duration(500).springify().damping(18).stiffness(200)}>
+            <ExpoImage
+              source={require("@/assets/new/icons/feedback.svg")}
+              contentFit="contain"
+              style={{ width: wp(240), height: wp(240) }}
+              cachePolicy="memory-disk"
+            />
+          </Animated.View>
+
+          {/* Text */}
+          <Animated.View
+            entering={FadeInUp.delay(220).duration(400).springify().damping(20).stiffness(240)}
+            style={{ alignItems: "center", gap: hp(8), marginTop: hp(8) }}
+          >
+            <Text
+              fontSize={fp(24)}
+              fontWeight="800"
+              color="#1C1C1E"
+              textAlign="center"
+              letterSpacing={-0.5}
+            >
+              Thank you!
+            </Text>
+            <Text
+              fontSize={fp(14)}
+              fontWeight="400"
+              color="#6B7280"
+              textAlign="center"
+              lineHeight={hp(22)}
+            >
+              Your feedback helps us improve the experience for every creator.
+            </Text>
+          </Animated.View>
+
+          {/* CTA */}
+          <Animated.View
+            entering={FadeInUp.delay(340).duration(400).springify().damping(20).stiffness(240)}
+            style={{ width: "100%", marginTop: hp(32) }}
+          >
+            <Pressable
+              onPress={() => router.back()}
+              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1, borderRadius: wp(14), overflow: "hidden" })}
+            >
+              <LinearGradient
+                colors={["#8E0FFF", "#A855F7"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ paddingVertical: hp(16), alignItems: "center", borderRadius: wp(14) }}
+              >
+                <Text fontSize={fp(16)} fontWeight="700" color="#FFFFFF" letterSpacing={-0.2}>
+                  Back to My Shoots
+                </Text>
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+        </Animated.View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>

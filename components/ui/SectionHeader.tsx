@@ -1,6 +1,8 @@
 import { XStack, Text } from "tamagui";
 import { Heading2 } from "./Typography";
-import { wp } from "@/utils/responsive";
+import { wp, fp } from "@/utils/responsive";
+import { Pressable } from "react-native";
+import { ChevronRight } from "lucide-react-native";
 
 interface SectionHeaderProps {
   title: string;
@@ -21,9 +23,13 @@ export function SectionHeader({
     >
       <Heading2>{title}</Heading2>
       {showViewAll && onViewAllPress && (
-        <XStack onPress={onViewAllPress} cursor="pointer">
-          <Text color="$purple9">View all </Text>
-        </XStack>
+        <Pressable
+          onPress={onViewAllPress}
+          style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: wp(2), opacity: pressed ? 0.7 : 1 })}
+        >
+          <Text fontSize={fp(13)} fontWeight="600" color="#6B7280">View All</Text>
+          <ChevronRight size={fp(14)} color="#6B7280" strokeWidth={2.5} />
+        </Pressable>
       )}
     </XStack>
   );

@@ -95,7 +95,7 @@ export default function Shoots() {
 
   const handleBrowseProducts = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push("/(tabs)/(home)");
+    router.push("/(tabs)/(home)/categories");
   }, []);
 
   const currentShoots =
@@ -301,45 +301,46 @@ export default function Shoots() {
           <YStack flex={1} justifyContent="center" alignItems="center" paddingBottom={hp(60)}>
             <ExpoImage
               source={require("@/assets/new/icons/myshoots.svg")}
-              style={{ width: wp(260), height: wp(260) }}
+              style={{ width: wp(220), height: wp(220) }}
               contentFit="contain"
             />
             <Text
-              fontSize={fp(22)}
-              fontWeight="700"
+              fontSize={fp(20)}
+              fontWeight="800"
               color="#1C1C1E"
               textAlign="center"
-              marginTop={hp(8)}
-              marginBottom={hp(10)}
+              marginTop={hp(16)}
+              marginBottom={hp(8)}
               paddingHorizontal={wp(24)}
+              letterSpacing={-0.3}
             >
               {activeTab === "past"
-                ? "Uh oh! You don't have any past shoots."
+                ? "Uh oh! You don't\nhave any past shoots."
                 : activeTab === "ongoing"
-                  ? "No ongoing shoots right now."
-                  : "You don't have any upcoming shoots."}
+                  ? "No ongoing shoots\nright now."
+                  : "Uh oh! You don't have\nany upcoming shoots."}
             </Text>
             <Text
               fontSize={fp(14)}
               color="#6B7280"
               textAlign="center"
-              lineHeight={fp(22)}
+              lineHeight={fp(21)}
               paddingHorizontal={wp(32)}
-              marginBottom={hp(28)}
+              marginBottom={hp(32)}
             >
               {activeTab === "past"
                 ? "Let's celebrate your shoot success together."
                 : activeTab === "ongoing"
                   ? "Active rentals will show up here."
-                  : "Your upcoming bookings will be listed here."}
+                  : "Make your shoot journey simplified\nwith camorent."}
             </Text>
             <Pressable
               onPress={handleBrowseProducts}
               style={{
-                paddingHorizontal: wp(40),
-                paddingVertical: hp(14),
+                paddingHorizontal: wp(48),
+                paddingVertical: hp(15),
                 backgroundColor: "#8E0FFF",
-                borderRadius: wp(14),
+                borderRadius: wp(50),
               }}
             >
               <Text fontSize={fp(15)} fontWeight="600" color="#FFFFFF">

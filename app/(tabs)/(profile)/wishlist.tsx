@@ -105,7 +105,7 @@ export default function WishlistPage() {
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push("/(tabs)/(home)");
+                router.push("/(tabs)/(home)/categories");
               }}
               style={styles.browseBtn}
             >

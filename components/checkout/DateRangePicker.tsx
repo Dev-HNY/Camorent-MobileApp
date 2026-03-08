@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { XStack, YStack, Text } from "tamagui";
 import { Calendar } from "lucide-react-native";
-import { Keyboard, Pressable } from "react-native";
+import {
+  Keyboard,
+  Pressable,
+  Modal,
+  Animated,
+  StyleSheet,
+  View,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { wp, hp, fp } from "@/utils/responsive";
-import { BottomSheet } from "@/components/ui/BottomSheet";
 import DateTimePicker from "react-native-ui-datepicker";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
@@ -83,10 +90,46 @@ export function DateRangePicker({
     endDate ? dayjs(endDate, "DD-MM-YYYY") : undefined
   );
 
+  // Animation values
+  const overlayAnim = useRef(new Animated.Value(0)).current;
+  const sheetAnim = useRef(new Animated.Value(300)).current;
+
   useEffect(() => {
     if (startDate) setTempStart(dayjs(startDate, "DD-MM-YYYY"));
     if (endDate) setTempEnd(dayjs(endDate, "DD-MM-YYYY"));
   }, [startDate, endDate]);
+
+  const animateIn = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(overlayAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(sheetAnim, {
+        toValue: 0,
+        damping: 28,
+        stiffness: 350,
+        mass: 0.8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const animateOut = useCallback((onDone: () => void) => {
+    Animated.parallel([
+      Animated.timing(overlayAnim, {
+        toValue: 0,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheetAnim, {
+        toValue: 300,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(onDone);
+  }, []);
 
   const formatDateDisplay = (dateStr: string) => {
     if (!dateStr || typeof dateStr !== "string") return "";
@@ -111,10 +154,16 @@ export function DateRangePicker({
   const handleOpen = () => {
     Keyboard.dismiss();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Reset temp to current values when opening
     setTempStart(startDate ? dayjs(startDate, "DD-MM-YYYY") : undefined);
     setTempEnd(endDate ? dayjs(endDate, "DD-MM-YYYY") : undefined);
+    overlayAnim.setValue(0);
+    sheetAnim.setValue(300);
     setIsOpen(true);
+    requestAnimationFrame(animateIn);
+  };
+
+  const handleClose = () => {
+    animateOut(() => setIsOpen(false));
   };
 
   const handleApply = () => {
@@ -124,11 +173,7 @@ export function DateRangePicker({
       startDate: tempStart.format("DD-MM-YYYY"),
       endDate: tempEnd.format("DD-MM-YYYY"),
     });
-    setIsOpen(false);
-  };
-
-  const handleClose = () => {
-    setIsOpen(false);
+    animateOut(() => setIsOpen(false));
   };
 
   const rentalDays =
@@ -138,7 +183,7 @@ export function DateRangePicker({
 
   return (
     <>
-      {/* Trigger field - clean, minimal */}
+      {/* Trigger field */}
       <Pressable onPress={handleOpen}>
         <XStack
           alignItems="center"
@@ -167,87 +212,67 @@ export function DateRangePicker({
         </XStack>
       </Pressable>
 
-      {/* Single BottomSheet with side-by-side calendars */}
-      <BottomSheet isOpen={isOpen} onClose={handleClose} snapPoints={[75]}>
-        <YStack
-          paddingHorizontal={wp(16)}
-          paddingTop={hp(20)}
-          paddingBottom={hp(16)}
-          gap={hp(16)}
-          flex={1}
-        >
-          {/* Header */}
-          <YStack gap={hp(4)}>
-            <Text
-              fontSize={fp(20)}
-              fontWeight="700"
-              color="#121217"
-              letterSpacing={-0.3}
-            >
-              Select Rental Dates
-            </Text>
-            {rentalDays > 0 && (
-              <Text fontSize={fp(13)} color="#6B7280">
-                {rentalDays} {rentalDays === 1 ? "day" : "days"} rental
-              </Text>
-            )}
-          </YStack>
+      {/* Native Modal — zero JS-thread overhead on open/close */}
+      <Modal
+        visible={isOpen}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={handleClose}
+      >
+        <View style={styles.modalContainer}>
+          {/* Backdrop */}
+          <TouchableWithoutFeedback onPress={handleClose}>
+            <Animated.View style={[styles.overlay, { opacity: overlayAnim }]} />
+          </TouchableWithoutFeedback>
 
-          {/* Date chips showing selected range */}
-          <XStack
-            backgroundColor="#F9FAFB"
-            borderRadius={wp(10)}
-            padding={wp(12)}
-            alignItems="center"
-            justifyContent="space-between"
+          {/* Sheet */}
+          <Animated.View
+            style={[
+              styles.sheet,
+              { paddingBottom: Math.max(insets.bottom, hp(16)) },
+              { transform: [{ translateY: sheetAnim }] },
+            ]}
           >
-            <YStack flex={1} alignItems="center">
-              <Text fontSize={fp(11)} color="#9CA3AF" fontWeight="600" textTransform="uppercase">
-                Start
-              </Text>
-              <Text
-                fontSize={fp(14)}
-                fontWeight="600"
-                color={tempStart ? "#121217" : "#D1D5DB"}
-                marginTop={hp(2)}
-              >
-                {tempStart
-                  ? tempStart.format("ddd, MMM D")
-                  : "Select date"}
-              </Text>
-            </YStack>
-            <XStack
-              backgroundColor="#E5E7EB"
-              width={wp(28)}
-              height={1}
-            />
-            <YStack flex={1} alignItems="center">
-              <Text fontSize={fp(11)} color="#9CA3AF" fontWeight="600" textTransform="uppercase">
-                End
-              </Text>
-              <Text
-                fontSize={fp(14)}
-                fontWeight="600"
-                color={tempEnd ? "#121217" : "#D1D5DB"}
-                marginTop={hp(2)}
-              >
-                {tempEnd
-                  ? tempEnd.format("ddd, MMM D")
-                  : "Select date"}
-              </Text>
-            </YStack>
-          </XStack>
+            {/* Handle */}
+            <View style={styles.handle} />
 
-          {/* Single calendar with range selection */}
-          <YStack flex={1}>
-            <YStack
-              backgroundColor="#FAFAFA"
-              borderRadius={wp(10)}
-              borderWidth={1}
-              borderColor="#E5E7EB"
-              overflow="hidden"
-              padding={wp(8)}
-            >
+            {/* Header */}
+            <View style={styles.headerRow}>
+              <Text
+                fontSize={fp(20)}
+                fontWeight="700"
+                color="#121217"
+                letterSpacing={-0.3}
+              >
+                Select Rental Dates
+              </Text>
+              {rentalDays > 0 && (
+                <Text fontSize={fp(13)} color="#6B7280">
+                  {rentalDays} {rentalDays === 1 ? "day" : "days"} rental
+                </Text>
+              )}
+            </View>
+
+            {/* Date chips */}
+            <View style={styles.chips}>
+              <View style={styles.chipSide}>
+                <Text style={styles.chipLabel}>START</Text>
+                <Text style={[styles.chipDate, !tempStart && styles.chipDateEmpty]}>
+                  {tempStart ? tempStart.format("ddd, MMM D") : "Select date"}
+                </Text>
+              </View>
+              <View style={styles.chipDivider} />
+              <View style={styles.chipSide}>
+                <Text style={styles.chipLabel}>END</Text>
+                <Text style={[styles.chipDate, !tempEnd && styles.chipDateEmpty]}>
+                  {tempEnd ? tempEnd.format("ddd, MMM D") : "Select date"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Calendar */}
+            <View style={styles.calendarWrap}>
               <DateTimePicker
                 {...{
                   mode: "range",
@@ -269,58 +294,144 @@ export function DateRangePicker({
                   styles: calendarStyles,
                 } as any}
               />
-            </YStack>
-          </YStack>
+            </View>
 
-          {/* Apply button */}
-          <XStack
-            gap={wp(12)}
-            paddingTop={hp(4)}
-            paddingBottom={Math.max(insets.bottom, hp(16))}
-          >
-            <Pressable
-              onPress={handleClose}
-              style={{
-                flex: 1,
-                paddingVertical: hp(14),
-                borderRadius: wp(10),
-                borderWidth: 1,
-                borderColor: "#E5E7EB",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                color="#374151"
-                fontWeight="600"
-                fontSize={fp(15)}
+            {/* Buttons */}
+            <View style={styles.btnRow}>
+              <Pressable
+                onPress={handleClose}
+                style={styles.btnCancel}
               >
-                Cancel
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={handleApply}
-              disabled={!canApply}
-              style={{
-                flex: 1,
-                paddingVertical: hp(14),
-                borderRadius: wp(10),
-                backgroundColor: canApply ? "#8E0FFF" : "#E5E7EB",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                color={canApply ? "#FFFFFF" : "#9CA3AF"}
-                fontWeight="600"
-                fontSize={fp(15)}
+                <Text style={styles.btnCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleApply}
+                disabled={!canApply}
+                style={[styles.btnApply, !canApply && styles.btnApplyDisabled]}
               >
-                Apply
-              </Text>
-            </Pressable>
-          </XStack>
-        </YStack>
-      </BottomSheet>
+                <Text style={[styles.btnApplyText, !canApply && styles.btnApplyTextDisabled]}>
+                  Apply
+                </Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  sheet: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: wp(24),
+    borderTopRightRadius: wp(24),
+    paddingHorizontal: wp(16),
+    paddingTop: hp(8),
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  handle: {
+    width: wp(36),
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#D1D1D6",
+    alignSelf: "center",
+    marginBottom: hp(16),
+  },
+  headerRow: {
+    gap: hp(4),
+    marginBottom: hp(16),
+  },
+  chips: {
+    flexDirection: "row",
+    backgroundColor: "#F9FAFB",
+    borderRadius: wp(10),
+    padding: wp(12),
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: hp(16),
+  },
+  chipSide: {
+    flex: 1,
+    alignItems: "center",
+  },
+  chipLabel: {
+    fontSize: fp(11),
+    color: "#9CA3AF",
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
+  chipDate: {
+    fontSize: fp(14),
+    fontWeight: "600",
+    color: "#121217",
+    marginTop: hp(2),
+  },
+  chipDateEmpty: {
+    color: "#D1D5DB",
+  },
+  chipDivider: {
+    width: wp(28),
+    height: 1,
+    backgroundColor: "#E5E7EB",
+  },
+  calendarWrap: {
+    backgroundColor: "#FAFAFA",
+    borderRadius: wp(10),
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    overflow: "hidden",
+    padding: wp(8),
+    marginBottom: hp(16),
+  },
+  btnRow: {
+    flexDirection: "row",
+    gap: wp(12),
+    paddingTop: hp(4),
+  },
+  btnCancel: {
+    flex: 1,
+    paddingVertical: hp(14),
+    borderRadius: wp(10),
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnCancelText: {
+    color: "#374151",
+    fontWeight: "600",
+    fontSize: fp(15),
+  },
+  btnApply: {
+    flex: 1,
+    paddingVertical: hp(14),
+    borderRadius: wp(10),
+    backgroundColor: "#8E0FFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnApplyDisabled: {
+    backgroundColor: "#E5E7EB",
+  },
+  btnApplyText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: fp(15),
+  },
+  btnApplyTextDisabled: {
+    color: "#9CA3AF",
+  },
+});
