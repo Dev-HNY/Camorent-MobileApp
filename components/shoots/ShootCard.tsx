@@ -149,19 +149,7 @@ export const ShootCard = React.memo(function ShootCard({
           <Text fontSize={fp(17)} fontWeight="700" color="#1C1C1E" letterSpacing={-0.3}>
             {"\u20B9"}{shoot.total_amount.toLocaleString()}
           </Text>
-          {needsPayment ? (
-            <Pressable
-              hitSlop={10}
-              onPress={handleInvoicePress}
-              disabled={isPayLoading}
-              style={({ pressed }) => [styles.payNowPill, { opacity: pressed || isPayLoading ? 0.75 : 1, flexDirection: "row", alignItems: "center", gap: wp(4) }]}
-            >
-              {isPayLoading
-                ? <ActivityIndicator size={10} color="#8E0FFF" />
-                : <Text fontSize={fp(10)} fontWeight="700" color="#8E0FFF">PAY NOW</Text>
-              }
-            </Pressable>
-          ) : (
+          {!needsPayment && (
             <XStack style={styles.paidPill}>
               <Text fontSize={fp(10)} fontWeight="600" color="#16A34A">Paid</Text>
             </XStack>
@@ -195,14 +183,14 @@ export const ShootCard = React.memo(function ShootCard({
         </XStack>
 
         <Pressable onPress={handleInvoicePress} hitSlop={10} disabled={isPayLoading}>
-          <YStack style={[styles.invoiceChip, isPayLoading && { opacity: 0.7 }]}>
+          <YStack style={[styles.invoiceChip, !needsPayment && styles.invoiceChipGray, isPayLoading && { opacity: 0.7 }]}>
             {isPayLoading
-              ? <ActivityIndicator size={16} color="#8E0FFF" />
+              ? <ActivityIndicator size={16} color={needsPayment ? "#8E0FFF" : "#8E8E93"} />
               : needsPayment
                 ? <WalletIcon size={18} color="#8E0FFF" />
-                : <FileText size={18} color="#8E0FFF" strokeWidth={1.8} />
+                : <FileText size={18} color="#8E8E93" strokeWidth={1.8} />
             }
-            <Text fontSize={fp(10)} fontWeight="600" color="#8E0FFF">
+            <Text fontSize={fp(10)} fontWeight="600" color={needsPayment ? "#8E0FFF" : "#8E8E93"}>
               {needsPayment ? "Pay now" : "Invoice"}
             </Text>
           </YStack>
@@ -324,6 +312,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: hp(3),
   },
+  invoiceChipGray: {
+    backgroundColor: "#F2F2F7",
+  },
   actionBtn: {
     flex: 1,
     flexDirection: "row",
@@ -349,12 +340,6 @@ const styles = StyleSheet.create({
     paddingVertical: hp(11),
     borderRadius: wp(10),
     backgroundColor: "#8E0FFF",
-  },
-  payNowPill: {
-    backgroundColor: "#F5EEFF",
-    paddingHorizontal: wp(8),
-    paddingVertical: hp(3),
-    borderRadius: wp(20),
   },
   paidPill: {
     backgroundColor: "#F0FDF4",

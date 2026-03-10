@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { XStack, YStack, Text, Spinner } from "tamagui";
 import { Button } from "@/components/ui/Button";
 import { router } from "expo-router";
+import { Pressable } from "react-native";
 import { useCartStore } from "@/store/cart/cart";
 import { useAuthStore } from "@/store/auth/auth";
 import { SKU } from "@/types/products/product";
@@ -32,6 +33,9 @@ interface StickyBottomCartProps {
   isPaymentScreen?: boolean;
   hasSelectedCrew?: boolean;
   onContinue?: () => void;
+  onPartialPayment?: () => void;
+  isPartialPaymentLoading?: boolean;
+  isSelfPickup?: boolean;
   customAmount?: number;
   cartData?: CartSummaryData;
   amount?: string;
@@ -54,6 +58,9 @@ export function StickyBottomCart({
   isLoading = false,
   embedded = false,
   isOrganization = false,
+  onPartialPayment,
+  isPartialPaymentLoading = false,
+  isSelfPickup = false,
 }: StickyBottomCartProps) {
   const { summary } = useCartStore();
   const { user } = useAuthStore();
@@ -150,7 +157,7 @@ export function StickyBottomCart({
   const getButtonText = () => {
     if (isPaymentScreen) return "Pay now";
     if (isCrewScreen) return hasSelectedCrew ? "Continue" : "Kindly Select Crew";
-    if (isCartScreen) return "Continue";
+    if (isCartScreen) return isSelfPickup ? "Send for Approval" : "Continue";
     return "Add to cart";
   };
 
@@ -250,6 +257,21 @@ export function StickyBottomCart({
             >
               {isLoading ? <Spinner color="white" /> : getButtonText()}
             </Button>
+            {isPaymentScreen && onPartialPayment && (
+              <Pressable
+                onPress={onPartialPayment}
+                disabled={isPartialPaymentLoading}
+                style={{ alignItems: "center", paddingVertical: hp(2) }}
+              >
+                {isPartialPaymentLoading ? (
+                  <Spinner size="small" color="#8E0FFF" />
+                ) : (
+                  <Text fontSize={fp(12)} fontWeight="500" color="#8E0FFF" textDecorationLine="underline">
+                    Want to do partial payment?
+                  </Text>
+                )}
+              </Pressable>
+            )}
           </YStack>
         )}
       </XStack>

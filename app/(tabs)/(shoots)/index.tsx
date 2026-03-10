@@ -19,7 +19,7 @@ import { useToastState } from "@tamagui/toast";
 import { Button } from "@/components/ui/Button";
 import { useGetUserBookings } from "@/hooks/shoots/useGetUserBookings";
 import { categoriseBookings } from "@/utils/categorise-bookings";
-import { Pressable, FlatList } from "react-native";
+import { Pressable, FlatList, RefreshControl } from "react-native";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -39,7 +39,15 @@ export default function Shoots() {
   const [activeTab, setActiveTab] = useState<ShootStatus>("ongoing");
   const [showCancelSheet, setShowCancelSheet] = useState(false);
   const insets = useSafeAreaInsets();
-  const { data: bookings, isLoading: isLoadingBookings } = useGetUserBookings();
+  const { data: bookings, isLoading: isLoadingBookings, refetch } = useGetUserBookings();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await refetch();
+    setRefreshing(false);
+  };
   const { past, ongoing, upcoming } = categoriseBookings(bookings);
 
   const headerOpacity = useSharedValue(1);
@@ -359,6 +367,14 @@ export default function Shoots() {
             }}
             renderItem={renderShootItem}
             ItemSeparatorComponent={ItemSeparator}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#8E0FFF"
+                colors={["#8E0FFF"]}
+              />
+            }
           />
         )}
       </YStack>

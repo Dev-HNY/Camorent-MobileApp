@@ -348,7 +348,7 @@ export default function CrewSelectionPage() {
             <StickyBottomCart
               embedded
               isCrewScreen={true}
-              hasSelectedCrew={(cartData?.sku_items?.length || 0) > 0}
+              hasSelectedCrew={(cartData?.crew_items?.length || 0) > 0}
               onContinue={handleProceedToPayment}
               customAmount={totalAmount}
               isLoading={
@@ -428,7 +428,7 @@ function CrewCard({
           <XStack justifyContent="space-between" alignItems="center">
             <XStack gap={wp(4)} alignItems="baseline">
               <Text fontSize={fp(18)} fontWeight="700" color="#121217">
-                ₹{crew.crew_price_0_12.toLocaleString()}
+                ₹{Math.round(crew.crew_price_0_12).toLocaleString()}
               </Text>
               <Text fontSize={fp(12)} color="#9CA3AF">
                 per day

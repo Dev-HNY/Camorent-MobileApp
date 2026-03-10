@@ -21,6 +21,7 @@ interface CartStore extends BaseStoreState, BaseStoreActions {
   shootName: string;
   // isCamocareAdded: boolean;
   bookingId: string | null;
+  fulfillmentType: "delivery" | "self_pickup";
   draftAddress: {
     name?: string;
     district?: string;
@@ -66,6 +67,9 @@ interface CartStore extends BaseStoreState, BaseStoreActions {
   removeCrew: () => void;
   getCrewItem: () => CrewCartItem | undefined;
   updateCrewQuantity: (crewId: string, quantity: number) => void;
+
+  // Fulfillment
+  setFulfillmentType: (type: "delivery" | "self_pickup") => void;
 
   // Booking methods
   setBookingId: (bookingId: string) => void;
@@ -119,6 +123,7 @@ export const useCartStore = create<CartStore>()(
       shootName: "",
       // isCamocareAdded: false,
       bookingId: null,
+      fulfillmentType: "delivery",
       draftAddress: null,
       selectedAddress: null,
       isLoading: false,
@@ -127,6 +132,8 @@ export const useCartStore = create<CartStore>()(
       setLoading: (loading) => set({ isLoading: loading }),
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
+
+      setFulfillmentType: (type) => set({ fulfillmentType: type }),
 
       setBookingId: (bookingId: string) => set({ bookingId }),
       clearBookingId: () => set({ bookingId: null }),
@@ -213,6 +220,7 @@ export const useCartStore = create<CartStore>()(
           shootName: "",
           // isCamocareAdded: false,
           bookingId: null,
+          fulfillmentType: "delivery",
           draftAddress: null,
           selectedAddress: null,
         });

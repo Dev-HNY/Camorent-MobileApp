@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { TextInput, Keyboard, Platform, Pressable } from "react-native";
+import { useState, useRef, useCallback } from "react";
+import { TextInput, Keyboard, Platform, Pressable, ActivityIndicator, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { YStack, XStack, Text, ScrollView } from "tamagui";
@@ -21,34 +21,64 @@ const TRENDING_SEARCHES = [
   "Drone",
 ];
 
+const PAGE_SIZE = 8;
+
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SKU[]>([]);
-
-  const { data: products } = UseGetAllProducts({ is_active: true, limit: 100 });
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<TextInput>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => inputRef.current?.focus(), 100);
-    return () => clearTimeout(timer);
+  // Focus on mount
+  const onInputRef = useCallback((ref: TextInput | null) => {
+    (inputRef as any).current = ref;
+    if (ref) setTimeout(() => ref.focus(), 100);
   }, []);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery.trim()) {
-        const filtered =
-          products?.data.filter(
-            (p: SKU) =>
-              p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              p.brand.toLowerCase().includes(searchQuery.toLowerCase())
-          ) ?? [];
-        setSearchResults(filtered.slice(0, 12));
-      } else {
-        setSearchResults([]);
-      }
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [searchQuery, products]);
+  const handleChangeText = (text: string) => {
+    setSearchQuery(text);
+    setVisibleCount(PAGE_SIZE);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    if (!text.trim()) {
+      setDebouncedQuery("");
+      return;
+    }
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedQuery(text.trim());
+    }, 300);
+  };
+
+  // Use the first word for server search (broader match), then filter client-side by all words
+  const words = debouncedQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const serverQuery = words[0] ?? "";
+
+  const { data: searchData, isLoading: isLoadingProducts } = UseGetAllProducts(
+    serverQuery
+      ? { is_active: true, limit: 200, q: serverQuery }
+      : undefined
+  );
+
+  // Client-side: every word must appear in name, brand, or tags
+  const allResults: SKU[] = (searchData?.data ?? []).filter((p: SKU) => {
+    if (words.length <= 1) return true; // single word — server already filtered
+    const haystack = [
+      p.name,
+      p.brand,
+      ...(p.tags ?? []),
+    ].join(" ").toLowerCase();
+    return words.every((w) => haystack.includes(w));
+  });
+  const displayedResults = allResults.slice(0, visibleCount);
+  const hasMore = visibleCount < allResults.length;
+
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    const isNearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - hp(60);
+    if (isNearBottom && hasMore) {
+      setVisibleCount((prev) => prev + PAGE_SIZE);
+    }
+  }, [hasMore]);
 
   const handleProductPress = (product: SKU) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -60,6 +90,8 @@ export default function SearchScreen() {
   const handleTrendingPress = (query: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSearchQuery(query);
+    setDebouncedQuery(query);
+    setVisibleCount(PAGE_SIZE);
   };
 
   const handleClose = () => {
@@ -70,11 +102,20 @@ export default function SearchScreen() {
 
   const clearSearch = () => {
     setSearchQuery("");
-    setSearchResults([]);
+    setDebouncedQuery("");
+    setVisibleCount(PAGE_SIZE);
     inputRef.current?.focus();
   };
 
   const showResults = searchQuery.trim().length > 0;
+  const isSearching = showResults && (isLoadingProducts || debouncedQuery !== searchQuery.trim());
+
+  const handleBrowseAll = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Keyboard.dismiss();
+    router.back();
+    router.push("/(tabs)/(home)/categories");
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
@@ -105,9 +146,9 @@ export default function SearchScreen() {
         >
           <Search size={18} color="#8E0FFF" strokeWidth={2.2} />
           <TextInput
-            ref={inputRef}
+            ref={onInputRef}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={handleChangeText}
             placeholder="Search cameras, lenses, lights..."
             placeholderTextColor="#9CA3AF"
             returnKeyType="search"
@@ -121,7 +162,10 @@ export default function SearchScreen() {
               height: hp(44),
             }}
           />
-          {searchQuery.length > 0 && (
+          {isSearching && (
+            <ActivityIndicator size="small" color="#8E0FFF" />
+          )}
+          {searchQuery.length > 0 && !isSearching && (
             <Pressable onPress={clearSearch} hitSlop={8}>
               <XStack
                 width={20}
@@ -154,9 +198,11 @@ export default function SearchScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           contentContainerStyle={{ paddingBottom: hp(40) }}
+          onScroll={handleScroll}
+          scrollEventThrottle={200}
         >
           {/* Search Results */}
-          {showResults && searchResults.length > 0 && (
+          {showResults && !isSearching && displayedResults.length > 0 && (
             <YStack
               backgroundColor="#FFFFFF"
               marginHorizontal={wp(16)}
@@ -171,7 +217,7 @@ export default function SearchScreen() {
                 elevation: 3,
               }}
             >
-              {searchResults.map((product, index) => (
+              {displayedResults.map((product, index) => (
                 <Pressable
                   key={product.sku_id}
                   onPress={() => handleProductPress(product)}
@@ -185,7 +231,6 @@ export default function SearchScreen() {
                     borderTopWidth={index === 0 ? 0 : 1}
                     borderTopColor="#F2F2F7"
                   >
-                    {/* Product thumbnail */}
                     <XStack
                       width={hp(48)}
                       height={hp(48)}
@@ -202,14 +247,8 @@ export default function SearchScreen() {
                       />
                     </XStack>
 
-                    {/* Text */}
                     <YStack flex={1} gap={hp(2)}>
-                      <Text
-                        fontSize={fp(14)}
-                        fontWeight="500"
-                        color="#1C1C1E"
-                        numberOfLines={1}
-                      >
+                      <Text fontSize={fp(14)} fontWeight="500" color="#1C1C1E" numberOfLines={1}>
                         {product.name}
                       </Text>
                       <Text fontSize={fp(12)} color="#8E8E93" numberOfLines={1}>
@@ -221,11 +260,27 @@ export default function SearchScreen() {
                   </XStack>
                 </Pressable>
               ))}
+
+              {hasMore && (
+                <XStack
+                  justifyContent="center"
+                  alignItems="center"
+                  paddingVertical={hp(12)}
+                  borderTopWidth={1}
+                  borderTopColor="#F2F2F7"
+                  gap={wp(6)}
+                >
+                  <ActivityIndicator size="small" color="#8E0FFF" />
+                  <Text fontSize={fp(12)} color="#8E8E93">
+                    {allResults.length - visibleCount} more results
+                  </Text>
+                </XStack>
+              )}
             </YStack>
           )}
 
           {/* No Results */}
-          {showResults && searchResults.length === 0 && (
+          {showResults && !isSearching && allResults.length === 0 && (
             <YStack
               alignItems="center"
               paddingTop={hp(40)}
@@ -251,10 +306,9 @@ export default function SearchScreen() {
             </YStack>
           )}
 
-          {/* Empty state: Trending + Quick suggestions */}
+          {/* Empty state: Trending + Browse */}
           {!showResults && (
             <YStack gap={hp(24)} paddingTop={hp(8)}>
-              {/* Trending Searches */}
               <YStack gap={hp(2)}>
                 <XStack
                   alignItems="center"
@@ -315,35 +369,40 @@ export default function SearchScreen() {
                 </YStack>
               </YStack>
 
-              {/* Camorent hint */}
-              <XStack
-                marginHorizontal={wp(16)}
-                backgroundColor="#F5EEFF"
-                borderRadius={12}
-                paddingHorizontal={wp(14)}
-                paddingVertical={hp(12)}
-                alignItems="center"
-                gap={wp(10)}
+              <Pressable
+                onPress={handleBrowseAll}
+                style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
               >
                 <XStack
-                  width={36}
-                  height={36}
-                  borderRadius={18}
-                  backgroundColor="#8E0FFF"
+                  marginHorizontal={wp(16)}
+                  backgroundColor="#F5EEFF"
+                  borderRadius={12}
+                  paddingHorizontal={wp(14)}
+                  paddingVertical={hp(12)}
                   alignItems="center"
-                  justifyContent="center"
+                  gap={wp(10)}
                 >
-                  <Search size={16} color="#FFFFFF" strokeWidth={2.2} />
+                  <XStack
+                    width={36}
+                    height={36}
+                    borderRadius={18}
+                    backgroundColor="#8E0FFF"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Search size={16} color="#FFFFFF" strokeWidth={2.2} />
+                  </XStack>
+                  <YStack flex={1} gap={hp(2)}>
+                    <Text fontSize={fp(13)} fontWeight="600" color="#5F00BA">
+                      Browse full catalog
+                    </Text>
+                    <Text fontSize={fp(12)} color="#8E0FFF">
+                      500+ cameras, lenses & lighting gear
+                    </Text>
+                  </YStack>
+                  <ChevronRight size={16} color="#8E0FFF" strokeWidth={2} />
                 </XStack>
-                <YStack flex={1} gap={hp(2)}>
-                  <Text fontSize={fp(13)} fontWeight="600" color="#5F00BA">
-                    Search the full catalog
-                  </Text>
-                  <Text fontSize={fp(12)} color="#8E0FFF">
-                    500+ cameras, lenses & lighting gear
-                  </Text>
-                </YStack>
-              </XStack>
+              </Pressable>
             </YStack>
           )}
         </ScrollView>

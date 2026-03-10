@@ -114,8 +114,7 @@ export default function CamorentDeliveryScreen() {
 
         clearDraftAddress();
         queryClient.invalidateQueries({ queryKey: ["addresses"] });
-        router.back();
-        router.back();
+        router.push("/cart");
       },
       onError: (error) => {
       },

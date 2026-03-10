@@ -74,13 +74,25 @@ export function formatShootData(
   };
 }
 
+const WAREHOUSE_ADDRESS: FormattedAddressData = {
+  address: "N-65, Gautam Nagar",
+  city: "New Delhi",
+  state: "Delhi",
+  pinCode: "110049",
+};
+
 /**
  * Formats address data for display
  */
 export function formatAddressData(
   addresses?: Address[],
-  addressId?: string
+  addressId?: string,
+  deliveryType?: string
 ): FormattedAddressData {
+  if (deliveryType === "self_pickup") {
+    return WAREHOUSE_ADDRESS;
+  }
+
   if (!addresses || !addressId) {
     return {
       address: "No address selected",
@@ -241,12 +253,15 @@ export function formatBookingPaymentData(
   const rentalDays =
     bookingDetails?.total_rental_days || calculateRentalDays?.() || 3;
 
+  const isSelfPickup = bookingDetails?.delivery_type === "self_pickup";
+
   return {
     shootData: formatShootData(bookingDetails, rentalDates),
-    addressData: formatAddressData(addresses, bookingDetails?.address_id),
+    addressData: formatAddressData(addresses, bookingDetails?.address_id, bookingDetails?.delivery_type),
     productData: formatProductData(bookingDetails?.sku_items, rentalDays),
     crewData: formatCrewData(bookingDetails?.crew_items, rentalDays),
     billDetails: formatBillDetails(bookingDetails, summary),
     rentalDays,
+    isSelfPickup,
   };
 }

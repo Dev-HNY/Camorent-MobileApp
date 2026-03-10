@@ -7,8 +7,8 @@ import { ChevronLeft, Camera, User, Mail, Briefcase, Phone, Building2, CreditCar
 import { router } from "expo-router";
 import { fp, hp, wp } from "@/utils/responsive";
 import { useGetCurrentUser, useUpdateUserProfile } from "@/hooks/auth";
-import { useEffect } from "react";
-import { Pressable, TouchableOpacity } from "react-native";
+import { useEffect, useState } from "react";
+import { Pressable, TouchableOpacity, View, TextInput, StyleSheet, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { AnimatedInput } from "@/components/ui/AnimatedInput";
@@ -16,6 +16,237 @@ import { AnimatedDropdown } from "@/components/ui/AnimatedDropdown";
 import * as Haptics from "expo-haptics";
 import { KeyboardAwareScrollView } from "@/components/ui/KeyboardAwareScrollView";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useVerifyGST } from "@/hooks/verifications/useVerifyGST";
+import { useAuthStore } from "@/store/auth/auth";
+import Svg, { Path } from "react-native-svg";
+
+// ─── GSTIN regex ──────────────────────────────────────────────────────────────
+const GST_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{3}$/;
+
+interface GSTINEditorProps {
+  initialGSTIN: string;
+  initialOrgName?: string;
+}
+
+function GSTINEditor({ initialGSTIN }: GSTINEditorProps) {
+  const [gstin, setGstin] = useState(initialGSTIN || "");
+  const [verifiedOrgName, setVerifiedOrgName] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(!!initialGSTIN);
+  const [inputError, setInputError] = useState("");
+
+  const { updateUser } = useAuthStore();
+  const verifyMutation = useVerifyGST();
+  const updateProfile = useUpdateUserProfile();
+
+  useEffect(() => {
+    if (initialGSTIN) {
+      setGstin(initialGSTIN);
+      setIsSaved(true);
+    }
+  }, [initialGSTIN]);
+
+  const handleChange = (text: string) => {
+    const upper = text.toUpperCase();
+    setGstin(upper);
+    setIsSaved(false);
+    setInputError("");
+    verifyMutation.reset();
+    setVerifiedOrgName(null);
+    if (upper.length === 15 && GST_REGEX.test(upper)) {
+      verifyMutation.mutate(
+        { gstin: upper },
+        {
+          onSuccess: (data: any) => {
+            if (data?.legal_name) {
+              setVerifiedOrgName(data.legal_name);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+          },
+        }
+      );
+    }
+  };
+
+  const handleSave = () => {
+    const trimmed = gstin.trim();
+    if (!trimmed || trimmed.length !== 15 || !GST_REGEX.test(trimmed)) {
+      setInputError("Invalid GSTIN format (e.g. 29ABCDE1234F1Z5)");
+      return;
+    }
+    if (!verifyMutation.isSuccess) {
+      setInputError("Please wait for GSTIN verification");
+      return;
+    }
+    updateProfile.mutate(
+      {
+        first_name: "",
+        GSTIN_no: trimmed,
+        ...(verifiedOrgName ? { org_name: verifiedOrgName } : {}),
+      },
+      {
+        onSuccess: (data) => {
+          updateUser(data as any);
+          setIsSaved(true);
+          setInputError("");
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+        onError: () => {
+          setInputError("Failed to save GSTIN. Please try again.");
+        },
+      }
+    );
+  };
+
+  const isVerifying = verifyMutation.isPending;
+  const isVerified = verifyMutation.isSuccess;
+  const isSaving = updateProfile.isPending;
+  const canSave = isVerified && !isSaved && !isSaving;
+
+  return (
+    <YStack gap={hp(8)}>
+      <XStack alignItems="center" gap={wp(8)}>
+        <FileText size={hp(16)} color="#8E8E93" />
+        <Text fontSize={fp(12)} fontWeight="500" color="#8E8E93">
+          GSTIN Number
+        </Text>
+        {isSaved && (
+          <YStack
+            backgroundColor="#F0FDF4"
+            paddingHorizontal={wp(8)}
+            paddingVertical={hp(2)}
+            borderRadius={wp(6)}
+          >
+            <Text fontSize={fp(10)} fontWeight="600" color="#22C55E">Verified ✓</Text>
+          </YStack>
+        )}
+      </XStack>
+
+      <View style={gstEditStyles.inputRow}>
+        <TextInput
+          style={[
+            gstEditStyles.input,
+            inputError ? gstEditStyles.inputError : null,
+            isVerified ? gstEditStyles.inputVerified : null,
+            isSaved ? gstEditStyles.inputVerified : null,
+          ]}
+          value={gstin}
+          onChangeText={handleChange}
+          placeholder="Enter 15-digit GSTIN"
+          placeholderTextColor="#9CA3AF"
+          autoCapitalize="characters"
+          maxLength={15}
+          returnKeyType="done"
+          editable={!isSaved}
+        />
+
+        {isVerifying || isSaving ? (
+          <View style={[gstEditStyles.statusWrap, { borderColor: "#8E0FFF", backgroundColor: "#F5EDFF" }]}>
+            <ActivityIndicator size="small" color="#8E0FFF" />
+          </View>
+        ) : isSaved ? (
+          <View style={[gstEditStyles.statusWrap, gstEditStyles.statusSaved]}>
+            <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+              <Path d="M20 6L9 17l-5-5" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          </View>
+        ) : (
+          <Pressable
+            onPress={handleSave}
+            disabled={!canSave}
+            style={({ pressed }) => [
+              gstEditStyles.saveBtn,
+              !canSave && gstEditStyles.saveBtnDisabled,
+              pressed && { opacity: 0.82 },
+            ]}
+          >
+            <LinearGradient
+              colors={["#8E0FFF", "#6D00DA"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={gstEditStyles.saveBtnGrad}
+            >
+              <Text style={gstEditStyles.saveBtnText}>Save</Text>
+            </LinearGradient>
+          </Pressable>
+        )}
+      </View>
+
+      {!!inputError && (
+        <Text fontSize={fp(11.5)} color="#EF4444">{inputError}</Text>
+      )}
+      {isVerifying && (
+        <Text fontSize={fp(11.5)} color="#9CA3AF">Verifying GSTIN…</Text>
+      )}
+      {isVerified && !isSaved && (
+        <Text fontSize={fp(11.5)} color="#22C55E">✓ GSTIN verified — tap Save</Text>
+      )}
+      {verifyMutation.isError && (
+        <Text fontSize={fp(11.5)} color="#EF4444">
+          {(verifyMutation.error as any)?.response?.data?.message || "Verification failed. Check the number."}
+        </Text>
+      )}
+
+      {/* Verified org name */}
+      {isVerified && verifiedOrgName && (
+        <YStack
+          backgroundColor="#F0FDF4"
+          borderWidth={1}
+          borderColor="#22C55E"
+          borderRadius={wp(10)}
+          padding={wp(12)}
+          gap={hp(3)}
+        >
+          <Text fontSize={fp(11)} color="#6C6C89" fontWeight="500">Organisation Name</Text>
+          <Text fontSize={fp(13.5)} fontWeight="700" color="#121217">{verifiedOrgName}</Text>
+        </YStack>
+      )}
+
+      {/* Change link */}
+      {isSaved && (
+        <Pressable
+          onPress={() => { setIsSaved(false); verifyMutation.reset(); setVerifiedOrgName(null); }}
+          hitSlop={8}
+        >
+          <Text fontSize={fp(12)} color="#8E0FFF" fontWeight="600">Change GSTIN</Text>
+        </Pressable>
+      )}
+    </YStack>
+  );
+}
+
+const gstEditStyles = StyleSheet.create({
+  inputRow: { flexDirection: "row", gap: wp(10), alignItems: "center" },
+  input: {
+    flex: 1,
+    height: hp(46),
+    borderWidth: 1.5,
+    borderColor: "#E5E5EA",
+    borderRadius: wp(10),
+    paddingHorizontal: wp(12),
+    fontSize: fp(13.5),
+    color: "#121217",
+    backgroundColor: "#F9F9F9",
+    letterSpacing: 1,
+    fontWeight: "600",
+  },
+  inputError: { borderColor: "#EF4444" },
+  inputVerified: { borderColor: "#22C55E", backgroundColor: "#F0FDF4" },
+  statusWrap: {
+    width: wp(46),
+    height: hp(46),
+    borderRadius: wp(10),
+    borderWidth: 1.5,
+    borderColor: "#E5E5EA",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F9F9F9",
+  },
+  statusSaved: { borderColor: "#22C55E", backgroundColor: "#F0FDF4" },
+  saveBtn: { borderRadius: wp(10), overflow: "hidden", height: hp(46), minWidth: wp(64) },
+  saveBtnDisabled: { opacity: 0.45 },
+  saveBtnGrad: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: wp(14) },
+  saveBtnText: { fontSize: fp(13), fontWeight: "700", color: "#FFFFFF" },
+});
 
 const editProfileSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -417,7 +648,7 @@ export default function EditProfileScreen() {
                   shadowRadius={8}
                   elevation={3}
                 >
-                  {/* Organization Name */}
+                  {/* Organization Name — read-only, auto-filled from GSTIN */}
                   <YStack gap={hp(8)}>
                     <XStack alignItems="center" gap={wp(8)}>
                       <Building2 size={hp(16)} color="#8E8E93" />
@@ -433,33 +664,18 @@ export default function EditProfileScreen() {
                       borderColor="#E5E5EA"
                     >
                       <Text fontSize={fp(15)} fontWeight="400" color="#666666">
-                        {currentUser?.org_name || "Not provided"}
+                        {currentUser?.org_name || "Auto-filled from GSTIN"}
                       </Text>
                     </YStack>
                   </YStack>
 
-                  {/* GSTIN */}
-                  <YStack gap={hp(8)}>
-                    <XStack alignItems="center" gap={wp(8)}>
-                      <FileText size={hp(16)} color="#8E8E93" />
-                      <Text fontSize={fp(12)} fontWeight="500" color="#8E8E93">
-                        GSTIN Number
-                      </Text>
-                    </XStack>
-                    <YStack
-                      backgroundColor="#F9F9F9"
-                      padding={wp(14)}
-                      borderRadius={wp(10)}
-                      borderWidth={1}
-                      borderColor="#E5E5EA"
-                    >
-                      <Text fontSize={fp(15)} fontWeight="400" color="#666666">
-                        {currentUser?.GSTIN_no || "Not provided"}
-                      </Text>
-                    </YStack>
-                  </YStack>
+                  {/* GSTIN — editable with verify */}
+                  <GSTINEditor
+                    initialGSTIN={currentUser?.GSTIN_no || ""}
+                    initialOrgName={currentUser?.org_name || ""}
+                  />
 
-                  {/* PAN */}
+                  {/* PAN — read-only */}
                   <YStack gap={hp(8)}>
                     <XStack alignItems="center" gap={wp(8)}>
                       <CreditCard size={hp(16)} color="#8E8E93" />
@@ -482,6 +698,40 @@ export default function EditProfileScreen() {
                 </YStack>
               </YStack>
             )}
+
+            {/* GST Invoice — available for all users */}
+            <YStack gap={hp(12)}>
+              <Text
+                fontSize={fp(13)}
+                fontWeight="600"
+                color="#8E8E93"
+                textTransform="uppercase"
+                letterSpacing={0.5}
+                paddingHorizontal={wp(4)}
+              >
+                GST Invoice
+              </Text>
+
+              <YStack
+                backgroundColor="#FFFFFF"
+                borderRadius={wp(16)}
+                padding={wp(20)}
+                gap={hp(8)}
+                shadowColor="#000000"
+                shadowOffset={{ width: 0, height: 2 }}
+                shadowOpacity={0.06}
+                shadowRadius={8}
+                elevation={3}
+              >
+                <Text fontSize={fp(12)} color="#9CA3AF" lineHeight={hp(18)}>
+                  Add your GSTIN to receive a GST invoice for your bookings. It will be auto-applied at checkout.
+                </Text>
+                <GSTINEditor
+                  initialGSTIN={currentUser?.GSTIN_no || ""}
+                  initialOrgName={currentUser?.org_name || ""}
+                />
+              </YStack>
+            </YStack>
           </YStack>
         </YStack>
       </KeyboardAwareScrollView>

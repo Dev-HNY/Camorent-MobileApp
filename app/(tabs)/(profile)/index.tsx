@@ -9,7 +9,7 @@ import {
 import { useAuthStore } from "@/store/auth/auth";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Pressable, Animated } from "react-native";
+import { Pressable, Animated, RefreshControl } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import * as Haptics from "expo-haptics";
 import { Button } from "@/components/ui/Button";
@@ -47,8 +47,16 @@ const capitalizeName = (name: string) => {
 export default function Index() {
   const tabBarHeight = useBottomTabBarHeight();
   const { clearAuth } = useAuthStore();
-  const { data: currentUser, isLoading: isLoadingUser } = useGetCurrentUser();
+  const { data: currentUser, isLoading: isLoadingUser, refetch } = useGetCurrentUser();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await refetch();
+    setRefreshing(false);
+  };
 
   // Premium animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -154,6 +162,14 @@ export default function Index() {
         contentContainerStyle={{
           paddingBottom: tabBarHeight + hp(24),
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#8E0FFF"
+            colors={["#8E0FFF"]}
+          />
+        }
       >
         <YStack flex={1}>
           {/* Header with Back Button and Title */}

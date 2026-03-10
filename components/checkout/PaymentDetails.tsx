@@ -48,6 +48,7 @@ interface PaymentDetailsProps {
   deliveryDate: string;
   camocarePrice?: number;
   hideEditShootDate?: boolean;
+  isSelfPickup?: boolean;
   onEditShootSettings: () => void;
   onEditAddress: () => void;
   onAddMoreProducts: () => void;
@@ -64,6 +65,7 @@ export function PaymentDetails({
   deliveryDate,
   camocarePrice = 64,
   hideEditShootDate = false,
+  isSelfPickup = false,
   onEditShootSettings,
   onEditAddress,
   onAddMoreProducts,
@@ -74,37 +76,43 @@ export function PaymentDetails({
       {/* Shoot Name */}
       {shootName && (
         <LinearGradient
-          colors={["#FFFBF0", "#FFF8E7", "#FFFFFF"]}
-          locations={[0, 0.5, 1]}
+          colors={["#FFFDE8", "#FFFFFF"]}
+          locations={[0, 1]}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 0, y: 1 }}
           style={{
-            borderRadius: 14,
+            borderRadius: 12,
             borderWidth: 1,
-            borderColor: "#FFE08A",
-            shadowColor: "#F59E0B",
+            borderColor: "#F9DF7B",
+            shadowColor: "#F9DF7B",
             shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
+            shadowOpacity: 0.15,
+            shadowRadius: 6,
             elevation: 2,
           }}
         >
-          <YStack padding={wp(16)} gap={hp(14)}>
-            <XStack alignItems="center" gap={wp(8)}>
-              <XStack
-                width={32}
-                height={32}
-                borderRadius={8}
-                backgroundColor="rgba(245, 158, 11, 0.12)"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Pen size={15} color="#D97706" strokeWidth={2} />
-              </XStack>
-              <Heading2 color="#1C1C1E">Shoot Name</Heading2>
+          <XStack
+            alignItems="center"
+            gap={wp(8)}
+            paddingHorizontal={wp(14)}
+            paddingTop={hp(12)}
+            paddingBottom={hp(12)}
+          >
+            <XStack
+              width={28}
+              height={28}
+              borderRadius={7}
+              backgroundColor="rgba(249,223,123,0.25)"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Pen size={14} color="#B8860B" strokeWidth={2} />
             </XStack>
-            <Separator borderColor="rgba(255, 218, 133, 0.5)" />
-            <BodyText color="#1C1C1E">{shootName}</BodyText>
+            <Text fontSize={fp(14)} fontWeight="600" color="#121217" flex={1}>Shoot Name</Text>
+          </XStack>
+          <YStack height={1} backgroundColor="#F9DF7B" />
+          <YStack paddingHorizontal={wp(14)} paddingTop={hp(10)} paddingBottom={hp(12)}>
+            <Text fontSize={fp(13)} color="#121217" fontWeight="600">{shootName}</Text>
           </YStack>
         </LinearGradient>
       )}
@@ -124,6 +132,7 @@ export function PaymentDetails({
         state={addressData.state}
         pinCode={addressData.pinCode}
         onEdit={onEditAddress}
+        isSelfPickup={isSelfPickup}
       />
 
       {/* Camocare */}

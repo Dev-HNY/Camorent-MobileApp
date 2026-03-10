@@ -8,6 +8,7 @@ import {
   ScrollView as RNScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  RefreshControl,
 } from "react-native";
 import { Redirect, router } from "expo-router";
 import { useAuthStore } from "@/store/auth/auth";
@@ -402,16 +403,24 @@ export default function Home() {
     smoothScrollTo(index);
   }, [smoothScrollTo]);
 
-  const { data: dop, isLoading: isLoadingDop } = UseGetAllProducts({
+  const { data: dop, isLoading: isLoadingDop, refetch: refetchDop } = UseGetAllProducts({
     selection: "dop",
     limit: 6,
     is_active: true,
   });
-  const { data: topPicks, isLoading: isLoadingTopPicks } = UseGetAllProducts({
+  const { data: topPicks, isLoading: isLoadingTopPicks, refetch: refetchTopPicks } = UseGetAllProducts({
     selection: "top_picks",
     limit: 6,
     is_active: true,
   });
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await Promise.all([refetchDop(), refetchTopPicks()]);
+    setRefreshing(false);
+  };
 
   const handleCategories = useCallback((category: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -461,6 +470,14 @@ export default function Home() {
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: tabHeight + insets.bottom + hp(40) }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#8E0FFF"
+            colors={["#8E0FFF"]}
+          />
+        }
       >
         {/* ── Header: white → slide color ── */}
         <View style={{ position: "relative" }}>

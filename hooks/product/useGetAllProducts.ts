@@ -12,6 +12,7 @@ export const UseGetAllProducts = (params?: SKUQueryParams) => {
       params?.limit,
       params?.is_active,
       params?.brand,
+      params?.q,
     ],
     queryFn: async () => {
       const res = await apiClient.get<SKUsResponse>("/skus", {

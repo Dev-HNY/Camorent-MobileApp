@@ -89,6 +89,7 @@ export interface SKUQueryParams {
   page?: number;
   is_active: boolean;
   brand?: string;
+  q?: string;
 }
 
 export interface Product {

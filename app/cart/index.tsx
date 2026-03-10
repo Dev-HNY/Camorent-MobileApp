@@ -16,15 +16,11 @@ import Animated, {
   FadeIn,
   FadeInDown,
   ZoomIn,
-  useAnimatedScrollHandler,
-  useSharedValue,
-  useAnimatedStyle,
-  interpolate,
-  Extrapolation,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { RefreshControl, Keyboard, TouchableWithoutFeedback } from "react-native";
+import { RefreshControl, Keyboard, TouchableWithoutFeedback, Pressable, Text as RNText, View, Alert } from "react-native";
+import { Truck, MapPin } from "lucide-react-native";
 // import { CamocareSheet } from "@/components/PDP/CamocareSheet";
 // import { CartCamocare } from "@/components/cart/CartCamocare";
 import { fp, hp, wp } from "@/utils/responsive";
@@ -45,6 +41,18 @@ import { Controller } from "react-hook-form";
 import { useRentalForm } from "@/hooks/useRentalForm";
 import { AddressSheet } from "@/components/cart/AddressSheet";
 import { BottomSheetButton } from "@/components/ui/BottomSheetButton";
+import { useUpdateBookingDelivery } from "@/hooks/delivery/useUpdateBookingDelivery";
+
+const WAREHOUSE_ADDRESS = {
+  address_line1: "N-65, Gautam Nagar",
+  address_line2: "",
+  city: "New Delhi",
+  state: "Delhi",
+  pincode: "110049",
+  full_name: "Camorent Warehouse",
+  mobile_number: "",
+  is_self_pickup: true,
+};
 
 export default function Cart() {
   const {
@@ -55,8 +63,14 @@ export default function Cart() {
     setBookingId,
     draftAddress,
     selectedAddress,
+    fulfillmentType,
+    setFulfillmentType,
+    setSelectedAddress,
   } = useCartStore();
   const queryClient = useQueryClient();
+  const bookingMutation = useCreateDraftBooking();
+  const updateDeliveryMutation = useUpdateBookingDelivery();
+  const [isPickupLoading, setIsPickupLoading] = useState(false);
 
   const {
     control,
@@ -80,34 +94,6 @@ export default function Cart() {
   const { data: cart, isLoading, refetch } = useGetCart();
   const items = cart?.sku_items || [];
 
-  // Premium scroll animations
-  const scrollY = useSharedValue(0);
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
-    },
-  });
-
-  // Animated header with parallax
-  const headerAnimatedStyle = useAnimatedStyle(() => {
-    const translateY = interpolate(
-      scrollY.value,
-      [0, 100],
-      [0, -20],
-      Extrapolation.CLAMP
-    );
-    const opacity = interpolate(
-      scrollY.value,
-      [0, 50],
-      [1, 0.7],
-      Extrapolation.CLAMP
-    );
-    return {
-      transform: [{ translateY }],
-      opacity,
-    };
-  });
-
   // Pull to refresh
   const onRefresh = async () => {
     setRefreshing(true);
@@ -116,10 +102,72 @@ export default function Cart() {
     setRefreshing(false);
   };
 
-  const handleContinue = handleSubmit((data) => {
-    // Validation passed, navigate to crew screen
-    router.push("/checkout/crew");
-  });
+  const handleSelfPickupContinue = () => {
+    if (!shootName || shootName.trim().length < 3) {
+      Alert.alert("Missing details", "Shoot name must be at least 3 characters");
+      return;
+    }
+    if (!rentalDates?.startDate || !rentalDates?.endDate) {
+      Alert.alert("Missing details", "Please select rental start and end dates");
+      return;
+    }
+    if (!items || items.length === 0) return;
+
+    const formatDate = (dateStr: string) => {
+      const [day, month, year] = dateStr.split("-");
+      return `${year}-${month}-${day}`;
+    };
+
+    const draftBooking: DraftBookingRequest = {
+      shoot_name: shootName,
+      items: items.map((item) => ({ sku_id: item.sku_id, quantity: item.quantity, addons: [] })),
+      crews: [],
+      rental_start_date: formatDate(rentalDates.startDate),
+      rental_end_date: formatDate(rentalDates.endDate),
+      coupon_codes: [],
+    };
+
+    setIsPickupLoading(true);
+    bookingMutation.mutate(draftBooking, {
+      onSuccess: (response) => {
+        setBookingId(response.booking_id);
+        updateDeliveryMutation.mutate(
+          {
+            booking_id: response.booking_id,
+            deliveryUpdates: { delivery_option: "self_pickup" },
+          },
+          {
+            onSuccess: () => {
+              setIsPickupLoading(false);
+              queryClient.invalidateQueries({ queryKey: ["bookings"] });
+              router.push("/checkout/payment");
+            },
+            onError: () => {
+              setIsPickupLoading(false);
+              Alert.alert("Error", "Failed to update delivery. Please try again.");
+            },
+          }
+        );
+      },
+      onError: () => {
+        setIsPickupLoading(false);
+        Alert.alert("Error", "Failed to create booking. Please try again.");
+      },
+    });
+  };
+
+  const handleContinue = handleSubmit(
+    () => {
+      router.push("/checkout/crew");
+    },
+    (errors) => {
+      const firstError = Object.values(errors)[0];
+      const message = (firstError as any)?.message as string | undefined;
+      if (message) {
+        Alert.alert("Missing details", message);
+      }
+    }
+  );
 
   const rentalDaysCount = rentalDates ? calculateRentalDays(rentalDates) : 1;
 
@@ -145,11 +193,10 @@ export default function Cart() {
   };
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
       <YStack flex={1}>
-        <YStack flex={1}>
           {/* Header - clean white */}
-          <Animated.View style={headerAnimatedStyle}>
+          <View>
             <YStack
               paddingTop={hp(12)}
               paddingBottom={hp(16)}
@@ -194,11 +241,54 @@ export default function Cart() {
                       </Text>
                     )}
                   </YStack>
+
+                  {/* Fulfillment selector */}
+                  <View style={{ flexDirection: "row", gap: wp(8) }}>
+                    {(["delivery", "self_pickup"] as const).map((type) => {
+                      const isSelected = fulfillmentType === type;
+                      const isDelivery = type === "delivery";
+                      return (
+                        <Pressable
+                          key={type}
+                          style={{ flex: 1 }}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setFulfillmentType(type);
+                          }}
+                        >
+                          <View style={{
+                            borderRadius: wp(12),
+                            borderWidth: 1.5,
+                            borderColor: isSelected ? "#8E0FFF" : "#E5E7EB",
+                            backgroundColor: isSelected ? "#F5EDFF" : "#FAFAFA",
+                            paddingVertical: wp(10),
+                            paddingHorizontal: wp(12),
+                            gap: 4,
+                          }}>
+                            {/* Icon + title on one line */}
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                              {isDelivery
+                                ? <Truck size={15} color={isSelected ? "#8E0FFF" : "#6B7280"} strokeWidth={2} />
+                                : <MapPin size={15} color={isSelected ? "#8E0FFF" : "#6B7280"} strokeWidth={2} />
+                              }
+                              <RNText style={{ fontSize: 13, fontWeight: "600", color: isSelected ? "#8E0FFF" : "#374151" }}>
+                                {isDelivery ? "Delivery" : "Self Pickup"}
+                              </RNText>
+                            </View>
+                            {/* Subtitle */}
+                            <RNText style={{ fontSize: 11, color: isSelected ? "#9B59B6" : "#9CA3AF" }}>
+                              {isDelivery ? "Deliver to my address" : "N-65, Gautam Nagar, Delhi"}
+                            </RNText>
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </>
               )}
               </YStack>
           </YStack>
-          </Animated.View>
+          </View>
 
           <Animated.ScrollView
             showsVerticalScrollIndicator={false}
@@ -210,11 +300,9 @@ export default function Cart() {
               paddingTop: hp(12),
               paddingBottom:
                 items.length > 0
-                  ? insets.bottom + hp(150)
+                  ? insets.bottom + hp(110)
                   : insets.bottom + hp(24),
             }}
-            onScroll={scrollHandler}
-            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -349,7 +437,6 @@ export default function Cart() {
               </YStack>
             )}
           </Animated.ScrollView>
-        </YStack>
         {/* <CamocareSheet
         isOpen={showCamocareSheet}
         onClose={() => setShowCamocareSheet(false)}
@@ -364,15 +451,51 @@ export default function Cart() {
           onClose={() => setShowAddressSheet(false)}
           handleAddNewAddress={handleAddNewAddress}
         />
-        {items.length > 0 && !draftAddress && !selectedAddress && (
+        {/* Self-pickup: show warehouse info + continue directly */}
+        {items.length > 0 && fulfillmentType === "self_pickup" && (
+          <YStack
+            position="absolute"
+            bottom={0}
+            left={0}
+            right={0}
+            backgroundColor="#FFFFFF"
+          >
+            <YStack
+              paddingHorizontal={wp(16)}
+              paddingVertical={hp(10)}
+              borderTopWidth={1}
+              borderTopColor="#F2F2F7"
+            >
+              <XStack alignItems="center" gap={wp(10)}>
+                <YStack flex={1}>
+                  <Text fontSize={fp(12)} color="#6C6C89" marginBottom={hp(2)}>
+                    Pickup from
+                  </Text>
+                  <Text fontSize={fp(14)} fontWeight="600" color="#121217">
+                    Camorent Warehouse
+                  </Text>
+                  <Text fontSize={fp(12)} color="#6C6C89">
+                    N-65, Gautam Nagar, New Delhi 110049
+                  </Text>
+                </YStack>
+              </XStack>
+            </YStack>
+            <StickyBottomCart
+              embedded
+              isCartScreen={true}
+              cartData={cartSummary}
+              onContinue={handleSelfPickupContinue}
+              isSelfPickup={true}
+              isLoading={isPickupLoading || bookingMutation.isPending || updateDeliveryMutation.isPending}
+            />
+          </YStack>
+        )}
+
+        {/* Delivery: no address selected yet — prompt to choose */}
+        {items.length > 0 && fulfillmentType === "delivery" && !draftAddress && !selectedAddress && (
           <Animated.View
             entering={FadeIn.duration(200)}
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-            }}
+            style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
           >
             <LinearGradient
               colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 1)']}
@@ -396,7 +519,9 @@ export default function Cart() {
             </LinearGradient>
           </Animated.View>
         )}
-        {items.length > 0 && (draftAddress || (selectedAddress && !selectedAddress.address_id)) && !selectedAddress?.address_id && (
+
+        {/* Delivery: draft address present but not saved */}
+        {items.length > 0 && fulfillmentType === "delivery" && (draftAddress || (selectedAddress && !selectedAddress.address_id)) && !selectedAddress?.address_id && (
           <YStack
             position="absolute"
             bottom={0}
@@ -410,11 +535,7 @@ export default function Cart() {
               borderTopWidth={1}
               borderTopColor="#F2F2F7"
             >
-              <XStack
-                justifyContent="space-between"
-                alignItems="center"
-                gap={wp(12)}
-              >
+              <XStack justifyContent="space-between" alignItems="center" gap={wp(12)}>
                 <YStack flex={1}>
                   <Text fontSize={fp(12)} color="#6C6C89" marginBottom={hp(4)}>
                     Delivery to
@@ -447,7 +568,9 @@ export default function Cart() {
             />
           </YStack>
         )}
-        {items.length > 0 && selectedAddress?.address_id && (
+
+        {/* Delivery: address fully selected */}
+        {items.length > 0 && fulfillmentType === "delivery" && selectedAddress?.address_id && (
           <YStack
             position="absolute"
             bottom={0}
@@ -461,19 +584,14 @@ export default function Cart() {
               borderTopWidth={1}
               borderTopColor="#F2F2F7"
             >
-              <XStack
-                justifyContent="space-between"
-                alignItems="center"
-                gap={wp(12)}
-              >
+              <XStack justifyContent="space-between" alignItems="center" gap={wp(12)}>
                 <YStack flex={1}>
                   <Text fontSize={fp(12)} color="#6C6C89" marginBottom={hp(2)}>
-                    {selectedAddress.is_self_pickup ? "Pickup by" : "Delivery to"}
+                    Delivery to
                   </Text>
                   <Text fontSize={fp(14)} fontWeight="600" color="#121217">
                     {selectedAddress.address_line1}
-                    {selectedAddress.address_line2 &&
-                      `, ${selectedAddress.address_line2}`}
+                    {selectedAddress.address_line2 && `, ${selectedAddress.address_line2}`}
                   </Text>
                   <Text fontSize={fp(12)} color="#6C6C89">
                     {selectedAddress.city}
@@ -501,7 +619,7 @@ export default function Cart() {
           </YStack>
         )}
       </YStack>
-    </SafeAreaView>
+      </SafeAreaView>
     </TouchableWithoutFeedback>
   );
 }

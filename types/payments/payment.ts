@@ -1,6 +1,7 @@
 export interface PaymentPayloadProps {
   payment_method: string;
   payment_type: string;
+  gst_number?: string;
 }
 
 export interface CreateTransactionParams {
