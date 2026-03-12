@@ -7,8 +7,12 @@ import {
 import { router, useFocusEffect } from "expo-router";
 import {
   Alert,
+  AppState,
+  AppStateStatus,
   BackHandler,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   View,
   TextInput,
@@ -27,6 +31,7 @@ import { StickyBottomCart } from "@/components/PDP/StickyBottomCart";
 import { hp, wp, fp } from "@/utils/responsive";
 import { useGetBookingById } from "@/hooks/shoots/useGetBookingById";
 import { useGetBookingInvoice } from "@/hooks/shoots/useGetBookingInvoice";
+import { useSyncInvoiceStatus } from "@/hooks/shoots/useSyncInvoiceStatus";
 import { useGetMyAddresses } from "@/hooks/delivery/useGetMyAddresses";
 import {
   useCreateDraftBooking,
@@ -523,6 +528,7 @@ export default function PaymentPage() {
   const bookingMutation = useCreateDraftBooking();
   const paymentMutation = useCreateTransaction();
   const clearCartMutation = useCLearCart();
+  const syncInvoice = useSyncInvoiceStatus();
   const isOrganization = user?.user_type === "organisation";
 
   const isLoading = isLoadingBooking || isLoadingAddresses;
@@ -550,6 +556,22 @@ export default function PaymentPage() {
       return () => sub.remove();
     }, [handleBackPress])
   );
+
+  // Sync invoice status from Razorpay + refetch when app returns to foreground
+  useEffect(() => {
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (nextState === "active" && bookingId) {
+        syncInvoice.mutate(bookingId, {
+          onSettled: () => {
+            refetchBooking();
+            refetchInvoice();
+          },
+        });
+      }
+    };
+    const sub = AppState.addEventListener("change", handleAppStateChange);
+    return () => sub.remove();
+  }, [bookingId, refetchBooking, refetchInvoice]);
 
   // Sync shoot details when rental dates or booking details change
   useEffect(() => {
@@ -759,6 +781,11 @@ export default function PaymentPage() {
             </Text>
           </YStack>
         ) : (
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={hp(10)}
+          >
           <ScrollView
               flex={1}
               showsVerticalScrollIndicator={false}
@@ -845,6 +872,7 @@ export default function PaymentPage() {
                 <RentInfoBanner />
               </YStack>
             </ScrollView>
+          </KeyboardAvoidingView>
         )}
         {/* Animated Sticky Bottom */}
         {bookingDetails?.sku_items && bookingDetails.sku_items.length > 0 && (
@@ -859,34 +887,20 @@ export default function PaymentPage() {
               isOrganization={isOrganization}
               onContinue={handlePayNow}
               amount={bookingDetails?.total_amount}
-              isLoading={isPayingNow || paymentMutation.isPending}
+              isLoading={isPayingNow}
               isPartialPaymentLoading={isPartialPaymentLoading}
               onPartialPayment={
                 bookingDetails.admin_approval === "True"
                   ? async () => {
-                      setIsPartialPaymentLoading(true);
-                      const savedGSTIN = user?.GSTIN_no || "";
-                      paymentMutation.mutate(
-                        {
-                          paymentPayload: {
-                            payment_method: "razorpay",
-                            payment_type: "advanced",
-                            ...(savedGSTIN ? { gst_number: savedGSTIN } : {}),
-                          },
-                          booking_id: bookingId,
-                        },
-                        {
-                          onSuccess: async (data) => {
-                            if (data.payment_link) {
-                              await Linking.openURL(data.payment_link);
-                            }
-                            setIsPartialPaymentLoading(false);
-                          },
-                          onError: () => {
-                            setIsPartialPaymentLoading(false);
-                          },
-                        }
-                      );
+                      // Open the Razorpay invoice URL directly — it supports partial payment natively
+                      const invoiceUrl = invoiceData?.pdf_url;
+                      if (invoiceUrl) {
+                        setIsPartialPaymentLoading(true);
+                        await Linking.openURL(invoiceUrl);
+                        setIsPartialPaymentLoading(false);
+                      } else {
+                        Alert.alert("Invoice not ready", "Please wait for the invoice to be generated and try again.");
+                      }
                     }
                   : undefined
               }

@@ -233,70 +233,90 @@ interface BookingRejectedDialogProps {
 }
 
 export function BookingRejectedDialog({ isOpen, onClose }: BookingRejectedDialogProps) {
-  const handleGoHome = () => {
+  const handleGoBookings = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     onClose();
-    router.replace("/(tabs)/(home)");
+    router.replace("/(tabs)/(shoots)");
+  };
+
+  const handleDismiss = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onClose();
   };
 
   return (
-    <Modal visible={isOpen} transparent animationType="slide" statusBarTranslucent>
+    <Modal visible={isOpen} transparent animationType="none" statusBarTranslucent>
       <Animated.View
-        entering={FadeIn.duration(280)}
+        entering={FadeIn.duration(220)}
         style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,0,30,0.55)" }]}
       />
 
       <View style={styles.sheetContainer}>
         <Animated.View
-          entering={FadeInUp.duration(420).springify().damping(20).stiffness(120)}
-          style={styles.sheet}
+          entering={FadeInUp.duration(380).springify().damping(22).stiffness(130)}
         >
-          <View style={styles.handle} />
-
-          <View style={styles.iconRow}>
-            <View style={[styles.iconCircle, { backgroundColor: "#EF4444", width: wp(64), height: wp(64), borderRadius: wp(32), alignItems: "center", justifyContent: "center" }]}>
-              <Text style={{ fontSize: fp(26), color: "#fff" }}>✕</Text>
+          {/* Floating red X badge above card */}
+          <View style={rejStyles.badgeWrap}>
+            <View style={rejStyles.badge}>
+              <Text style={rejStyles.badgeX}>✕</Text>
             </View>
           </View>
 
-          <Text style={[styles.title, { color: "#EF4444" }]}>Booking{"\n"}Rejected</Text>
-
-          <Text style={styles.subtitle}>
-            Your booking request was not approved. This may be due to equipment unavailability.
-          </Text>
-
-          <View style={[styles.infoCard, { backgroundColor: "#FEF2F2" }]}>
-            <View style={styles.infoIconWrap}>
-              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                <Circle cx="12" cy="12" r="10" stroke="#EF4444" strokeWidth="2" />
-                <Path d="M12 8v4M12 16h.01" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" />
-              </Svg>
+          <View style={[styles.sheet, { gap: hp(16) }]}>
+            <View style={rejStyles.textGroup}>
+              <Text style={rejStyles.title}>Booking Not{"\n"}Approved!</Text>
+              <Text style={styles.subtitle}>
+                Your booking request has not been approved yet. Please wait for approval before proceeding with the payment.
+              </Text>
             </View>
-            <Text style={[styles.infoText, { color: "#EF4444" }]}>
-              No charges have been made. Please try again with different dates or items.
-            </Text>
-          </View>
 
-          <View style={styles.ctaGroup}>
-            <Pressable
-              onPress={handleGoHome}
-              style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }]}
-            >
-              <LinearGradient
-                colors={["#EF4444", "#DC2626"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.primaryGradient}
+            <View style={styles.ctaGroup}>
+              <Pressable
+                onPress={handleGoBookings}
+                style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }]}
               >
-                <Text style={styles.primaryText}>Back to Home</Text>
-              </LinearGradient>
-            </Pressable>
+                <LinearGradient
+                  colors={["#6D00DA", "#8E0FFF"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.primaryGradient}
+                >
+                  <Text style={styles.primaryText}>Back to Bookings</Text>
+                </LinearGradient>
+              </Pressable>
+
+              <Pressable
+                onPress={handleDismiss}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignItems: "center", paddingVertical: hp(12) })}
+              >
+                <Text style={rejStyles.okayText}>Okay, Got It</Text>
+              </Pressable>
+            </View>
           </View>
         </Animated.View>
       </View>
     </Modal>
   );
 }
+
+const rejStyles = StyleSheet.create({
+  badgeWrap: { alignItems: "center", marginBottom: -wp(32), zIndex: 10 },
+  badge: {
+    width: wp(72), height: wp(72), borderRadius: wp(36),
+    backgroundColor: "#E8194B",
+    alignItems: "center", justifyContent: "center",
+    shadowColor: "#E8194B", shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4, shadowRadius: 14, elevation: 12,
+    borderWidth: 4, borderColor: "#FFFFFF",
+  },
+  badgeX: { fontSize: fp(28), color: "#FFFFFF", fontWeight: "800" },
+  textGroup: { gap: hp(10), alignItems: "center" },
+  title: {
+    fontSize: fp(26), fontWeight: "800", color: "#E8194B",
+    textAlign: "center", letterSpacing: -0.5, lineHeight: hp(34),
+  },
+  okayText: { fontSize: fp(14), fontWeight: "500", color: "#9CA3AF" },
+});
 
 // ── Styles ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({

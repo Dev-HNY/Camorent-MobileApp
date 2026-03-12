@@ -3,8 +3,8 @@ import { useAuthStore } from "@/store/auth/auth";
 import { router } from "expo-router";
 
 // const BASE_URL = "https://1d2936043394.ngrok-free.app";
-const BASE_URL = "https://api.camorent.co.in";
 // const BASE_URL = "https://resplendent-chronometric-bridgett.ngrok-free.dev";
+const BASE_URL = "https://api.camorent.co.in";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -18,6 +18,10 @@ apiClient.interceptors.request.use((config) => {
     "/auth/confirm-signup",
     "/auth/refresh-token",
     "/auth/login",
+    "/auth/login-otp",
+    "/auth/verify-login-otp",
+    "/auth/signup-sms-otp",
+    "/auth/verify-signup-otp",
   ];
   const isAuthEndpoint = authEndpoints.some((endpoint) =>
     config.url?.includes(endpoint)
@@ -48,6 +52,10 @@ apiClient.interceptors.response.use(
       "/auth/login",
       "/auth/confirm-signup",
       "/auth/resend-code",
+      "/auth/login-otp",
+      "/auth/verify-login-otp",
+      "/auth/signup-sms-otp",
+      "/auth/verify-signup-otp",
     ];
     const isAuthEndpoint = authEndpoints.some((endpoint) =>
       original?.url?.includes(endpoint)

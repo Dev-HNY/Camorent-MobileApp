@@ -13,7 +13,7 @@ import { CartProgressIndicator } from "@/components/cart/CartProgressIndicator";
 import { Counter } from "@/components/ui/Counter";
 import { VerifiedIcon } from "@/components/ui/VerifiedIcon";
 import { Image } from "expo-image";
-import { Pressable, Keyboard } from "react-native";
+import { Pressable, Keyboard, Alert } from "react-native";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import {
@@ -75,6 +75,7 @@ export default function CrewSelectionPage() {
   const bookingMutation = useCreateDraftBooking();
   const handleProceedToPayment = () => {
     if (!rentalDates?.startDate || !rentalDates?.endDate) {
+      Alert.alert("Missing details", "Please select rental dates.");
       return;
     }
 
@@ -83,6 +84,15 @@ export default function CrewSelectionPage() {
     }
 
     if (!selectedAddress?.address_id) {
+      return;
+    }
+
+    if (!cartData?.crew_items || cartData.crew_items.length === 0) {
+      Alert.alert(
+        "Crew required",
+        "Please add at least one crew member to proceed with delivery.",
+        [{ text: "OK" }]
+      );
       return;
     }
 
@@ -428,7 +438,7 @@ function CrewCard({
           <XStack justifyContent="space-between" alignItems="center">
             <XStack gap={wp(4)} alignItems="baseline">
               <Text fontSize={fp(18)} fontWeight="700" color="#121217">
-                ₹{Math.round(crew.crew_price_0_12).toLocaleString()}
+                ₹{Math.round(parseFloat(String(crew.crew_price_0_12))).toLocaleString()}
               </Text>
               <Text fontSize={fp(12)} color="#9CA3AF">
                 per day

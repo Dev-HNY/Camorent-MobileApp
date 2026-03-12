@@ -130,6 +130,10 @@ export default function RootLayout() {
     "PlayfairDisplay-Bold": require("../assets/fonts/PlayfairDisplay-Bold.ttf"),
     "PlayfairDisplay-Italic": require("../assets/fonts/PlayfairDisplay-Italic.ttf"),
     "PlayfairDisplay-SemiBoldItalic": require("../assets/fonts/PlayfairDisplay-SemiBoldItalic.ttf"),
+    "Poppins-Regular": require("../assets/fonts/Poppins-Regular.ttf"),
+    "Poppins-Medium": require("../assets/fonts/Poppins-Medium.ttf"),
+    "Poppins-SemiBold": require("../assets/fonts/Poppins-SemiBold.ttf"),
+    "Poppins-Bold": require("../assets/fonts/Poppins-Bold.ttf"),
   });
 
   const [splashDone, setSplashDone] = useState(false);

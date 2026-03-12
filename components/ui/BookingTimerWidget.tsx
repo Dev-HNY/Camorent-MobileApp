@@ -343,52 +343,63 @@ function TruckScene() {
 
 // ─── Congrats modal ──────────────────────────────────────────────────────────
 function CongratsModal({ onDismiss }: { onDismiss: () => void }) {
-  const scale   = useRef(new Animated.Value(0.88)).current;
+  const slideY  = useRef(new Animated.Value(300)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.spring(scale,   { toValue: 1, friction: 7, tension: 55, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: 1, duration: 260, useNativeDriver: true }),
+      Animated.spring(slideY,  { toValue: 0, friction: 9, tension: 60, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
     ]).start();
   }, []);
 
   return (
     <Modal transparent animationType="none" statusBarTranslucent>
-      <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill}>
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(255,255,255,0.48)", opacity }]} />
+      <BlurView intensity={28} tint="dark" style={StyleSheet.absoluteFill}>
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.35)", opacity }]} />
         <View style={cm.sheet}>
-          <Animated.View style={{ transform: [{ scale }], opacity }}>
+          <Animated.View style={{ transform: [{ translateY: slideY }], opacity }}>
+            {/* Floating green checkmark badge above the card */}
+            <View style={cm.badgeWrap}>
+              <View style={cm.badge}>
+                <Text style={cm.badgeCheck}>✓</Text>
+              </View>
+            </View>
+
             <View style={cm.card}>
-              <LinearGradient colors={["#7C3AED", "#A855F7"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={cm.bar} />
               <View style={cm.content}>
-                <View style={cm.iconWrap}>
-                  <LinearGradient colors={["#7C3AED", "#A855F7"]} style={cm.iconGrad}>
-                    <Text style={cm.check}>✓</Text>
-                  </LinearGradient>
-                </View>
+                {/* Decorative large title text */}
                 <View style={cm.textGroup}>
-                  <Text style={cm.title}>Booking Approved!</Text>
-                  <Text style={cm.body}>Your booking has been approved. Proceed to pay and confirm your shoot.</Text>
+                  <Text style={cm.title}>Booking{"\n"}Approved!</Text>
+                  <Text style={cm.body}>
+                    Great news! Your booking has been approved by our team. Proceed to pay and confirm your shoot.
+                  </Text>
                 </View>
+
+                {/* Continue button — solid purple pill */}
                 <Pressable
-                  style={cm.btn}
+                  style={({ pressed }) => [cm.btn, pressed && { opacity: 0.88 }]}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                     onDismiss();
                   }}
                 >
                   <LinearGradient
-                    colors={["#7C3AED", "#A855F7"]}
+                    colors={["#6D00DA", "#8E0FFF"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={cm.btnGrad}
                   >
-                    <Text style={cm.btnText}>Continue to Pay</Text>
+                    <Text style={cm.btnText}>Continue</Text>
                   </LinearGradient>
                 </Pressable>
-                <Pressable onPress={onDismiss}>
-                  <Text style={cm.later}>I'll pay later</Text>
+
+                {/* I'll pay later — outlined pill */}
+                <Pressable
+                  style={({ pressed }) => [cm.laterBtn, pressed && { opacity: 0.7 }]}
+                  onPress={onDismiss}
+                >
+                  <Text style={cm.laterText}>I'll pay later</Text>
                 </Pressable>
               </View>
             </View>
@@ -668,28 +679,52 @@ const bw = StyleSheet.create({
 });
 
 const cm = StyleSheet.create({
-  sheet: { flex: 1, justifyContent: "flex-end", paddingBottom: hp(44) },
+  sheet: { flex: 1, justifyContent: "flex-end" },
+  // floating badge positioned above card
+  badgeWrap: { alignItems: "center", marginBottom: -wp(32), zIndex: 10 },
+  badge: {
+    width: wp(64), height: wp(64), borderRadius: wp(32),
+    backgroundColor: "#34C759",
+    alignItems: "center", justifyContent: "center",
+    shadowColor: "#34C759", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35, shadowRadius: 12, elevation: 10,
+    borderWidth: 4, borderColor: "#FFFFFF",
+  },
+  badgeCheck: { fontSize: fp(26), color: "#FFFFFF", fontWeight: "800" },
   card: {
-    marginHorizontal: wp(20),
-    borderRadius: wp(24),
+    marginHorizontal: wp(0),
+    borderTopLeftRadius: wp(24),
+    borderTopRightRadius: wp(24),
     backgroundColor: "#FFFFFF",
-    overflow: "hidden",
-    shadowColor: "#7C3AED",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 32,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
     elevation: 18,
   },
-  bar:     { height: hp(4) },
-  content: { padding: wp(28), gap: hp(20), alignItems: "center" },
+  content: {
+    paddingTop: wp(44),
+    paddingHorizontal: wp(24),
+    paddingBottom: hp(36),
+    gap: hp(14),
+    alignItems: "center",
+  },
+  textGroup: { gap: hp(10), alignItems: "center", width: "100%" },
+  title:     { fontSize: fp(28), fontWeight: "800", color: "#121217", textAlign: "center", letterSpacing: -0.6 },
+  body:      { fontSize: fp(14), color: "#6C6C89", textAlign: "center", lineHeight: hp(22) },
+  btn:       { width: "100%", borderRadius: wp(100), overflow: "hidden" },
+  btnGrad:   { paddingVertical: hp(16), alignItems: "center", borderRadius: wp(100) },
+  btnText:   { fontSize: fp(16), fontWeight: "700", color: "#FFFFFF", letterSpacing: 0.2 },
+  laterBtn: {
+    width: "100%", paddingVertical: hp(14),
+    borderRadius: wp(100), borderWidth: 1.5, borderColor: "rgba(110,0,218,0.25)",
+    alignItems: "center",
+  },
+  laterText: { fontSize: fp(14), fontWeight: "600", color: "#6D00DA" },
+  // keep unused legacy keys to avoid other reference errors
+  bar:       { height: hp(4) },
   iconWrap:  { width: wp(64), height: wp(64), borderRadius: wp(32), overflow: "hidden" },
   iconGrad:  { width: wp(64), height: wp(64), borderRadius: wp(32), alignItems: "center", justifyContent: "center" },
   check:     { fontSize: fp(28), color: "#FFFFFF", fontWeight: "700" },
-  textGroup: { gap: hp(8), alignItems: "center", width: "100%" },
-  title:     { fontSize: fp(20), fontWeight: "700", color: "#121217", textAlign: "center", letterSpacing: -0.4 },
-  body:      { fontSize: fp(14), color: "#6C6C89", textAlign: "center", lineHeight: hp(20) },
-  btn:       { width: "100%" },
-  btnGrad:   { borderRadius: wp(14), paddingVertical: hp(16), alignItems: "center" },
-  btnText:   { fontSize: fp(16), fontWeight: "700", color: "#FFFFFF" },
   later:     { fontSize: fp(13), color: "#9CA3AF", fontWeight: "500" },
 });

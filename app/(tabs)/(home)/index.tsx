@@ -648,7 +648,7 @@ export default function Home() {
 
           <OffersSection onViewAllPress={() => router.push("./offers")} />
 
-          {isLoadingDop ? (
+          {/* {isLoadingDop ? (
             <Spinner color="#8E0FFF" />
           ) : (
             <ProductListSection
@@ -657,9 +657,9 @@ export default function Home() {
               onViewAllPress={() => router.push("./selections")}
               onProductPress={handleProductPress}
             />
-          )}
+          )} */}
 
-          <RentNowCards />
+          {/* <RentNowCards /> */}
 
           <HowDoIRollSection />
 

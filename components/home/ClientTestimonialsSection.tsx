@@ -9,14 +9,13 @@ import bannerImage from "@/assets/images/testimoni-1.png";
 import clientImage from "@/assets/images/client-1.png";
 
 // Banner images — extracted PNGs from the SVG files (avoids SVG transformer overhead)
-const banner1 = require("@/assets/images/brands/banners/1.png");
-const banner2 = require("@/assets/images/brands/banners/2.png");
-const banner3 = require("@/assets/images/brands/banners/3.png");
-const banner4 = require("@/assets/images/brands/banners/4.png");
+const banner1 = require("@/assets/images/brands/banners/Home-1.png");
+const banner2 = require("@/assets/images/brands/banners/Home-2.png");
+const banner3 = require("@/assets/images/brands/banners/Home-3.png");
 
 const SCREEN_W = Dimensions.get("window").width;
-const BANNER_H_PX = hp(110);
-const BANNER_PAD = wp(2);
+const BANNER_H_PX = hp(140);
+const BANNER_PAD = wp(4);
 const BANNER_W = SCREEN_W - BANNER_PAD * 2;
 
 // --- Static data ---
@@ -25,8 +24,7 @@ const BANNER_W = SCREEN_W - BANNER_PAD * 2;
 const BANNERS = [
   { id: "b1", src: banner1 },
   { id: "b2", src: banner2 },
-  { id: "b3", src: banner3 },
-  { id: "b4", src: banner4 },
+  { id: "b3", src: banner3 }
 ];
 
 // Brand rows using SVG files. Duplicated for seamless infinite loop.
@@ -413,6 +411,9 @@ export function ClientTestimonialsSection() {
   return (
     <YStack gap={hp(28)}>
 
+      {/* 3. Banner carousel (brands/banners/1–4.svg) */}
+      <BannerCarousel />
+
       {/* 1. "Our clients" heading */}
       <YStack paddingHorizontal={wp(16)} alignItems="center">
         <Text fontSize={fp(16)} fontWeight="600" color="#121217" marginBottom={hp(4)}>
@@ -450,18 +451,17 @@ export function ClientTestimonialsSection() {
         </View>
       </View>
 
-      {/* 3. Banner carousel (brands/banners/1–4.svg) */}
-      <BannerCarousel />
+
 
       {/* 4. "What DOPs Say" title */}
-      <YStack gap={hp(10)} paddingHorizontal={wp(16)}>
+      {/* <YStack gap={hp(10)} paddingHorizontal={wp(16)}>
         <XStack justifyContent="space-between" alignItems="center">
           <Text fontSize={fp(16)} fontWeight="600" color="#121217">What DOPs Say About Us</Text>
         </XStack>
-      </YStack>
+      </YStack> */}
 
       {/* 5. Testimonial cards horizontal scroll */}
-      <ScrollView
+      {/* <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: wp(16), paddingBottom: hp(8) }}
@@ -471,7 +471,7 @@ export function ClientTestimonialsSection() {
         {TESTIMONIALS.map((t) => (
           <TestimonialCard key={t.id} t={t} />
         ))}
-      </ScrollView>
+      </ScrollView> */}
 
     </YStack>
   );

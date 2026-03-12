@@ -49,9 +49,9 @@ export default function SearchScreen() {
     }, 300);
   };
 
-  // Use the first word for server search (broader match), then filter client-side by all words
   const words = debouncedQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const serverQuery = words[0] ?? "";
+  // Send full query to server for best matching; use limit:200 to get broad results
+  const serverQuery = debouncedQuery.trim();
 
   const { data: searchData, isLoading: isLoadingProducts } = UseGetAllProducts(
     serverQuery
@@ -59,15 +59,19 @@ export default function SearchScreen() {
       : undefined
   );
 
-  // Client-side: every word must appear in name, brand, or tags
+  // Client-side scoring: rank results by how many words match (name/brand/tags)
   const allResults: SKU[] = (searchData?.data ?? []).filter((p: SKU) => {
-    if (words.length <= 1) return true; // single word — server already filtered
-    const haystack = [
-      p.name,
-      p.brand,
-      ...(p.tags ?? []),
-    ].join(" ").toLowerCase();
-    return words.every((w) => haystack.includes(w));
+    if (!words.length) return true;
+    const haystack = [p.name, p.brand, ...(p.tags ?? [])].join(" ").toLowerCase();
+    // Keep if ANY word matches (flexible), but boost results where all words match
+    return words.some((w) => haystack.includes(w));
+  }).sort((a: SKU, b: SKU) => {
+    // Sort: more matching words = higher rank
+    const score = (p: SKU) => {
+      const haystack = [p.name, p.brand, ...(p.tags ?? [])].join(" ").toLowerCase();
+      return words.filter((w) => haystack.includes(w)).length;
+    };
+    return score(b) - score(a);
   });
   const displayedResults = allResults.slice(0, visibleCount);
   const hasMore = visibleCount < allResults.length;
@@ -89,9 +93,11 @@ export default function SearchScreen() {
 
   const handleTrendingPress = (query: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
     setSearchQuery(query);
     setDebouncedQuery(query);
     setVisibleCount(PAGE_SIZE);
+    Keyboard.dismiss();
   };
 
   const handleClose = () => {
@@ -248,12 +254,22 @@ export default function SearchScreen() {
                     </XStack>
 
                     <YStack flex={1} gap={hp(2)}>
-                      <Text fontSize={fp(14)} fontWeight="500" color="#1C1C1E" numberOfLines={1}>
+                      <Text fontSize={fp(14)} fontWeight="600" color="#1C1C1E" numberOfLines={1}>
                         {product.name}
                       </Text>
-                      <Text fontSize={fp(12)} color="#8E8E93" numberOfLines={1}>
-                        {product.brand}
-                      </Text>
+                      <XStack alignItems="center" gap={wp(6)}>
+                        <Text fontSize={fp(12)} color="#8E8E93" numberOfLines={1}>
+                          {product.brand}
+                        </Text>
+                        {product.price_per_day && (
+                          <>
+                            <Text fontSize={fp(11)} color="#D1D5DB">·</Text>
+                            <Text fontSize={fp(12)} fontWeight="600" color="#8E0FFF">
+                              ₹{Number(product.price_per_day).toLocaleString("en-IN")}/day
+                            </Text>
+                          </>
+                        )}
+                      </XStack>
                     </YStack>
 
                     <ChevronRight size={16} color="#C7C7CC" strokeWidth={2} />

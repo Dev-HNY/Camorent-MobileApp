@@ -120,6 +120,26 @@ export function useVerifySignupOTP() {
   });
 }
 
+// ==================== LOGIN OTP HOOKS ====================
+
+export function useRequestLoginOTP() {
+  return useMutation({
+    mutationFn: async ({ phone_number }: { phone_number: string }) => {
+      const res = await apiClient.post("/auth/login-otp", { phone_number });
+      return res.data as { success: boolean; message: string; phone_number: string };
+    },
+  });
+}
+
+export function useVerifyLoginOTP() {
+  return useMutation({
+    mutationFn: async ({ phone_number, otp }: { phone_number: string; otp: string }) => {
+      const res = await apiClient.post("/auth/verify-login-otp", { phone_number, otp });
+      return res.data as { user: any; id_token: string; access_token: string; refresh_token: string; expires_in: number };
+    },
+  });
+}
+
 export function useResendSMSOTP() {
   return useMutation({
     mutationFn: async ({

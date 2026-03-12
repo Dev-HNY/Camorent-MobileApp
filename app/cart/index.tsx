@@ -19,7 +19,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { RefreshControl, Keyboard, TouchableWithoutFeedback, Pressable, Text as RNText, View, Alert } from "react-native";
+import { RefreshControl, Keyboard, Pressable, Text as RNText, View, Alert } from "react-native";
 import { Truck, MapPin } from "lucide-react-native";
 // import { CamocareSheet } from "@/components/PDP/CamocareSheet";
 // import { CartCamocare } from "@/components/cart/CartCamocare";
@@ -42,6 +42,8 @@ import { useRentalForm } from "@/hooks/useRentalForm";
 import { AddressSheet } from "@/components/cart/AddressSheet";
 import { BottomSheetButton } from "@/components/ui/BottomSheetButton";
 import { useUpdateBookingDelivery } from "@/hooks/delivery/useUpdateBookingDelivery";
+import { GSTSheet } from "@/components/cart/GSTSheet";
+import { useAuthStore } from "@/store/auth/auth";
 
 const WAREHOUSE_ADDRESS = {
   address_line1: "N-65, Gautam Nagar",
@@ -86,8 +88,10 @@ export default function Cart() {
     onRentalDatesChange: setRentalDates,
   });
 
+  const { user } = useAuthStore();
   const [showCancellationPolicy, setShowCancellationPolicy] = useState(false);
   const [showAddressSheet, setShowAddressSheet] = useState(false);
+  const [showGSTSheet, setShowGSTSheet] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   // const [showCamocareSheet, setShowCamocareSheet] = useState(false);
   const insets = useSafeAreaInsets();
@@ -192,8 +196,7 @@ export default function Cart() {
     setShowAddressSheet(false);
   };
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
       <YStack flex={1}>
           {/* Header - clean white */}
           <View>
@@ -284,6 +287,43 @@ export default function Cart() {
                       );
                     })}
                   </View>
+
+                  {/* GST Invoice button */}
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowGSTSheet(true);
+                    }}
+                    style={({ pressed }) => ({
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      borderRadius: wp(12),
+                      borderWidth: 1.5,
+                      borderColor: user?.GSTIN_no ? "#22C55E" : "#E5D5FF",
+                      backgroundColor: user?.GSTIN_no ? "#F0FDF4" : "#FAFAFA",
+                      paddingVertical: hp(10),
+                      paddingHorizontal: wp(12),
+                      opacity: pressed ? 0.8 : 1,
+                    })}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <RNText style={{ fontSize: 15 }}>🧾</RNText>
+                      <View>
+                        <RNText style={{ fontSize: 13, fontWeight: "600", color: user?.GSTIN_no ? "#15803D" : "#374151" }}>
+                          {user?.GSTIN_no ? "GST Invoice Added" : "Add GST Invoice"}
+                        </RNText>
+                        {user?.GSTIN_no ? (
+                          <RNText style={{ fontSize: 11, color: "#16A34A" }}>{user.GSTIN_no}</RNText>
+                        ) : (
+                          <RNText style={{ fontSize: 11, color: "#9CA3AF" }}>Tap to add your GSTIN</RNText>
+                        )}
+                      </View>
+                    </View>
+                    <RNText style={{ fontSize: 12, color: user?.GSTIN_no ? "#16A34A" : "#8E0FFF", fontWeight: "600" }}>
+                      {user?.GSTIN_no ? "Change" : "Add"}
+                    </RNText>
+                  </Pressable>
                 </>
               )}
               </YStack>
@@ -450,6 +490,10 @@ export default function Cart() {
           isOpen={showAddressSheet}
           onClose={() => setShowAddressSheet(false)}
           handleAddNewAddress={handleAddNewAddress}
+        />
+        <GSTSheet
+          open={showGSTSheet}
+          onOpenChange={setShowGSTSheet}
         />
         {/* Self-pickup: show warehouse info + continue directly */}
         {items.length > 0 && fulfillmentType === "self_pickup" && (
@@ -620,6 +664,5 @@ export default function Cart() {
         )}
       </YStack>
       </SafeAreaView>
-    </TouchableWithoutFeedback>
   );
 }

@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { YStack, XStack, Text } from "tamagui";
 import * as Linking from "expo-linking";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Pressable, StyleSheet } from "react-native";
+import { AppState, AppStateStatus, Pressable, StyleSheet } from "react-native";
+import { useCartStore } from "@/store/cart/cart";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,6 +22,7 @@ import { OrderStatusCard } from "@/components/shoots/OrderStatusCard";
 import { RatingCard } from "@/components/shoots/RatingCard";
 import { OrderItemCard } from "@/components/shoots/OrderItemCard";
 import { useGetBookingInvoice } from "@/hooks/shoots/useGetBookingInvoice";
+import { useSyncInvoiceStatus } from "@/hooks/shoots/useSyncInvoiceStatus";
 import * as Haptics from "expo-haptics";
 import { SkeletonOrderDetails } from "@/components/animations/SkeletonLoader";
 import { ChevronLeft, FileText } from "lucide-react-native";
@@ -30,16 +32,35 @@ export default function OrderDetailsPage() {
   const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
 
-  const { data: bookingDetails, isLoading: isLoadingBookingDetails, isError, error } =
+  const { data: bookingDetails, isLoading: isLoadingBookingDetails, isError, error, refetch: refetchBooking } =
     useGetBookingById(booking_id as string);
 
-  const { data: invoiceData, isLoading: isLoadingInvoice } = useGetBookingInvoice({
+  const { data: invoiceData, isLoading: isLoadingInvoice, refetch: refetchInvoice } = useGetBookingInvoice({
     bookingId: booking_id as string,
     invoice_id: bookingDetails?.invoice_id ?? "",
   });
 
   const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
   const [showCancelSheet, setShowCancelSheet] = useState(false);
+  const { setBookingId } = useCartStore();
+  const syncInvoice = useSyncInvoiceStatus();
+
+  // Sync invoice status from Razorpay + refetch when app returns to foreground
+  useEffect(() => {
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (nextState === "active" && booking_id) {
+        // First sync DB with live Razorpay status, then refetch to update UI
+        syncInvoice.mutate(booking_id as string, {
+          onSettled: () => {
+            refetchBooking();
+            refetchInvoice();
+          },
+        });
+      }
+    };
+    const sub = AppState.addEventListener("change", handleAppStateChange);
+    return () => sub.remove();
+  }, [booking_id, refetchBooking, refetchInvoice]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (e) => { scrollY.value = e.contentOffset.y; },
@@ -262,6 +283,24 @@ export default function OrderDetailsPage() {
             </YStack>
           </Animated.View>
 
+          {/* Pay Now — shown for admin_approved bookings with unpaid invoice */}
+          {bookingDetails.admin_approval === "True" && (bookingDetails.invoice_status === "created" || bookingDetails.invoice_status === "pending") && (
+            <Animated.View entering={FadeInDown.delay(showRatingCard ? 120 : 60).duration(280).springify().damping(20).stiffness(260)}>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setBookingId(booking_id as string);
+                  router.push("/checkout/payment");
+                }}
+                style={({ pressed }) => [styles.payNowBtn, { opacity: pressed ? 0.85 : 1 }]}
+              >
+                <Text fontSize={fp(16)} fontWeight="700" color="#FFFFFF">
+                  Complete Payment
+                </Text>
+              </Pressable>
+            </Animated.View>
+          )}
+
           {/* Support */}
           <Animated.View entering={FadeInDown.delay(showRatingCard ? 180 : 120).duration(280).springify().damping(20).stiffness(260)}>
             <YStack gap={hp(10)}>
@@ -330,6 +369,10 @@ const styles = StyleSheet.create({
     borderRadius: wp(8), backgroundColor: "#F5EEFF",
   },
   center: { flex: 1, justifyContent: "center", alignItems: "center", padding: wp(24) },
+  payNowBtn: {
+    backgroundColor: "#8E0FFF", borderRadius: wp(14),
+    paddingVertical: hp(16), alignItems: "center",
+  },
   card: {
     backgroundColor: "#FFFFFF", borderRadius: wp(14), overflow: "hidden",
     shadowColor: "#000", shadowOffset: { width: 0, height: 1 },
