@@ -16,6 +16,7 @@ const BRANDS = [
 
 interface BrandsSectionProps {
   onViewAllPress?: () => void;
+  onBrandPress?: (brandId: string) => void;
 }
 
 const BrandCell = memo(({ img }: { img: any }) => (
