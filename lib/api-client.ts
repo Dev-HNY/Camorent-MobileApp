@@ -3,8 +3,8 @@ import { useAuthStore } from "@/store/auth/auth";
 import { router } from "expo-router";
 
 // const BASE_URL = "https://1d2936043394.ngrok-free.app";
-const BASE_URL = "https://resplendent-chronometric-bridgett.ngrok-free.dev";
-// const BASE_URL = "https://api.camorent.co.in";
+// const BASE_URL = "https://resplendent-chronometric-bridgett.ngrok-free.dev";
+const BASE_URL = "https://api.camorent.co.in";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
