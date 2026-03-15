@@ -34,6 +34,7 @@ import { useRentalForm } from "@/hooks/useRentalForm";
 import { CrewCartItem } from "@/types/cart/cart";
 import { useUpdateBookingDelivery } from "@/hooks/delivery/useUpdateBookingDelivery";
 import { Button } from "@/components/ui/Button";
+import { useAuthStore } from "@/store/auth/auth";
 
 export default function CrewSelectionPage() {
   const {
@@ -43,7 +44,9 @@ export default function CrewSelectionPage() {
     setRentalDates,
     setShootName,
     selectedAddress,
+    gstEnabled,
   } = useCartStore();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const updateDeliveryMutation = useUpdateBookingDelivery();
   const { data: cartData } = useGetCart();
@@ -119,6 +122,7 @@ export default function CrewSelectionPage() {
       rental_start_date: formatDate(rentalDates.startDate),
       rental_end_date: formatDate(rentalDates.endDate),
       coupon_codes: [],
+      ...(gstEnabled && user?.GSTIN_no ? { gstin: user.GSTIN_no } : {}),
     };
 
     bookingMutation.mutate(draftBooking, {

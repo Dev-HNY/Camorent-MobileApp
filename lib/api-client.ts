@@ -3,8 +3,8 @@ import { useAuthStore } from "@/store/auth/auth";
 import { router } from "expo-router";
 
 // const BASE_URL = "https://1d2936043394.ngrok-free.app";
-// const BASE_URL = "https://resplendent-chronometric-bridgett.ngrok-free.dev";
-const BASE_URL = "https://api.camorent.co.in";
+const BASE_URL = "https://resplendent-chronometric-bridgett.ngrok-free.dev";
+// const BASE_URL = "https://api.camorent.co.in";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -37,7 +37,7 @@ apiClient.interceptors.request.use((config) => {
 
 const handleAuthenticationFailure = () => {
   useAuthStore.getState().clearAuth();
-  router.replace("/(auth)/signup");
+  router.replace("/(auth)/login");
 };
 
 apiClient.interceptors.response.use(
@@ -77,17 +77,17 @@ apiClient.interceptors.response.use(
         // console.log(" Calling refresh token endpoint...");
         const { data } = await axios.post(`${BASE_URL}/auth/refresh-token`, {
           refresh_token: refresh_token,
-          phone_number: user?.phone_number,
         });
 
-        // console.log(" Refresh successful, updating tokens");
+        // new backend returns access_token; normalize to id_token for store
+        const newToken = data.access_token ?? data.id_token;
         useAuthStore.getState().setAuth({
           user: user!,
-          id_token: data.id_token,
-          refresh_token,
+          id_token: newToken,
+          refresh_token: data.refresh_token ?? refresh_token,
         });
 
-        original.headers.Authorization = `Bearer ${data.id_token}`;
+        original.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(original);
       } catch (error) {
         handleAuthenticationFailure();

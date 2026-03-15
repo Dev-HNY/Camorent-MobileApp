@@ -15,10 +15,6 @@ import {
   Platform,
   RefreshControl,
   View,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  ActivityIndicator,
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import * as Linking from "expo-linking";
@@ -44,7 +40,6 @@ import { AdminApprovalDialog, BookingRejectedDialog } from "@/components/checkou
 import { useBookingTimerStore } from "@/store/bookingTimer/bookingTimer";
 import { PaymentDetails } from "@/components/checkout/PaymentDetails";
 import { BillingSummary } from "@/components/checkout/BillingSummary";
-import { PromocodeSection } from "@/components/checkout/PromocodeSection";
 import { RentInfoBanner } from "@/components/checkout/RentInfoCards";
 import { ShootSettingsManager } from "@/components/checkout/ShootSettingsManager";
 import {
@@ -54,429 +49,62 @@ import {
   isDateAfterOrEqual,
 } from "@/utils/booking/dateFormatters";
 import { formatBookingPaymentData } from "@/utils/booking/bookingDataFormatters";
-import { useUpdateUserProfile } from "@/hooks/auth/useUpdateUserProfile";
-import { useVerifyGST } from "@/hooks/verifications/useVerifyGST";
-import { LinearGradient } from "expo-linear-gradient";
-import Svg, { Path, Polyline } from "react-native-svg";
+import Svg, { Path, Line } from "react-native-svg";
 
-// ─── GSTIN regex (same as onboarding) ────────────────────────────────────────
-const GST_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{3}$/;
-
-// ─── GSTSection ───────────────────────────────────────────────────────────────
-interface GSTSectionProps {
-  initialGSTIN: string;
-}
-
-function GSTSection({ initialGSTIN }: GSTSectionProps) {
-  const [enabled, setEnabled] = useState(!!initialGSTIN);
-  const [gstin, setGstin] = useState(initialGSTIN || "");
-  const [verifiedOrgName, setVerifiedOrgName] = useState<string | null>(null);
-  const [isSaved, setIsSaved] = useState(!!initialGSTIN);
-  const [inputError, setInputError] = useState("");
-
-  const { updateUser } = useAuthStore();
-  const verifyMutation = useVerifyGST();
-  const updateProfileMutation = useUpdateUserProfile();
-
-  useEffect(() => {
-    if (initialGSTIN) {
-      setGstin(initialGSTIN);
-      setEnabled(true);
-      setIsSaved(true);
-    }
-  }, [initialGSTIN]);
-
-  const handleToggle = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const next = !enabled;
-    setEnabled(next);
-    if (!next) {
-      setInputError("");
-      verifyMutation.reset();
-    }
-  };
-
-  const handleChange = (text: string) => {
-    const upper = text.toUpperCase();
-    setGstin(upper);
-    setIsSaved(false);
-    setInputError("");
-    verifyMutation.reset();
-    setVerifiedOrgName(null);
-    // Auto-verify when 15 valid chars entered
-    if (upper.length === 15 && GST_REGEX.test(upper)) {
-      verifyMutation.mutate(
-        { gstin: upper },
-        {
-          onSuccess: (data: any) => {
-            if (data?.legal_name) {
-              setVerifiedOrgName(data.legal_name);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            }
-          },
-        }
-      );
-    }
-  };
-
-  const handleSave = () => {
-    const trimmed = gstin.trim();
-    if (!trimmed || trimmed.length !== 15 || !GST_REGEX.test(trimmed)) {
-      setInputError("Invalid GSTIN format (e.g. 29ABCDE1234F1Z5)");
-      return;
-    }
-    if (!verifyMutation.isSuccess) {
-      setInputError("Please wait for GSTIN verification");
-      return;
-    }
-    updateProfileMutation.mutate(
-      {
-        first_name: "", // required by type; backend merges existing values
-        GSTIN_no: trimmed,
-        ...(verifiedOrgName ? { org_name: verifiedOrgName } : {}),
-      },
-      {
-        onSuccess: (data) => {
-          updateUser(data as any);
-          setIsSaved(true);
-          setInputError("");
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        },
-        onError: () => {
-          setInputError("Failed to save GSTIN. Please try again.");
-        },
-      }
-    );
-  };
-
-  const isVerifying = verifyMutation.isPending;
-  const isVerified = verifyMutation.isSuccess;
-  const verifyFailed = verifyMutation.isError;
-  const isSaving = updateProfileMutation.isPending;
-  const canSave = isVerified && !isSaved && !isSaving;
-
+// ─── GSTStatusRow — read-only indicator synced to cart store toggle ───────────
+function GSTStatusRow({ gstin, orgName }: { gstin: string; orgName?: string }) {
+  const { gstEnabled } = useCartStore();
+  if (!gstin) return null;
   return (
-    <View style={gstStyles.card}>
-      {/* Header — toggle row */}
-      <Pressable onPress={handleToggle} style={gstStyles.headerRow}>
-        <View style={gstStyles.labelGroup}>
-          <View style={gstStyles.iconWrap}>
-            <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                stroke="#8E0FFF"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <Polyline
-                points="14 2 14 8 20 8"
-                stroke="#8E0FFF"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <Path
-                d="M9 13h6M9 17h4"
-                stroke="#8E0FFF"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </Svg>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={gstStyles.title}>GST Invoice</Text>
-            <Text style={gstStyles.subtitle} numberOfLines={1}>
-              {isSaved && gstin
-                ? `GSTIN: ${gstin}`
-                : "Avail GST invoice for this booking"}
-            </Text>
-          </View>
-        </View>
-        <View style={[gstStyles.toggle, enabled && gstStyles.toggleOn]}>
-          <View style={[gstStyles.thumb, enabled && gstStyles.thumbOn]} />
-        </View>
-      </Pressable>
-
-      {/* Expanded area */}
-      {enabled && (
-        <View style={gstStyles.inputArea}>
-          <View style={gstStyles.divider} />
-
-          <View style={gstStyles.inputRow}>
-            <TextInput
-              style={[
-                gstStyles.input,
-                inputError ? gstStyles.inputError : null,
-                isVerified ? gstStyles.inputVerified : null,
-              ]}
-              value={gstin}
-              onChangeText={handleChange}
-              placeholder="Enter 15-digit GSTIN"
-              placeholderTextColor="#9CA3AF"
-              autoCapitalize="characters"
-              maxLength={15}
-              returnKeyType="done"
-              editable={!isSaved}
-            />
-
-            {/* Status / action on the right */}
-            {isVerifying || isSaving ? (
-              // Spinner for both verifying and saving states
-              <View style={[gstStyles.statusWrap, isSaving && { borderColor: "#8E0FFF", backgroundColor: "#F5EDFF" }]}>
-                <ActivityIndicator size="small" color="#8E0FFF" />
-              </View>
-            ) : isSaved ? (
-              <View style={[gstStyles.statusWrap, gstStyles.statusSaved]}>
-                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-                  <Path
-                    d="M20 6L9 17l-5-5"
-                    stroke="#22C55E"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </Svg>
-              </View>
-            ) : (
-              <Pressable
-                onPress={handleSave}
-                disabled={!canSave}
-                style={({ pressed }) => [
-                  gstStyles.saveBtn,
-                  !canSave && gstStyles.saveBtnDisabled,
-                  pressed && { opacity: 0.82 },
-                ]}
-              >
-                <LinearGradient
-                  colors={["#8E0FFF", "#6D00DA"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={gstStyles.saveBtnGrad}
-                >
-                  <Text style={gstStyles.saveBtnText}>Save</Text>
-                </LinearGradient>
-              </Pressable>
-            )}
-          </View>
-
-          {/* Feedback messages */}
-          {!!inputError && <Text style={gstStyles.errorText}>{inputError}</Text>}
-          {isVerifying && <Text style={gstStyles.hintText}>Verifying GSTIN…</Text>}
-          {isVerified && !isSaved && (
-            <Text style={[gstStyles.hintText, { color: "#22C55E" }]}>
-              ✓ GSTIN verified — tap Save to apply to this booking
-            </Text>
-          )}
-          {verifyFailed && (
-            <Text style={gstStyles.errorText}>
-              {(verifyMutation.error as any)?.response?.data?.message ||
-                "GSTIN verification failed. Please check the number."}
-            </Text>
-          )}
-
-          {/* Verified org name */}
-          {isVerified && verifiedOrgName && (
-            <View style={gstStyles.orgCard}>
-              <Text style={gstStyles.orgLabel}>Organisation Name</Text>
-              <Text style={gstStyles.orgName}>{verifiedOrgName}</Text>
-            </View>
-          )}
-
-          {/* Change GSTIN link */}
-          {isSaved && (
-            <Pressable
-              onPress={() => {
-                setIsSaved(false);
-                verifyMutation.reset();
-                setVerifiedOrgName(null);
-              }}
-              hitSlop={8}
-            >
-              <Text style={gstStyles.changeLink}>Change GSTIN</Text>
-            </Pressable>
-          )}
-
-          {!isSaved && (
-            <Text style={gstStyles.hintText}>
-              Your GSTIN will be saved to your profile and sent to the payment gateway.
-            </Text>
-          )}
+    <View style={{
+      flexDirection: "row", alignItems: "center", gap: wp(10),
+      backgroundColor: gstEnabled ? "#F0FDF4" : "#FAFAFA",
+      borderRadius: wp(14), borderWidth: 1,
+      borderColor: gstEnabled ? "#86EFAC" : "#E5D5FF",
+      paddingVertical: hp(12), paddingHorizontal: wp(14),
+    }}>
+      <View style={{
+        width: wp(34), height: wp(34), borderRadius: wp(10),
+        backgroundColor: gstEnabled ? "#DCFCE7" : "#F5EDFF",
+        alignItems: "center", justifyContent: "center",
+      }}>
+        <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+          <Path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1V2l-2 1-2-1-2 1-2-1-2 1-2-1z"
+            stroke={gstEnabled ? "#16A34A" : "#8E0FFF"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <Line x1="8" y1="9" x2="16" y2="9" stroke={gstEnabled ? "#16A34A" : "#8E0FFF"} strokeWidth="1.8" strokeLinecap="round" />
+          <Line x1="8" y1="13" x2="16" y2="13" stroke={gstEnabled ? "#16A34A" : "#8E0FFF"} strokeWidth="1.8" strokeLinecap="round" />
+          <Line x1="8" y1="17" x2="12" y2="17" stroke={gstEnabled ? "#16A34A" : "#8E0FFF"} strokeWidth="1.8" strokeLinecap="round" />
+        </Svg>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: fp(13), fontWeight: "600", color: gstEnabled ? "#15803D" : "#374151" }}>
+          GST Invoice {gstEnabled ? "Enabled" : "Disabled"}
+        </Text>
+        <Text style={{ fontSize: fp(11), color: gstEnabled ? "#16A34A" : "#9CA3AF" }} numberOfLines={1}>
+          {gstin}{orgName ? ` · ${orgName}` : ""}
+        </Text>
+      </View>
+      {gstEnabled && (
+        <View style={{
+          width: wp(22), height: wp(22), borderRadius: wp(11),
+          backgroundColor: "#DCFCE7", alignItems: "center", justifyContent: "center",
+        }}>
+          <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+            <Path d="M20 6L9 17l-5-5" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
         </View>
       )}
     </View>
   );
 }
 
-const gstStyles = StyleSheet.create({
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: wp(16),
-    borderWidth: 1,
-    borderColor: "#F3F0FF",
-    overflow: "hidden",
-    shadowColor: "#8E0FFF",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: wp(16),
-    paddingVertical: hp(14),
-  },
-  labelGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: wp(10),
-    flex: 1,
-    marginRight: wp(12),
-  },
-  iconWrap: {
-    width: wp(34),
-    height: wp(34),
-    borderRadius: wp(10),
-    backgroundColor: "#F5EDFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: fp(14),
-    fontWeight: "600",
-    color: "#121217",
-    letterSpacing: -0.2,
-  },
-  subtitle: {
-    fontSize: fp(11.5),
-    color: "#8E0FFF",
-    marginTop: hp(1),
-    fontWeight: "500",
-  },
-  toggle: {
-    width: wp(44),
-    height: wp(26),
-    borderRadius: wp(13),
-    backgroundColor: "#E5E7EB",
-    justifyContent: "center",
-    paddingHorizontal: wp(3),
-  },
-  toggleOn: { backgroundColor: "#8E0FFF" },
-  thumb: {
-    width: wp(20),
-    height: wp(20),
-    borderRadius: wp(10),
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
-    alignSelf: "flex-start",
-  },
-  thumbOn: { alignSelf: "flex-end" },
-  inputArea: {
-    paddingHorizontal: wp(16),
-    paddingBottom: hp(14),
-    gap: hp(8),
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#F3F0FF",
-    marginBottom: hp(2),
-  },
-  inputRow: {
-    flexDirection: "row",
-    gap: wp(10),
-    alignItems: "center",
-  },
-  input: {
-    flex: 1,
-    height: hp(44),
-    borderWidth: 1.5,
-    borderColor: "#E5D5FF",
-    borderRadius: wp(10),
-    paddingHorizontal: wp(12),
-    fontSize: fp(13.5),
-    color: "#121217",
-    backgroundColor: "#FAFAFA",
-    letterSpacing: 1,
-    fontWeight: "600",
-  },
-  inputError: { borderColor: "#EF4444" },
-  inputVerified: { borderColor: "#22C55E", backgroundColor: "#F0FDF4" },
-  statusWrap: {
-    width: wp(44),
-    height: hp(44),
-    borderRadius: wp(10),
-    borderWidth: 1.5,
-    borderColor: "#E5D5FF",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FAFAFA",
-  },
-  statusSaved: { borderColor: "#22C55E", backgroundColor: "#F0FDF4" },
-  saveBtn: {
-    borderRadius: wp(10),
-    overflow: "hidden",
-    height: hp(44),
-    minWidth: wp(64),
-  },
-  saveBtnDisabled: { opacity: 0.45 },
-  saveBtnGrad: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: wp(14),
-  },
-  saveBtnText: {
-    fontSize: fp(13),
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  errorText: {
-    fontSize: fp(11.5),
-    color: "#EF4444",
-  },
-  hintText: {
-    fontSize: fp(11.5),
-    color: "#9CA3AF",
-    lineHeight: hp(16),
-  },
-  orgCard: {
-    backgroundColor: "#F0FDF4",
-    borderWidth: 1,
-    borderColor: "#22C55E",
-    borderRadius: wp(10),
-    padding: wp(12),
-    gap: hp(3),
-  },
-  orgLabel: {
-    fontSize: fp(11),
-    color: "#6C6C89",
-    fontWeight: "500",
-  },
-  orgName: {
-    fontSize: fp(13.5),
-    fontWeight: "700",
-    color: "#121217",
-  },
-  changeLink: {
-    fontSize: fp(12),
-    color: "#8E0FFF",
-    fontWeight: "600",
-  },
-});
-
 export default function PaymentPage() {
   const {
-    items,
     summary,
     rentalDates,
     shootName: storeShootName,
     calculateRentalDays,
+    gstEnabled,
   } = useCartStore();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
@@ -497,7 +125,8 @@ export default function PaymentPage() {
   // Start as false — the useEffect opens it once booking data confirms pending status
   const [showAdminApprovalDialog, setShowAdminApprovalDialog] =
     useState<boolean>(false);
-  const [isPromoApplied, setIsPromoApplied] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isPromoApplied, setIsPromoApplied] = useState(false); // reserved for promo code feature
   const [isPayingNow, setIsPayingNow] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -631,14 +260,13 @@ export default function PaymentPage() {
 
   const handlePayNow = async () => {
     setIsPayingNow(true);
-    const savedGSTIN = user?.GSTIN_no || "";
 
     paymentMutation.mutate(
       {
         paymentPayload: {
           payment_method: "razorpay",
           payment_type: "final",
-          ...(savedGSTIN ? { gst_number: savedGSTIN } : {}),
+          ...(gstEnabled && user?.GSTIN_no ? { gst_number: user.GSTIN_no } : {}),
         },
         booking_id: bookingId,
       },
@@ -711,6 +339,7 @@ export default function PaymentPage() {
       rental_start_date: formatDateForBackend(tempStartDate),
       rental_end_date: formatDateForBackend(tempEndDate),
       coupon_codes: [],
+      ...(gstEnabled && user?.GSTIN_no ? { gstin: user.GSTIN_no } : {}),
     };
     setShowShootSettings(false);
 
@@ -729,7 +358,7 @@ export default function PaymentPage() {
           queryKey: ["bookings", response.booking_id],
         });
       },
-      onError: (error) => {
+      onError: () => {
       },
     });
   };
@@ -867,7 +496,7 @@ export default function PaymentPage() {
                   }}
                 />
 
-                <GSTSection initialGSTIN={user?.GSTIN_no || ""} />
+                <GSTStatusRow gstin={user?.GSTIN_no || ""} orgName={user?.org_name} />
 
                 <RentInfoBanner />
               </YStack>

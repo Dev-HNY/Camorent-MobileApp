@@ -635,6 +635,8 @@ export default function Home() {
             />
           )}
 
+          <OffersSection onViewAllPress={() => router.push("./offers")} />
+
           {/* <FanCarouselSection /> */}
 
           <ClientTestimonialsSection />
@@ -645,8 +647,6 @@ export default function Home() {
           />
 
           {/* <ProjectsDeliveredSection /> */}
-
-          <OffersSection onViewAllPress={() => router.push("./offers")} />
 
           {/* {isLoadingDop ? (
             <Spinner color="#8E0FFF" />

@@ -2,56 +2,54 @@ import React, { memo } from "react";
 import { XStack, YStack, Text } from "tamagui";
 import { Image } from "expo-image";
 import { wp, fp, hp } from "@/utils/responsive";
-import { useGetBrands } from "@/hooks/CDP/useGetBrands";
-import { Pressable, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { View, Pressable } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 
+const BRANDS = [
+  { id: "sony",    img: require("@/assets/images/brands/sony.png") },
+  { id: "canon",   img: require("@/assets/images/brands/canaon.png") },
+  { id: "aputure", img: require("@/assets/images/brands/aputure.png") },
+  { id: "dji",     img: require("@/assets/images/brands/dji.png") },
+  { id: "nanlux",  img: require("@/assets/images/brands/nanlux.png") },
+  { id: "gopro",   img: require("@/assets/images/brands/gopro.png") },
+];
+
 interface BrandsSectionProps {
-  onBrandPress?: (brand: string) => void;
   onViewAllPress?: () => void;
 }
 
-const BrandCell = memo(({ brand, onPress, borderRight, borderBottom }: {
-  brand: { id: string; name: string };
-  onPress: () => void;
-  borderRight?: boolean;
-  borderBottom?: boolean;
-}) => (
-  <Pressable
-    onPress={onPress}
+const BrandCell = memo(({ img }: { img: any }) => (
+  <View
     style={{
       flex: 1,
       height: hp(76),
-      backgroundColor: "#FFFFFF",
+      backgroundColor: "#FAFAFA",
       alignItems: "center",
       justifyContent: "center",
-      padding: wp(16),
-      borderRightWidth: borderRight ? 1 : 0,
-      borderBottomWidth: borderBottom ? 1 : 0,
-      borderColor: "#EBEBEF",
+      padding: wp(12),
+      borderRadius: wp(10),
+      shadowColor: "#121217",
+      shadowOffset: { width: 2, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 4,
+      elevation: 4,
     }}
   >
     <Image
-      source={{ uri: `https://img.camorent.co.in/brands/images/${brand.id}/primary.webp` }}
+      source={img}
       contentFit="contain"
       cachePolicy="memory-disk"
       style={{ width: "100%", height: "100%", maxWidth: wp(80), maxHeight: hp(44) }}
     />
-  </Pressable>
+  </View>
 ));
 
 BrandCell.displayName = "BrandCell";
 
-export function BrandsSection({ onBrandPress, onViewAllPress }: BrandsSectionProps) {
-  const { data: brandsData } = useGetBrands();
-  const brands = (brandsData || [])
-    .filter((b: { id: string; name: string }) => b.id !== "blackmagic")
-    .slice(0, 6);
+const row1 = BRANDS.slice(0, 3);
+const row2 = BRANDS.slice(3, 6);
 
-  const row1 = brands.slice(0, 3);
-  const row2 = brands.slice(3, 6);
-
+export function BrandsSection({ onViewAllPress }: BrandsSectionProps) {
   return (
     <YStack gap={hp(20)} paddingHorizontal={wp(16)}>
       {/* Header */}
@@ -66,56 +64,19 @@ export function BrandsSection({ onBrandPress, onViewAllPress }: BrandsSectionPro
         </Pressable>
       </XStack>
 
-      {/* Grid with gradient fade on left/right edges (borders appear to dissolve) */}
-      <View style={{ position: "relative" }}>
-        <View style={{ borderWidth: 1, borderColor: "#EBEBEF", borderRadius: wp(12), overflow: "hidden" }}>
-          <XStack>
-            {row1.map((brand: { id: string; name: string }, i: number) => (
-              <BrandCell
-                key={brand.id}
-                brand={brand}
-                onPress={() => onBrandPress?.(brand.name)}
-                borderRight={i < 2}
-                borderBottom
-              />
-            ))}
-          </XStack>
-          <XStack>
-            {row2.map((brand: { id: string; name: string }, i: number) => (
-              <BrandCell
-                key={brand.id}
-                brand={brand}
-                onPress={() => onBrandPress?.(brand.name)}
-                borderRight={i < 2}
-              />
-            ))}
-          </XStack>
-        </View>
-        {/* Left */}
-        <LinearGradient
-          colors={["#ffffff", "rgba(255,255,255,0)"]}
-          start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
-          style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: wp(32), pointerEvents: "none" }}
-        />
-        {/* Right */}
-        <LinearGradient
-          colors={["rgba(255,255,255,0)", "#ffffff"]}
-          start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
-          style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: wp(32), pointerEvents: "none" }}
-        />
-        {/* Top */}
-        <LinearGradient
-          colors={["#ffffff", "rgba(255,255,255,0)"]}
-          start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
-          style={{ position: "absolute", top: 0, left: 0, right: 0, height: hp(24), pointerEvents: "none" }}
-        />
-        {/* Bottom */}
-        <LinearGradient
-          colors={["rgba(255,255,255,0)", "#ffffff"]}
-          start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
-          style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: hp(24), pointerEvents: "none" }}
-        />
-      </View>
+      {/* Grid — individual shadow cards with gap */}
+      <YStack gap={wp(10)}>
+        <XStack gap={wp(10)}>
+          {row1.map((b) => (
+            <BrandCell key={b.id} img={b.img} />
+          ))}
+        </XStack>
+        <XStack gap={wp(10)}>
+          {row2.map((b) => (
+            <BrandCell key={b.id} img={b.img} />
+          ))}
+        </XStack>
+      </YStack>
     </YStack>
   );
 }

@@ -159,7 +159,7 @@ export default function Info() {
   };
 
   if (!user) {
-    return <Redirect href={"/(auth)/signup"} />;
+    return <Redirect href={"/(auth)/login"} />;
   }
 
   if (isVerified && isCitySelected) {
@@ -258,36 +258,40 @@ export default function Info() {
               />
 
               {/* Profession Field */}
-              <Controller
-                control={control}
-                name="profession"
-                render={({ field: { onChange, value } }) => (
-                  <AnimatedDropdown
-                    label="Select Your Profession *"
-                    value={value || ""}
-                    options={professionOptions}
-                    onValueChange={onChange}
-                    placeholder="Choose your role"
-                    error={errors.profession?.message}
-                  />
-                )}
-              />
+              <YStack zIndex={20}>
+                <Controller
+                  control={control}
+                  name="profession"
+                  render={({ field: { onChange, value } }) => (
+                    <AnimatedDropdown
+                      label="Select Your Profession *"
+                      value={value || ""}
+                      options={professionOptions}
+                      onValueChange={onChange}
+                      placeholder="Choose your role"
+                      error={errors.profession?.message}
+                    />
+                  )}
+                />
+              </YStack>
 
               {/* User Type Field */}
-              <Controller
-                control={control}
-                name="userType"
-                render={({ field: { onChange, value } }) => (
-                  <AnimatedDropdown
-                    label="Select User Type *"
-                    value={value || ""}
-                    options={userTypeOptions}
-                    onValueChange={onChange}
-                    placeholder="Individual or Organisation"
-                    error={errors.userType?.message}
-                  />
-                )}
-              />
+              <YStack zIndex={10}>
+                <Controller
+                  control={control}
+                  name="userType"
+                  render={({ field: { onChange, value } }) => (
+                    <AnimatedDropdown
+                      label="Select User Type *"
+                      value={value || ""}
+                      options={userTypeOptions}
+                      onValueChange={onChange}
+                      placeholder="Individual or Organisation"
+                      error={errors.userType?.message}
+                    />
+                  )}
+                />
+              </YStack>
 
               {/* GSTIN Field - Only for Organisation */}
               {userType === "organisation" && (

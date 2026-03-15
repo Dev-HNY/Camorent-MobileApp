@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
-import Svg, { Path, Polyline } from "react-native-svg";
+import Svg, { Path, Line } from "react-native-svg";
 import { useAuthStore } from "@/store/auth/auth";
 import { useVerifyGST } from "@/hooks/verifications/useVerifyGST";
 import { useUpdateUserProfile } from "@/hooks/auth/useUpdateUserProfile";
@@ -24,35 +24,48 @@ interface GSTSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Receipt SVG icon
+function ReceiptIcon({ color = "#8E0FFF", size = 20 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1V2l-2 1-2-1-2 1-2-1-2 1-2-1z"
+        stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <Line x1="8" y1="9" x2="16" y2="9" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Line x1="8" y1="13" x2="16" y2="13" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Line x1="8" y1="17" x2="12" y2="17" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 export function GSTSheet({ open, onOpenChange }: GSTSheetProps) {
   const { user, updateUser } = useAuthStore();
   const insets = useSafeAreaInsets();
 
-  const initialGSTIN = user?.GSTIN_no || "";
-  const [gstin, setGstin] = useState(initialGSTIN);
+  // "saved" = viewing existing GSTIN, "editing" = input mode
+  const [mode, setMode] = useState<"saved" | "editing">("editing");
+  const [gstin, setGstin] = useState("");
   const [verifiedOrgName, setVerifiedOrgName] = useState<string | null>(null);
-  const [isSaved, setIsSaved] = useState(!!initialGSTIN);
   const [inputError, setInputError] = useState("");
 
   const verifyMutation = useVerifyGST();
   const updateProfileMutation = useUpdateUserProfile();
 
-  // Sync if user's GSTIN changes from outside
-  useEffect(() => {
-    if (initialGSTIN) {
-      setGstin(initialGSTIN);
-      setIsSaved(true);
-    }
-  }, [initialGSTIN]);
-
-  // Reset state when sheet opens
+  // Reset on open
   useEffect(() => {
     if (open) {
-      const saved = user?.GSTIN_no || "";
-      setGstin(saved);
-      setIsSaved(!!saved);
+      const savedGSTIN = user?.GSTIN_no || "";
+      if (savedGSTIN) {
+        setMode("saved");
+        setGstin(savedGSTIN);
+        setVerifiedOrgName(user?.org_name || null);
+      } else {
+        setMode("editing");
+        setGstin("");
+        setVerifiedOrgName(null);
+      }
       setInputError("");
-      setVerifiedOrgName(null);
       verifyMutation.reset();
     }
   }, [open]);
@@ -60,7 +73,6 @@ export function GSTSheet({ open, onOpenChange }: GSTSheetProps) {
   const handleChange = (text: string) => {
     const upper = text.toUpperCase();
     setGstin(upper);
-    setIsSaved(false);
     setInputError("");
     verifyMutation.reset();
     setVerifiedOrgName(null);
@@ -99,11 +111,10 @@ export function GSTSheet({ open, onOpenChange }: GSTSheetProps) {
       {
         onSuccess: (data) => {
           updateUser(data as any);
-          setIsSaved(true);
+          setMode("saved");
           setInputError("");
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          // Close sheet after short delay so user sees the saved state
-          setTimeout(() => onOpenChange(false), 600);
+          setTimeout(() => onOpenChange(false), 500);
         },
         onError: () => {
           setInputError("Failed to save GSTIN. Please try again.");
@@ -119,7 +130,7 @@ export function GSTSheet({ open, onOpenChange }: GSTSheetProps) {
         onSuccess: (data) => {
           updateUser(data as any);
           setGstin("");
-          setIsSaved(false);
+          setMode("editing");
           setInputError("");
           verifyMutation.reset();
           setVerifiedOrgName(null);
@@ -133,7 +144,8 @@ export function GSTSheet({ open, onOpenChange }: GSTSheetProps) {
   const isVerified = verifyMutation.isSuccess;
   const verifyFailed = verifyMutation.isError;
   const isSaving = updateProfileMutation.isPending;
-  const canSave = isVerified && !isSaved && !isSaving;
+  const isRemoving = updateProfileMutation.isPending && mode === "saved";
+  const canSave = isVerified && !isSaving;
 
   return (
     <Sheet
@@ -165,136 +177,162 @@ export function GSTSheet({ open, onOpenChange }: GSTSheetProps) {
         {/* Header */}
         <XStack alignItems="center" gap={wp(10)} marginBottom={hp(20)}>
           <View style={s.iconWrap}>
-            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                stroke="#8E0FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              />
-              <Polyline
-                points="14 2 14 8 20 8"
-                stroke="#8E0FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              />
-              <Path
-                d="M9 13h6M9 17h4"
-                stroke="#8E0FFF" strokeWidth="2" strokeLinecap="round"
-              />
-            </Svg>
+            <ReceiptIcon color="#8E0FFF" size={20} />
           </View>
           <YStack flex={1}>
             <Text fontSize={fp(16)} fontWeight="700" color="#121217" letterSpacing={-0.2}>
               GST Invoice
             </Text>
             <Text fontSize={fp(12)} color="#8E0FFF" fontWeight="500" marginTop={hp(1)}>
-              {isSaved && gstin ? `GSTIN: ${gstin}` : "Add GSTIN for a GST invoice on this booking"}
+              {mode === "saved" && gstin ? `GSTIN: ${gstin}` : "Add GSTIN for a GST invoice on this booking"}
             </Text>
           </YStack>
         </XStack>
 
-        {/* Input row */}
-        <View style={s.inputRow}>
-          <TextInput
-            style={[
-              s.input,
-              inputError ? s.inputError : null,
-              isVerified ? s.inputVerified : null,
-              isSaved ? s.inputSaved : null,
-            ]}
-            value={gstin}
-            onChangeText={handleChange}
-            placeholder="Enter 15-digit GSTIN"
-            placeholderTextColor="#9CA3AF"
-            autoCapitalize="characters"
-            maxLength={15}
-            returnKeyType="done"
-            onSubmitEditing={handleSave}
-            editable={!isSaved && !isSaving}
-            autoFocus={!isSaved}
-          />
-
-          {isVerifying || isSaving ? (
-            <View style={[s.statusWrap, isSaving && { borderColor: "#8E0FFF", backgroundColor: "#F5EDFF" }]}>
-              <ActivityIndicator size="small" color="#8E0FFF" />
+        {mode === "saved" ? (
+          /* ── Saved view ── */
+          <YStack gap={hp(16)}>
+            {/* GSTIN display card */}
+            <View style={s.savedCard}>
+              <XStack alignItems="center" justifyContent="space-between">
+                <YStack gap={hp(3)} flex={1}>
+                  <Text fontSize={fp(11)} color="#6C6C89" fontWeight="500">GSTIN</Text>
+                  <Text fontSize={fp(15)} fontWeight="700" color="#16A34A" letterSpacing={1}>
+                    {gstin}
+                  </Text>
+                  {verifiedOrgName ? (
+                    <Text fontSize={fp(12)} color="#374151" fontWeight="500" marginTop={hp(2)}>
+                      {verifiedOrgName}
+                    </Text>
+                  ) : null}
+                </YStack>
+                {/* Green check */}
+                <View style={s.checkWrap}>
+                  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                    <Path d="M20 6L9 17l-5-5" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </View>
+              </XStack>
             </View>
-          ) : isSaved ? (
-            <View style={[s.statusWrap, s.statusSaved]}>
-              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                <Path d="M20 6L9 17l-5-5" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
-            </View>
-          ) : (
-            <Pressable
-              onPress={handleSave}
-              disabled={!canSave}
-              style={({ pressed }) => [s.saveBtn, !canSave && s.saveBtnDisabled, pressed && { opacity: 0.82 }]}
-            >
-              <LinearGradient
-                colors={["#8E0FFF", "#6D00DA"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={s.saveBtnGrad}
-              >
-                <Text style={s.saveBtnText}>Save</Text>
-              </LinearGradient>
-            </Pressable>
-          )}
-        </View>
 
-        {/* Feedback */}
-        {!!inputError && (
-          <Text fontSize={fp(12)} color="#EF4444" marginTop={hp(6)}>{inputError}</Text>
-        )}
-        {isVerifying && (
-          <Text fontSize={fp(12)} color="#9CA3AF" marginTop={hp(6)}>Verifying GSTIN…</Text>
-        )}
-        {isVerified && !isSaved && (
-          <Text fontSize={fp(12)} color="#22C55E" marginTop={hp(6)}>
-            ✓ GSTIN verified — tap Save to apply
-          </Text>
-        )}
-        {verifyFailed && (
-          <Text fontSize={fp(12)} color="#EF4444" marginTop={hp(6)}>
-            {(verifyMutation.error as any)?.response?.data?.message || "GSTIN verification failed. Check the number."}
-          </Text>
-        )}
-
-        {/* Verified org name card */}
-        {isVerified && verifiedOrgName && (
-          <View style={s.orgCard}>
-            <Text fontSize={fp(11)} color="#6C6C89" fontWeight="500">Organisation Name</Text>
-            <Text fontSize={fp(14)} fontWeight="700" color="#121217">{verifiedOrgName}</Text>
-          </View>
-        )}
-
-        {/* Actions row */}
-        <XStack gap={wp(10)} marginTop={hp(20)}>
-          {isSaved ? (
-            <>
+            {/* Actions */}
+            <XStack gap={wp(10)}>
               <Pressable
-                onPress={() => { setIsSaved(false); verifyMutation.reset(); setVerifiedOrgName(null); }}
+                onPress={() => { setMode("editing"); verifyMutation.reset(); setVerifiedOrgName(null); }}
                 style={({ pressed }) => [s.outlineBtn, { opacity: pressed ? 0.7 : 1 }]}
               >
                 <Text fontSize={fp(14)} fontWeight="600" color="#8E0FFF">Change GSTIN</Text>
               </Pressable>
               <Pressable
                 onPress={handleRemove}
-                disabled={isSaving}
+                disabled={isRemoving}
                 style={({ pressed }) => [s.outlineBtn, s.removeBtn, { opacity: pressed ? 0.7 : 1 }]}
               >
-                {isSaving
+                {isRemoving
                   ? <ActivityIndicator size="small" color="#EF4444" />
                   : <Text fontSize={fp(14)} fontWeight="600" color="#EF4444">Remove</Text>
                 }
               </Pressable>
-            </>
-          ) : (
+            </XStack>
+
             <Pressable
               onPress={() => onOpenChange(false)}
-              style={({ pressed }) => [s.outlineBtn, { opacity: pressed ? 0.7 : 1, flex: 1 }]}
+              style={({ pressed }) => [s.doneBtn, { opacity: pressed ? 0.85 : 1 }]}
+            >
+              <Text fontSize={fp(15)} fontWeight="700" color="#FFFFFF">Done</Text>
+            </Pressable>
+          </YStack>
+        ) : (
+          /* ── Input / editing view ── */
+          <YStack gap={hp(4)}>
+            {/* Input row */}
+            <View style={s.inputRow}>
+              <TextInput
+                style={[
+                  s.input,
+                  inputError ? s.inputError : null,
+                  isVerified ? s.inputVerified : null,
+                ]}
+                value={gstin}
+                onChangeText={handleChange}
+                placeholder="Enter 15-digit GSTIN"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="characters"
+                maxLength={15}
+                returnKeyType="done"
+                onSubmitEditing={handleSave}
+                editable={!isSaving}
+                autoFocus
+              />
+
+              {isVerifying || isSaving ? (
+                <View style={[s.statusWrap, isSaving && { borderColor: "#8E0FFF", backgroundColor: "#F5EDFF" }]}>
+                  <ActivityIndicator size="small" color="#8E0FFF" />
+                </View>
+              ) : (
+                <Pressable
+                  onPress={handleSave}
+                  disabled={!canSave}
+                  style={({ pressed }) => [s.saveBtn, !canSave && s.saveBtnDisabled, pressed && { opacity: 0.82 }]}
+                >
+                  <LinearGradient
+                    colors={["#8E0FFF", "#6D00DA"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={s.saveBtnGrad}
+                  >
+                    <Text style={s.saveBtnText}>Save</Text>
+                  </LinearGradient>
+                </Pressable>
+              )}
+            </View>
+
+            {/* Feedback */}
+            {!!inputError && (
+              <Text fontSize={fp(12)} color="#EF4444" marginTop={hp(4)}>{inputError}</Text>
+            )}
+            {isVerifying && (
+              <Text fontSize={fp(12)} color="#9CA3AF" marginTop={hp(4)}>Verifying GSTIN…</Text>
+            )}
+            {isVerified && (
+              <Text fontSize={fp(12)} color="#22C55E" marginTop={hp(4)}>
+                ✓ GSTIN verified — tap Save to apply
+              </Text>
+            )}
+            {verifyFailed && (
+              <Text fontSize={fp(12)} color="#EF4444" marginTop={hp(4)}>
+                {(verifyMutation.error as any)?.response?.data?.message || "GSTIN verification failed. Check the number."}
+              </Text>
+            )}
+
+            {/* Verified org name card */}
+            {isVerified && verifiedOrgName && (
+              <View style={s.orgCard}>
+                <Text fontSize={fp(11)} color="#6C6C89" fontWeight="500">Organisation Name</Text>
+                <Text fontSize={fp(14)} fontWeight="700" color="#121217">{verifiedOrgName}</Text>
+              </View>
+            )}
+
+            {/* Cancel */}
+            <Pressable
+              onPress={() => {
+                if (user?.GSTIN_no) {
+                  // Go back to saved view if there's an existing GSTIN
+                  setMode("saved");
+                  setGstin(user.GSTIN_no);
+                  setVerifiedOrgName(user.org_name || null);
+                  verifyMutation.reset();
+                  setInputError("");
+                } else {
+                  onOpenChange(false);
+                }
+              }}
+              style={({ pressed }) => [s.outlineBtn, { marginTop: hp(12), opacity: pressed ? 0.7 : 1 }]}
             >
               <Text fontSize={fp(14)} fontWeight="600" color="#6B7280">Cancel</Text>
             </Pressable>
-          )}
-        </XStack>
+          </YStack>
+        )}
       </Sheet.Frame>
     </Sheet>
   );
@@ -308,6 +346,14 @@ const s = StyleSheet.create({
     width: wp(40), height: wp(40), borderRadius: wp(12),
     backgroundColor: "#F5EDFF", alignItems: "center", justifyContent: "center",
   },
+  savedCard: {
+    backgroundColor: "#F0FDF4", borderWidth: 1, borderColor: "#86EFAC",
+    borderRadius: wp(14), padding: wp(14),
+  },
+  checkWrap: {
+    width: wp(36), height: wp(36), borderRadius: wp(18),
+    backgroundColor: "#DCFCE7", alignItems: "center", justifyContent: "center",
+  },
   inputRow: {
     flexDirection: "row", gap: wp(10), alignItems: "center",
   },
@@ -320,13 +366,11 @@ const s = StyleSheet.create({
   },
   inputError: { borderColor: "#EF4444" },
   inputVerified: { borderColor: "#22C55E", backgroundColor: "#F0FDF4" },
-  inputSaved: { borderColor: "#22C55E", backgroundColor: "#F0FDF4", color: "#16A34A" },
   statusWrap: {
     width: wp(48), height: hp(48), borderRadius: wp(12),
     borderWidth: 1.5, borderColor: "#E5D5FF",
     alignItems: "center", justifyContent: "center", backgroundColor: "#FAFAFA",
   },
-  statusSaved: { borderColor: "#22C55E", backgroundColor: "#F0FDF4" },
   saveBtn: {
     borderRadius: wp(12), overflow: "hidden", height: hp(48), minWidth: wp(70),
   },
@@ -336,7 +380,7 @@ const s = StyleSheet.create({
   },
   saveBtnText: { fontSize: fp(14), fontWeight: "700", color: "#FFFFFF" },
   orgCard: {
-    marginTop: hp(12), backgroundColor: "#F0FDF4",
+    marginTop: hp(8), backgroundColor: "#F0FDF4",
     borderWidth: 1, borderColor: "#22C55E", borderRadius: wp(12), padding: wp(12), gap: hp(3),
   },
   outlineBtn: {
@@ -345,4 +389,8 @@ const s = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   removeBtn: { borderColor: "#FEE2E2", backgroundColor: "#FFF5F5" },
+  doneBtn: {
+    backgroundColor: "#8E0FFF", borderRadius: wp(12),
+    paddingVertical: hp(14), alignItems: "center", justifyContent: "center",
+  },
 });

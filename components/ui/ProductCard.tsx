@@ -154,7 +154,7 @@ function ProductCardComponent({
                   position: "absolute",
                   top: hp(-1),
                   left: wp(-2),
-                  backgroundColor: "#FFCC00",
+                  backgroundColor: "#F4EAFE",
                   borderBottomRightRadius: wp(5),
                   // borderBottomLeftRadius:0,
                   // borderTopRightRadius:5,
@@ -163,7 +163,7 @@ function ProductCardComponent({
                   zIndex: 10,
                 }}
               >
-                <Text fontSize={fp(9)} fontWeight="700" color="#121217">
+                <Text fontSize={fp(9)} fontWeight="700" color="#500696">
                   Exclusive
                 </Text>
               </View>

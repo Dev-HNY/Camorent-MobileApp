@@ -20,6 +20,12 @@ import { ChevronLeft, ChevronRight, LogOut, Edit2 } from "lucide-react-native";
 import { Image } from "expo-image";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
 interface MenuItem {
   icon: any;
   label: string;
@@ -97,12 +103,6 @@ export default function Index() {
   };
 
   const menuItems: MenuItem[] = [
-    {
-      icon: require("@/assets/profile/email.svg"),
-      label: currentUser?.email || "girtika@gmail.com",
-      onPress: () => {},
-      showChevron: false,
-    },
     {
       icon: require("@/assets/profile/phone.svg"),
       label: currentUser?.phone_number || "+91 9758577153",
@@ -240,24 +240,23 @@ export default function Index() {
                 >
                   {/* Left: Avatar + Info */}
                   <XStack alignItems="center" gap={wp(12)} flex={1}>
-                    {/* Profile Picture - Circular */}
+                    {/* Profile Avatar — Initials */}
                     <YStack
                       width={wp(64)}
                       height={hp(64)}
                       borderRadius={wp(32)}
-                      backgroundColor="#F0F0F0"
-                      overflow="hidden"
-                      shadowColor="#000000"
+                      backgroundColor="#7B2CBF"
+                      alignItems="center"
+                      justifyContent="center"
+                      shadowColor="#320163"
                       shadowOffset={{ width: 0, height: 2 }}
-                      shadowOpacity={0.1}
-                      shadowRadius={4}
-                      elevation={2}
+                      shadowOpacity={0.22}
+                      shadowRadius={6}
+                      elevation={3}
                     >
-                      <Image
-                        source={require("@/assets/images/adaptive-icon.png")}
-                        style={{ width: "100%", height: "100%" }}
-                        contentFit="cover"
-                      />
+                      <Text fontSize={fp(22)} fontWeight="700" color="#FFFFFF" lineHeight={hp(26)}>
+                        {getInitials(displayName)}
+                      </Text>
                     </YStack>
 
                     {/* User Info */}

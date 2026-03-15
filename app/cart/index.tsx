@@ -19,8 +19,9 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
-import { RefreshControl, Keyboard, Pressable, Text as RNText, View, Alert } from "react-native";
+import { RefreshControl, Keyboard, Pressable, Switch, Text as RNText, View, Alert } from "react-native";
 import { Truck, MapPin } from "lucide-react-native";
+import Svg, { Path, Line } from "react-native-svg";
 // import { CamocareSheet } from "@/components/PDP/CamocareSheet";
 // import { CartCamocare } from "@/components/cart/CartCamocare";
 import { fp, hp, wp } from "@/utils/responsive";
@@ -45,6 +46,20 @@ import { useUpdateBookingDelivery } from "@/hooks/delivery/useUpdateBookingDeliv
 import { GSTSheet } from "@/components/cart/GSTSheet";
 import { useAuthStore } from "@/store/auth/auth";
 
+function ReceiptIcon({ color = "#8E0FFF", size = 18 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1V2l-2 1-2-1-2 1-2-1-2 1-2-1z"
+        stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <Line x1="8" y1="9" x2="16" y2="9" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Line x1="8" y1="13" x2="16" y2="13" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Line x1="8" y1="17" x2="12" y2="17" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 const WAREHOUSE_ADDRESS = {
   address_line1: "N-65, Gautam Nagar",
   address_line2: "",
@@ -68,6 +83,8 @@ export default function Cart() {
     fulfillmentType,
     setFulfillmentType,
     setSelectedAddress,
+    gstEnabled,
+    setGstEnabled,
   } = useCartStore();
   const queryClient = useQueryClient();
   const bookingMutation = useCreateDraftBooking();
@@ -129,6 +146,7 @@ export default function Cart() {
       rental_start_date: formatDate(rentalDates.startDate),
       rental_end_date: formatDate(rentalDates.endDate),
       coupon_codes: [],
+      ...(gstEnabled && user?.GSTIN_no ? { gstin: user.GSTIN_no } : {}),
     };
 
     setIsPickupLoading(true);
@@ -198,136 +216,20 @@ export default function Cart() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }}>
       <YStack flex={1}>
-          {/* Header - clean white */}
+          {/* Header - fixed top bar: back button + progress only */}
           <View>
             <YStack
               paddingTop={hp(12)}
-              paddingBottom={hp(16)}
+              paddingBottom={hp(12)}
               backgroundColor="#FFFFFF"
               borderBottomWidth={1}
               borderBottomColor="#F2F2F7"
             >
-              <YStack>
-                <InsideScreenHeader />
+              <InsideScreenHeader />
+              <YStack paddingHorizontal={wp(16)} paddingTop={hp(12)}>
+                <CartProgressIndicator currentStep={"cart"} />
               </YStack>
-
-                <YStack paddingHorizontal={wp(16)} paddingTop={hp(16)} gap={hp(8)}>
-                  <CartProgressIndicator currentStep={"cart"} />
-              {items.length > 0 && (
-                <>
-                  <Controller
-                    control={control}
-                    name="shootName"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <ShootNameField
-                        value={value}
-                        onChangeText={(text) => {
-                          onChange(text);
-                          handleShootNameChange(text);
-                        }}
-                        onBlur={onBlur}
-                        error={errors.shootName?.message}
-                      />
-                    )}
-                  />
-                  <YStack gap={hp(4)}>
-                    <DateRangePicker
-                      startDate={selectedDateRange?.startDate}
-                      endDate={selectedDateRange?.endDate}
-                      onDateRangeChange={handleDateRangeChange}
-                    />
-                    {errors.rentalDates && (
-                      <Text fontSize={12} color="#EF4444">
-                        {typeof errors.rentalDates.message === "string"
-                          ? errors.rentalDates.message
-                          : "Please select rental start and end dates"}
-                      </Text>
-                    )}
-                  </YStack>
-
-                  {/* Fulfillment selector */}
-                  <View style={{ flexDirection: "row", gap: wp(8) }}>
-                    {(["delivery", "self_pickup"] as const).map((type) => {
-                      const isSelected = fulfillmentType === type;
-                      const isDelivery = type === "delivery";
-                      return (
-                        <Pressable
-                          key={type}
-                          style={{ flex: 1 }}
-                          onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            setFulfillmentType(type);
-                          }}
-                        >
-                          <View style={{
-                            borderRadius: wp(12),
-                            borderWidth: 1.5,
-                            borderColor: isSelected ? "#8E0FFF" : "#E5E7EB",
-                            backgroundColor: isSelected ? "#F5EDFF" : "#FAFAFA",
-                            paddingVertical: wp(10),
-                            paddingHorizontal: wp(12),
-                            gap: 4,
-                          }}>
-                            {/* Icon + title on one line */}
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                              {isDelivery
-                                ? <Truck size={15} color={isSelected ? "#8E0FFF" : "#6B7280"} strokeWidth={2} />
-                                : <MapPin size={15} color={isSelected ? "#8E0FFF" : "#6B7280"} strokeWidth={2} />
-                              }
-                              <RNText style={{ fontSize: 13, fontWeight: "600", color: isSelected ? "#8E0FFF" : "#374151" }}>
-                                {isDelivery ? "Delivery" : "Self Pickup"}
-                              </RNText>
-                            </View>
-                            {/* Subtitle */}
-                            <RNText style={{ fontSize: 11, color: isSelected ? "#9B59B6" : "#9CA3AF" }}>
-                              {isDelivery ? "Deliver to my address" : "N-65, Gautam Nagar, Delhi"}
-                            </RNText>
-                          </View>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-
-                  {/* GST Invoice button */}
-                  <Pressable
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setShowGSTSheet(true);
-                    }}
-                    style={({ pressed }) => ({
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      borderRadius: wp(12),
-                      borderWidth: 1.5,
-                      borderColor: user?.GSTIN_no ? "#22C55E" : "#E5D5FF",
-                      backgroundColor: user?.GSTIN_no ? "#F0FDF4" : "#FAFAFA",
-                      paddingVertical: hp(10),
-                      paddingHorizontal: wp(12),
-                      opacity: pressed ? 0.8 : 1,
-                    })}
-                  >
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <RNText style={{ fontSize: 15 }}>🧾</RNText>
-                      <View>
-                        <RNText style={{ fontSize: 13, fontWeight: "600", color: user?.GSTIN_no ? "#15803D" : "#374151" }}>
-                          {user?.GSTIN_no ? "GST Invoice Added" : "Add GST Invoice"}
-                        </RNText>
-                        {user?.GSTIN_no ? (
-                          <RNText style={{ fontSize: 11, color: "#16A34A" }}>{user.GSTIN_no}</RNText>
-                        ) : (
-                          <RNText style={{ fontSize: 11, color: "#9CA3AF" }}>Tap to add your GSTIN</RNText>
-                        )}
-                      </View>
-                    </View>
-                    <RNText style={{ fontSize: 12, color: user?.GSTIN_no ? "#16A34A" : "#8E0FFF", fontWeight: "600" }}>
-                      {user?.GSTIN_no ? "Change" : "Add"}
-                    </RNText>
-                  </Pressable>
-                </>
-              )}
-              </YStack>
-          </YStack>
+            </YStack>
           </View>
 
           <Animated.ScrollView
@@ -352,6 +254,151 @@ export default function Cart() {
               />
             }
           >
+            {/* Shoot name, dates, fulfillment, GST — scrolls with content */}
+            {items.length > 0 && (
+              <YStack gap={hp(8)} marginBottom={hp(12)}>
+                <Controller
+                  control={control}
+                  name="shootName"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <ShootNameField
+                      value={value}
+                      onChangeText={(text) => {
+                        onChange(text);
+                        handleShootNameChange(text);
+                      }}
+                      onBlur={onBlur}
+                      error={errors.shootName?.message}
+                    />
+                  )}
+                />
+                <YStack gap={hp(4)}>
+                  <DateRangePicker
+                    startDate={selectedDateRange?.startDate}
+                    endDate={selectedDateRange?.endDate}
+                    onDateRangeChange={handleDateRangeChange}
+                  />
+                  {errors.rentalDates && (
+                    <Text fontSize={12} color="#EF4444">
+                      {typeof errors.rentalDates.message === "string"
+                        ? errors.rentalDates.message
+                        : "Please select rental start and end dates"}
+                    </Text>
+                  )}
+                </YStack>
+
+                {/* Fulfillment selector */}
+                <View style={{ flexDirection: "row", gap: wp(8) }}>
+                  {(["delivery", "self_pickup"] as const).map((type) => {
+                    const isSelected = fulfillmentType === type;
+                    const isDelivery = type === "delivery";
+                    return (
+                      <Pressable
+                        key={type}
+                        style={{ flex: 1 }}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setFulfillmentType(type);
+                        }}
+                      >
+                        <View style={{
+                          borderRadius: wp(12), borderWidth: 1.5,
+                          borderColor: isSelected ? "#8E0FFF" : "#E5E7EB",
+                          backgroundColor: isSelected ? "#F5EDFF" : "#FAFAFA",
+                          paddingVertical: wp(10), paddingHorizontal: wp(12), gap: 4,
+                        }}>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                            {isDelivery
+                              ? <Truck size={15} color={isSelected ? "#8E0FFF" : "#6B7280"} strokeWidth={2} />
+                              : <MapPin size={15} color={isSelected ? "#8E0FFF" : "#6B7280"} strokeWidth={2} />
+                            }
+                            <RNText style={{ fontSize: 13, fontWeight: "600", color: isSelected ? "#8E0FFF" : "#374151" }}>
+                              {isDelivery ? "Delivery" : "Self Pickup"}
+                            </RNText>
+                          </View>
+                          <RNText style={{ fontSize: 11, color: isSelected ? "#9B59B6" : "#9CA3AF" }}>
+                            {isDelivery ? "Deliver to my address" : "N-65, Gautam Nagar, Delhi"}
+                          </RNText>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                {/* GST Invoice row */}
+                {user?.GSTIN_no ? (
+                  <View style={{
+                    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                    borderRadius: wp(12), borderWidth: 1.5,
+                    borderColor: gstEnabled ? "#22C55E" : "#E5D5FF",
+                    backgroundColor: gstEnabled ? "#F0FDF4" : "#FAFAFA",
+                    paddingVertical: hp(10), paddingHorizontal: wp(12),
+                  }}>
+                    <Pressable
+                      style={{ flexDirection: "row", alignItems: "center", gap: wp(8), flex: 1 }}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setShowGSTSheet(true);
+                      }}
+                    >
+                      <View style={{
+                        width: wp(32), height: wp(32), borderRadius: wp(8),
+                        backgroundColor: gstEnabled ? "#DCFCE7" : "#F5EDFF",
+                        alignItems: "center", justifyContent: "center",
+                      }}>
+                        <ReceiptIcon color={gstEnabled ? "#16A34A" : "#8E0FFF"} size={18} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <RNText style={{ fontSize: fp(13), fontWeight: "600", color: gstEnabled ? "#15803D" : "#374151" }}>
+                          GST Invoice
+                        </RNText>
+                        <RNText style={{ fontSize: fp(11), color: gstEnabled ? "#16A34A" : "#9CA3AF" }} numberOfLines={1}>
+                          {user.GSTIN_no} · {user.org_name || "Tap to view"}
+                        </RNText>
+                      </View>
+                    </Pressable>
+                    <Switch
+                      value={gstEnabled}
+                      onValueChange={(val) => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setGstEnabled(val);
+                      }}
+                      trackColor={{ false: "#E5E7EB", true: "#86EFAC" }}
+                      thumbColor={gstEnabled ? "#16A34A" : "#9CA3AF"}
+                    />
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowGSTSheet(true);
+                    }}
+                    style={({ pressed }) => ({
+                      flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                      borderRadius: wp(12), borderWidth: 1.5,
+                      borderColor: "#E5D5FF", backgroundColor: "#FAFAFA",
+                      paddingVertical: hp(10), paddingHorizontal: wp(12),
+                      opacity: pressed ? 0.8 : 1,
+                    })}
+                  >
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: wp(8) }}>
+                      <View style={{
+                        width: wp(32), height: wp(32), borderRadius: wp(8),
+                        backgroundColor: "#F5EDFF", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <ReceiptIcon color="#8E0FFF" size={18} />
+                      </View>
+                      <View>
+                        <RNText style={{ fontSize: fp(13), fontWeight: "600", color: "#374151" }}>Add GST Invoice</RNText>
+                        <RNText style={{ fontSize: fp(11), color: "#9CA3AF" }}>Save GSTIN for tax invoice</RNText>
+                      </View>
+                    </View>
+                    <RNText style={{ fontSize: fp(12), color: "#8E0FFF", fontWeight: "600" }}>Add →</RNText>
+                  </Pressable>
+                )}
+              </YStack>
+            )}
+
             {isLoading ? (
               <YStack gap={hp(12)} marginTop={hp(8)}>
                 {[1, 2].map((i) => (

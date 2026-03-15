@@ -8,6 +8,7 @@ import { View } from "react-native";
 
 const footericons = [icons.footer1, icons.footer2, icons.footer3];
 
+const footerBanner = require("@/assets/new/footer/footer.svg");
 const trusted1 = require("@/assets/new/footer/trusted-1.svg");
 const trusted2 = require("@/assets/new/footer/trusted-2.svg");
 const powered1 = require("@/assets/new/footer/powered-1.svg");
@@ -92,6 +93,7 @@ function TrustedBySection() {
 export function Footer() {
   return (
     <YStack>
+
       <YStack gap={hp(16)} paddingHorizontal={wp(16)}>
         <XStack>
           <Text fontSize={fp(18)} fontWeight="800" color="#121217">Rent Smart with Camorent</Text>
@@ -146,6 +148,13 @@ export function Footer() {
       </YStack>
 
       <TrustedBySection />
+            {/* Full-width footer banner image */}
+      <Image
+        source={footerBanner}
+        contentFit="cover"
+        style={{ width: "100%", aspectRatio: 360 / 274 }}
+        cachePolicy="memory-disk"
+      />
     </YStack>
   );
 }

@@ -3,13 +3,12 @@ import { XStack, YStack, Spinner, Text } from "tamagui";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ChevronLeft, Camera, User, Mail, Briefcase, Phone, Building2, CreditCard, FileText } from "lucide-react-native";
+import { ChevronLeft, User, Mail, Briefcase, Phone, Building2, CreditCard, FileText } from "lucide-react-native";
 import { router } from "expo-router";
 import { fp, hp, wp } from "@/utils/responsive";
 import { useGetCurrentUser, useUpdateUserProfile } from "@/hooks/auth";
 import { useEffect, useState } from "react";
-import { Pressable, TouchableOpacity, View, TextInput, StyleSheet, ActivityIndicator } from "react-native";
-import { Image } from "expo-image";
+import { Pressable, View, TextInput, StyleSheet, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { AnimatedInput } from "@/components/ui/AnimatedInput";
 import { AnimatedDropdown } from "@/components/ui/AnimatedDropdown";
@@ -19,6 +18,16 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useVerifyGST } from "@/hooks/verifications/useVerifyGST";
 import { useAuthStore } from "@/store/auth/auth";
 import Svg, { Path } from "react-native-svg";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const getInitials = (firstName: string, lastName: string) => {
+  const f = (firstName || "").trim();
+  const l = (lastName || "").trim();
+  if (f && l) return (f.charAt(0) + l.charAt(0)).toUpperCase();
+  if (f) return f.charAt(0).toUpperCase();
+  return "?";
+};
 
 // ─── GSTIN regex ──────────────────────────────────────────────────────────────
 const GST_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{3}$/;
@@ -390,65 +399,25 @@ export default function EditProfileScreen() {
         enableResetScrollToCoords={false}
       >
         <YStack gap={hp(24)}>
-          {/* Profile Photo Section */}
+          {/* Profile Avatar — Initials */}
           <YStack alignItems="center" paddingTop={hp(8)}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={{
-                position: "relative",
-              }}
+            <YStack
+              width={wp(120)}
+              height={hp(120)}
+              borderRadius={wp(60)}
+              backgroundColor="#7B2CBF"
+              alignItems="center"
+              justifyContent="center"
+              shadowColor="#320163"
+              shadowOffset={{ width: 0, height: 4 }}
+              shadowOpacity={0.25}
+              shadowRadius={12}
+              elevation={6}
             >
-              {/* Avatar */}
-              <YStack
-                width={wp(120)}
-                height={hp(120)}
-                borderRadius={wp(60)}
-                backgroundColor="#FFFFFF"
-                overflow="hidden"
-                shadowColor="#000000"
-                shadowOffset={{ width: 0, height: 4 }}
-                shadowOpacity={0.15}
-                shadowRadius={12}
-                elevation={6}
-              >
-                <Image
-                  source={require("@/assets/images/adaptive-icon.png")}
-                  style={{ width: "100%", height: "100%" }}
-                  contentFit="cover"
-                />
-              </YStack>
-
-              {/* Camera Button Overlay */}
-              <YStack
-                position="absolute"
-                bottom={0}
-                right={0}
-                width={wp(40)}
-                height={hp(40)}
-                borderRadius={wp(20)}
-                backgroundColor="#8E0FFF"
-                justifyContent="center"
-                alignItems="center"
-                borderWidth={3}
-                borderColor="#FFFFFF"
-                shadowColor="#8E0FFF"
-                shadowOffset={{ width: 0, height: 2 }}
-                shadowOpacity={0.3}
-                shadowRadius={6}
-                elevation={4}
-              >
-                <Camera size={hp(20)} color="#FFFFFF" strokeWidth={2.5} />
-              </YStack>
-            </TouchableOpacity>
-
-            <Text
-              fontSize={fp(13)}
-              fontWeight="500"
-              color="#666666"
-              marginTop={hp(12)}
-            >
-              Tap to change profile photo
-            </Text>
+              <Text fontSize={fp(40)} fontWeight="700" color="#FFFFFF" lineHeight={hp(48)}>
+                {getInitials(currentUser?.first_name || "", currentUser?.last_name || "")}
+              </Text>
+            </YStack>
           </YStack>
 
           {/* Form Section */}

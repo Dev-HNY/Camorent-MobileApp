@@ -90,8 +90,8 @@ export function AnimatedDropdown({
   const selectedOption = options.find((opt) => opt.value === value);
 
   return (
-    <YStack gap={hp(6)}>
-      <YStack>
+    <YStack gap={hp(6)} style={{ zIndex: isOpen ? 999 : 1 }}>
+      <YStack style={{ position: "relative" }}>
         {/* Floating Label */}
         <Animated.View
           style={[
@@ -138,7 +138,7 @@ export function AnimatedDropdown({
           </Animated.View>
         </Pressable>
 
-        {/* Dropdown Options — conditionally rendered, opacity fade only */}
+        {/* Dropdown Options — absolutely positioned so it overlays content below */}
         {isOpen && (
           <Animated.View
             style={[
@@ -217,6 +217,10 @@ const styles = StyleSheet.create({
     fontSize: fp(14),
   },
   dropdownContainer: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
     backgroundColor: "#FFFFFF",
     borderBottomLeftRadius: hp(12),
     borderBottomRightRadius: hp(12),
@@ -229,6 +233,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
+    zIndex: 999,
   },
   option: {
     paddingHorizontal: wp(16),

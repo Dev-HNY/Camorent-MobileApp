@@ -45,7 +45,7 @@ export default function Index() {
 
   const handleStart = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push("/welcome");
+    router.push("/(auth)/login");
   };
 
   // Redirect based on auth state
@@ -76,7 +76,7 @@ export default function Index() {
               textAlign="center"
               lineHeight={hp(26)}
             >
-              INDIA&apos;S FIRST CAMERA RENTAL SERVICE APP FOR FILMMAKERS
+              INDIA&apos;S FIRST SHOOT OS {"\n"} Where DOPs and Brands create with confidence
             </Text>
 
             <Text
@@ -86,7 +86,7 @@ export default function Index() {
               textAlign="center"
               lineHeight={hp(20)}
             >
-              A platform where filmmakers feels homely.
+              Everything you need for professional shoots.
             </Text>
           </YStack>
         </Animated.View>

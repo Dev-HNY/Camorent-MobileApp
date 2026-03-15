@@ -68,6 +68,10 @@ interface CartStore extends BaseStoreState, BaseStoreActions {
   getCrewItem: () => CrewCartItem | undefined;
   updateCrewQuantity: (crewId: string, quantity: number) => void;
 
+  // GST
+  gstEnabled: boolean;
+  setGstEnabled: (enabled: boolean) => void;
+
   // Fulfillment
   setFulfillmentType: (type: "delivery" | "self_pickup") => void;
 
@@ -124,6 +128,7 @@ export const useCartStore = create<CartStore>()(
       // isCamocareAdded: false,
       bookingId: null,
       fulfillmentType: "delivery",
+      gstEnabled: false,
       draftAddress: null,
       selectedAddress: null,
       isLoading: false,
@@ -134,6 +139,7 @@ export const useCartStore = create<CartStore>()(
       clearError: () => set({ error: null }),
 
       setFulfillmentType: (type) => set({ fulfillmentType: type }),
+      setGstEnabled: (enabled) => set({ gstEnabled: enabled }),
 
       setBookingId: (bookingId: string) => set({ bookingId }),
       clearBookingId: () => set({ bookingId: null }),
@@ -221,6 +227,7 @@ export const useCartStore = create<CartStore>()(
           // isCamocareAdded: false,
           bookingId: null,
           fulfillmentType: "delivery",
+          gstEnabled: false,
           draftAddress: null,
           selectedAddress: null,
         });
@@ -407,6 +414,7 @@ export const useCartStore = create<CartStore>()(
         shootName: state.shootName,
         //  isCamocareAdded: state.isCamocareAdded,
         bookingId: state.bookingId,
+        gstEnabled: state.gstEnabled,
         // draftAddress: state.draftAddress,
         // selectedAddress: state.selectedAddress,
       }),

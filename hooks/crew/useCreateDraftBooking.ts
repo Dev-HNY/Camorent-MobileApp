@@ -18,6 +18,7 @@ export interface DraftBookingRequest {
   rental_start_date: string;
   rental_end_date: string;
   coupon_codes: string[];
+  gstin?: string;
 }
 
 interface AppliedCoupon {

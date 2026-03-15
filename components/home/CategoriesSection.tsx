@@ -2,7 +2,6 @@ import { XStack, YStack, Text, Card, Spinner } from "tamagui";
 import { Image } from "expo-image";
 import { hp, wp, fp } from "@/utils/responsive";
 import { useGetCategories } from "@/hooks/CDP/useGetCategories";
-import { LinearGradient } from "expo-linear-gradient";
 import { memo, useMemo, useCallback } from "react";
 
 interface CategoriesSectionProps {
@@ -114,10 +113,15 @@ export function CategoriesSection({ onCategoryPress }: CategoriesSectionProps) {
   if (isLoading) {
     return (
       <YStack gap="$3" paddingHorizontal={wp(16)}>
-        <XStack alignItems="flex-start" gap={8}>
+        <XStack alignItems="flex-start" gap={wp(8)}>
           <Text fontSize={fp(18)} fontWeight="800" color="#121217">Crafted</Text>
-          <XStack backgroundColor="#E50000" borderRadius={14} paddingHorizontal={12} paddingVertical={5}>
-            <Text fontSize={fp(11)} fontWeight="600" color="#FFFFFF">for Creators</Text>
+          <XStack
+            backgroundColor="#F4EAFE"
+            borderRadius={wp(5)}
+            paddingHorizontal={wp(8)}
+            paddingVertical={hp(3)}
+          >
+            <Text fontSize={fp(11)} fontWeight="700" color="#500696">for Creators</Text>
           </XStack>
         </XStack>
         <XStack justifyContent="center" paddingVertical={hp(40)}>
@@ -130,10 +134,15 @@ export function CategoriesSection({ onCategoryPress }: CategoriesSectionProps) {
   if (isError) {
     return (
       <YStack gap="$3" paddingHorizontal={wp(16)}>
-        <XStack alignItems="flex-start" gap={8}>
+        <XStack alignItems="center" gap={wp(8)}>
           <Text fontSize={fp(18)} fontWeight="800" color="#121217">Crafted</Text>
-          <XStack backgroundColor="#E50000" borderRadius={14} paddingHorizontal={12} paddingVertical={5}>
-            <Text fontSize={fp(11)} fontWeight="600" color="#FFFFFF">for Creators</Text>
+          <XStack
+            backgroundColor="#F4EAFE"
+            borderRadius={wp(5)}
+            paddingHorizontal={wp(8)}
+            paddingVertical={hp(3)}
+          >
+            <Text fontSize={fp(11)} fontWeight="700" color="#500696">for Creators</Text>
           </XStack>
         </XStack>
         <XStack justifyContent="center" paddingVertical={hp(40)}>
@@ -146,10 +155,15 @@ export function CategoriesSection({ onCategoryPress }: CategoriesSectionProps) {
   return (
     <YStack gap={wp(12)} paddingHorizontal={wp(16)}>
       <XStack justifyContent="flex-start">
-        <XStack alignItems="flex-start" gap={8}>
+        <XStack alignItems="center" gap={wp(8)}>
           <Text fontSize={fp(18)} fontWeight="800" color="#121217">Crafted</Text>
-          <XStack backgroundColor="#E50000" borderRadius={14} paddingHorizontal={12} paddingVertical={5}>
-            <Text fontSize={fp(11)} fontWeight="600" color="#FFFFFF">for Creators</Text>
+          <XStack
+            backgroundColor="#F4EAFE"
+            borderRadius={wp(5)}
+            paddingHorizontal={wp(8)}
+            paddingVertical={hp(3)}
+          >
+            <Text fontSize={fp(11)} fontWeight="700" color="#500696">for Creators</Text>
           </XStack>
         </XStack>
       </XStack>

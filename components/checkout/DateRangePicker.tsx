@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { XStack, YStack, Text } from "tamagui";
+import { XStack, Text } from "tamagui";
 import { Calendar } from "lucide-react-native";
 import {
   Keyboard,
   Pressable,
   Modal,
   Animated,
+  Easing,
   StyleSheet,
   View,
   TouchableWithoutFeedback,
@@ -93,6 +94,8 @@ export function DateRangePicker({
   // Animation values
   const overlayAnim = useRef(new Animated.Value(0)).current;
   const sheetAnim = useRef(new Animated.Value(300)).current;
+  // Track closing so we hide the heavy calendar immediately while the sheet animates out
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     if (startDate) setTempStart(dayjs(startDate, "DD-MM-YYYY"));
@@ -103,20 +106,20 @@ export function DateRangePicker({
     Animated.parallel([
       Animated.timing(overlayAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 180,
         useNativeDriver: true,
       }),
-      Animated.spring(sheetAnim, {
+      Animated.timing(sheetAnim, {
         toValue: 0,
-        damping: 28,
-        stiffness: 350,
-        mass: 0.8,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start();
   }, []);
 
   const animateOut = useCallback((onDone: () => void) => {
+    setIsClosing(true);
     Animated.parallel([
       Animated.timing(overlayAnim, {
         toValue: 0,
@@ -126,9 +129,13 @@ export function DateRangePicker({
       Animated.timing(sheetAnim, {
         toValue: 300,
         duration: 200,
+        easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }),
-    ]).start(onDone);
+    ]).start(() => {
+      setIsClosing(false);
+      onDone();
+    });
   }, []);
 
   const formatDateDisplay = (dateStr: string) => {
@@ -271,29 +278,31 @@ export function DateRangePicker({
               </View>
             </View>
 
-            {/* Calendar */}
+            {/* Calendar — hidden immediately on close to avoid unmount jank during animation */}
             <View style={styles.calendarWrap}>
-              <DateTimePicker
-                {...{
-                  mode: "range",
-                  startDate: tempStart,
-                  endDate: tempEnd,
-                  minDate: dayjs(),
-                  maxDate: dayjs().add(90, "day"),
-                  onChange: (params: any) => {
-                    if (params.startDate) {
-                      setTempStart(dayjs(params.startDate));
-                    }
-                    if (params.endDate) {
-                      setTempEnd(dayjs(params.endDate));
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                  },
-                  headerButtonSize: 20,
-                  headerTextContainerStyle: { flexDirection: "column", alignItems: "center" },
-                  styles: calendarStyles,
-                } as any}
-              />
+              {!isClosing && (
+                <DateTimePicker
+                  {...{
+                    mode: "range",
+                    startDate: tempStart,
+                    endDate: tempEnd,
+                    minDate: dayjs(),
+                    maxDate: dayjs().add(90, "day"),
+                    onChange: (params: any) => {
+                      if (params.startDate) {
+                        setTempStart(dayjs(params.startDate));
+                      }
+                      if (params.endDate) {
+                        setTempEnd(dayjs(params.endDate));
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }
+                    },
+                    headerButtonSize: 20,
+                    headerTextContainerStyle: { flexDirection: "column", alignItems: "center" },
+                    styles: calendarStyles,
+                  } as any}
+                />
+              )}
             </View>
 
             {/* Buttons */}
